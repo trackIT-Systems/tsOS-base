@@ -1,0 +1,10 @@
+[Unit]
+Description=WittyPi GPIO14 power control - sets GPIO14 low on shutdown
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStop=/usr/bin/pinctrl set 14 op dl
+
+[Install]
+WantedBy=multi-user.target

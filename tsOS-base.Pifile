@@ -180,7 +180,7 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-led,gpio=17,label=sysup,t
 
 ### install python daemon
 RUN python3 -m pip install --break-system-packages -e /home/pi/wittypi4
-RUN systemctl enable wittypid.service wittypid-watcher.path
+RUN systemctl enable wittypid.service wittypid-watcher.path wittypid-power.service
 RUN tee -a /etc/sysdweb.conf <<EOF
 [wittypid]
 title = WittyPi | Schedule Management
