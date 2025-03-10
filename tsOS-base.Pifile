@@ -148,6 +148,9 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=i2c-rtc,ds3231
 # Set Europe/Berlin timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
 
+# Disable Swap
+RUN systemctl disable dphys-swapfile.service
+
 # set git config for possible local commits
 RUN git config --global user.email "pi@tsOS"
 RUN git config --global user.name "tsOS User"
