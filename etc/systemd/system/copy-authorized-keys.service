@@ -1,0 +1,14 @@
+[Unit]
+Description=Copy /boot/firmware/authorized_keys file to root/pi user .ssh/authorized_keys2
+ConditionPathExists=/boot/firmware/authorized_keys
+After=local-fs.target
+
+[Service]
+UMask=0177
+ExecStart=/usr/bin/cp /boot/firmware/authorized_keys /root/.ssh/authorized_keys2
+ExecStart=/usr/bin/su pi -c "/usr/bin/cp /boot/firmware/authorized_keys /home/pi/.ssh/authorized_keys2"
+Type=oneshot
+StandardOutput=journal
+
+[Install]
+RequiredBy=network.target

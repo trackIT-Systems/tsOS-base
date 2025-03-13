@@ -131,6 +131,10 @@ RUN chmod 755       /root
 RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
 
+# Enable copy-authorized-keys
+RUN systemctl enable copy-authorized-keys.service
+RUN systemctl enable copy-authorized-keys.path
+
 # Set default password
 RUN bash -c 'echo -n "pi:" > /boot/firmware/userconf.txt'
 RUN bash -c 'echo "natur" | openssl passwd -6 -stdin >> /boot/firmware/userconf.txt'
