@@ -145,9 +145,6 @@ RUN raspi-config nonint do_ssh 0
 RUN raspi-config nonint do_i2c 0
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=i2c-rtc,ds3231
 
-# Set Europe/Berlin timezone
-RUN ln -sf /usr/share/zoneinfo/Europe/Berlin /etc/localtime
-
 # Disable Swap
 RUN systemctl disable dphys-swapfile.service
 
