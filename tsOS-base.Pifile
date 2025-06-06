@@ -3,7 +3,7 @@
 
 FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2024-11-19/2024-11-19-raspios-bookworm-${ARCH}-lite.img.xz
 TO "tsOS-base-${ARCH}.img"
-PUMP 1000M
+PUMP 1100M
 
 # Set os-release info
 NAME="tsOS-base"
@@ -104,6 +104,11 @@ RUN chown -R pi:pi /home/pi/
 # Mount boot writable for users
 RUN sed -i 's/\(boot.*vfat.*defaults\)/\1,user,umask=000/g' /etc/fstab
 
+# Mount data partition Mount
+RUN tee -a /etc/fstab <<EOF
+PARTUUID=8a438930-03  /data           exfat   defaults,user,uid=1000,gid=1000,nofail,x-systemd.device-timeout=5  0       2
+EOF
+
 #################################################
 ### basic configuration
 
@@ -151,6 +156,15 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=i2c-rtc,ds3231
 
 # Disable Swap
 RUN systemctl disable dphys-swapfile.service
+
+# disable unnecessary services
+RUN systemctl disable e2scrub_reap.service 
+RUN systemctl disable raspi-config.service
+RUN systemctl disable rpi-eeprom-update.service
+RUN systemctl disable resize2fs_once.service
+
+# rebuild initramfs
+RUN update-initramfs -k all -u -v
 
 # set git config for possible local commits
 RUN git config --global user.email "pi@tsOS"
