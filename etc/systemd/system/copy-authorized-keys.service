@@ -6,7 +6,9 @@ After=local-fs.target
 [Service]
 UMask=0177
 ExecStart=/usr/bin/cp /boot/firmware/authorized_keys /root/.ssh/authorized_keys2
-ExecStart=/usr/bin/su pi -c "/usr/bin/cp /boot/firmware/authorized_keys /home/pi/.ssh/authorized_keys2"
+ExecStart=/usr/bin/cp /boot/firmware/authorized_keys /home/pi/.ssh/authorized_keys2
+ExecStart=/usr/bin/chown pi:pi /home/pi/.ssh/authorized_keys2
+ExecStart=/usr/bin/chmod 644 /home/pi/.ssh/authorized_keys2
 Type=oneshot
 StandardOutput=journal
 
