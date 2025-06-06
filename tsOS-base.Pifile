@@ -52,9 +52,9 @@ RUN apt-get install -y dkms bc
 
 # Install caddy
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.7.5/caddy_2.7.5_linux_armv7.tar.gz | tar xz caddy"
+    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.0/caddy_2.10.0_linux_armv7.tar.gz | tar xz caddy"
 else
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.7.5/caddy_2.7.5_linux_${ARCH}.tar.gz | tar xz caddy"
+    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.0/caddy_2.10.0_linux_${ARCH}.tar.gz | tar xz caddy"
 fi
 RUN mv caddy /usr/bin/caddy
 RUN groupadd --system caddy
@@ -68,9 +68,9 @@ RUN useradd --system \
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.26.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.32.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.26.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.32.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
