@@ -170,6 +170,9 @@ RUN update-initramfs -k all -u -v
 RUN git config --global user.email "pi@tsOS"
 RUN git config --global user.name "tsOS User"
 
+# install gitui
+RUN bash -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
+
 # enable hostname-config script and set default hostname
 RUN systemctl enable hostname-config.service
 
