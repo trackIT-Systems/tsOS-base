@@ -98,6 +98,26 @@ INSTALL home /home
 INSTALL var /var
 INSTALL usr /usr
 
+# Copy git repositories
+RUN rm /home/pi/.oh-my-zsh/.git
+INSTALL .git/modules/home/pi/.oh-my-zsh /home/pi/.oh-my-zsh/.git
+RUN rm /home/pi/Witty-Pi-4/.git
+INSTALL .git/modules/home/pi/Witty-Pi-4 /home/pi/Witty-Pi-4/.git
+RUN rm /home/pi/pymqttutil/.git
+INSTALL .git/modules/home/pi/pymqttutil /home/pi/pymqttutil/.git
+RUN rm /home/pi/pysmartsolar/.git
+INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysmartsolar/.git
+RUN rm /home/pi/snd-i2s_rpi/.git
+INSTALL .git/modules/home/pi/snd-i2s_rpi /home/pi/snd-i2s_rpi/.git
+RUN rm /home/pi/sysdweb/.git
+INSTALL .git/modules/home/pi/sysdweb /home/pi/sysdweb/.git
+RUN rm /home/pi/uhubctl/.git
+INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
+RUN rm /home/pi/vedirect_dump/.git
+INSTALL .git/modules/home/pi/vedirect_dump /home/pi/vedirect_dump/.git
+RUN rm /home/pi/wittypi4/.git
+INSTALL .git/modules/home/pi/wittypi4 /home/pi/wittypi4/.git
+
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
 
@@ -169,6 +189,7 @@ RUN update-initramfs -k all -u -v
 # set git config for possible local commits
 RUN git config --global user.email "pi@tsOS"
 RUN git config --global user.name "tsOS User"
+RUN git config --global core.excludesfile "~/.gitignore"
 
 # install gitui
 RUN bash -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
