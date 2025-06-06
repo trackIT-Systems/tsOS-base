@@ -126,7 +126,7 @@ RUN sed -i 's/\(boot.*vfat.*defaults\)/\1,user,umask=000/g' /etc/fstab
 
 # Mount data partition Mount
 RUN tee -a /etc/fstab <<EOF
-PARTUUID=8a438930-03  /data           exfat   defaults,user,uid=1000,gid=1000,nofail,x-systemd.device-timeout=5  0       2
+PARTUUID=8a438930-03  /data           exfat   defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
 EOF
 
 #################################################
@@ -263,9 +263,9 @@ RUN python3 -m pip install --break-system-packages -e /home/pi/sysdweb
 RUN systemctl enable sysdweb
 
 # Create symlinks for other webserver targets
-RUN mkdir /data
-RUN chown pi:pi /data
-RUN ln -s /boot/firmware/ /data/boot
+RUN tee -a /etc/fstab <<EOF
+/boot/firmware        /data/boot      none    defaults,bind,x-mount.mkdir	0	0
+EOF
 
 # enable caddy
 RUN systemctl enable caddy
@@ -320,9 +320,6 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=uart0-pi5
 
 # Enable gpsd
 RUN systemctl enable gpsd
-
-# Install docs folder (if HTML available)
-if [ -d docs/_site22/ ]; then INSTALL docs/_site /data/docs; fi
 
 # Enable i2s
 RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
