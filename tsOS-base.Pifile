@@ -270,18 +270,12 @@ RUN systemctl enable brovi_startup.service
 # Blacklist DVB-T driver
 RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
 
-# Configure hardware connectivity 
+# Configure hardware connectivity
 RUN sed -i 's/dtparam=audio=on/#dtparam=audio=on/' /boot/firmware/config.txt
 RUN raspi-config nonint do_serial_hw 0
 RUN raspi-config nonint do_serial_cons 1
 
 RUN systemctl disable serial-getty@ttyS0.service
-
-# Disable freq scaling to fix miniuart issues, i.e., https://wiki.dragino.com/index.php?title=Getting_GPS_to_work_on_Raspberry_Pi_3_Model_B
-RUN tee -a /boot/firmware/config.txt <<EOF
-core_freq=250
-force_turbo=1
-EOF
 
 # Enable UART0 on GPIO header in RPi5 
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=uart0-pi5
