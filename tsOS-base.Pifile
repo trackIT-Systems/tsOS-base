@@ -179,7 +179,6 @@ RUN systemctl disable dphys-swapfile.service
 
 # disable unnecessary services
 RUN systemctl disable e2scrub_reap.service 
-RUN systemctl disable raspi-config.service
 RUN systemctl disable rpi-eeprom-update.service
 RUN systemctl disable resize2fs_once.service
 
