@@ -1,9 +1,0 @@
-[Unit]
-Description=WittyPi restarter
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/systemctl restart wittypid.service
-
-[Install]
-WantedBy=multi-user.target

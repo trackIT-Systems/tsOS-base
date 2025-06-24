@@ -1,0 +1,5 @@
+[user]
+	email = pi@tsOS
+	name = tsOS User
+[core]
+	excludesfile = ~/.gitignore
