@@ -77,8 +77,8 @@ RUN mv filebrowser /usr/bin/filebrowser
 # Install mosquitto
 RUN apt-get install -y mosquitto mosquitto-clients
 
-# Install sysdweb dependecies
-RUN apt-get install -y python3-systemd python3-dbus libdbus-glib-1-dev
+# Install python system packages
+RUN apt-get install -y python3-dbus libdbus-glib-1-dev
 
 # Install GPS / NTP software
 RUN apt-get install --no-install-recommends -y \
@@ -107,10 +107,8 @@ RUN rm /home/pi/pymqttutil/.git
 INSTALL .git/modules/home/pi/pymqttutil /home/pi/pymqttutil/.git
 RUN rm /home/pi/pysmartsolar/.git
 INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysmartsolar/.git
-RUN rm /home/pi/snd-i2s_rpi/.git
-INSTALL .git/modules/home/pi/snd-i2s_rpi /home/pi/snd-i2s_rpi/.git
-RUN rm /home/pi/sysdweb/.git
-INSTALL .git/modules/home/pi/sysdweb /home/pi/sysdweb/.git
+RUN rm /home/pi/tsconfig/.git
+INSTALL .git/modules/home/pi/tsconfig /home/pi/tsconfig/.git
 RUN rm /home/pi/uhubctl/.git
 INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
 RUN rm /home/pi/vedirect_dump/.git
@@ -185,11 +183,6 @@ RUN systemctl disable resize2fs_once.service
 # rebuild initramfs
 RUN update-initramfs -k all -u -v
 
-# set git config for possible local commits
-RUN git config --global user.email "pi@tsOS"
-RUN git config --global user.name "tsOS User"
-RUN git config --global core.excludesfile "~/.gitignore"
-
 # install gitui
 RUN bash -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
 
@@ -201,13 +194,6 @@ RUN systemctl enable chrony-waitsync.service systemd-time-wait-sync-prepare.serv
 
 # Reboot on kernel panic
 RUN bash -c "echo kernel.panic=10 | tee -a /etc/sysctl.conf"
-
-# List chrony
-RUN tee -a /etc/sysdweb.conf <<EOF
-[chrony]
-title = Chrony | Time Synchronization
-unit = chrony
-EOF
 
 # Install dependenies & enable WittyPi
 RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.6.y
@@ -221,12 +207,7 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-led,gpio=17,label=sysup,t
 
 ### install python daemon
 RUN python3 -m pip install --break-system-packages -e /home/pi/wittypi4
-RUN systemctl enable wittypid.service wittypid-watcher.path wittypid-power.service
-RUN tee -a /etc/sysdweb.conf <<EOF
-[wittypid]
-title = WittyPi | Schedule Management
-unit = wittypid
-EOF
+RUN systemctl enable wittypid.service wittypid-power.service
 
 #################################################
 ### network configuration
@@ -245,11 +226,6 @@ RUN bash -c "echo net.ipv4.icmp_echo_ignore_broadcasts=0 | tee -a /etc/sysctl.co
 # enable wireguard
 RUN ln -s /boot/firmware/wireguard.conf /etc/wireguard/wireguard.conf
 RUN systemctl enable wg-quick@wireguard
-RUN tee -a /etc/sysdweb.conf <<EOF
-[wg-quick@wireguard]
-title = Wireguard | Remote Access (/boot/firmware/wireguard.conf)
-unit = wg-quick@wireguard
-EOF
 
 # disable resolv.conf altering
 RUN chattr +i /etc/resolv.conf
@@ -257,9 +233,10 @@ RUN chattr +i /etc/resolv.conf
 #################################################
 ### services configuration
 
-# install and enable enable sysdweb
-RUN python3 -m pip install --break-system-packages -e /home/pi/sysdweb
-RUN systemctl enable sysdweb
+# install and enable enable tsconfig
+RUN apt-get install -y portaudio19-dev
+RUN python3 -m pip install --break-system-packages -e /home/pi/tsconfig
+RUN systemctl enable tsconfig
 
 # Create symlinks for other webserver targets
 RUN tee -a /etc/fstab <<EOF
@@ -274,11 +251,6 @@ RUN systemctl enable filebrowser
 
 # enable mosquitto
 RUN systemctl enable mosquitto.service
-RUN tee -a /etc/sysdweb.conf <<EOF
-[Mosquitto]
-title = Mosquitto | MQTT Broker
-unit = mosquitto
-EOF
 
 # Install pysmartsolar
 RUN python3 -m pip install --break-system-packages -e /home/pi/pysmartsolar
@@ -290,11 +262,6 @@ RUN python3 -m pip install --break-system-packages -e /home/pi/vedirect_dump
 RUN python3 -m pip install --break-system-packages -e /home/pi/pymqttutil
 RUN python3 -m pip install --break-system-packages psutil
 RUN systemctl enable mqttutil.service
-RUN tee -a /etc/sysdweb.conf <<EOF
-[mqttutil]
-title = MQTTUtil | System Health State
-unit = mqttutil
-EOF
 
 # Enable dmesgdump
 RUN systemctl enable dmesgdump
@@ -308,7 +275,6 @@ RUN systemctl enable brovi_startup.service
 RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
 
 # Configure hardware connectivity
-RUN sed -i 's/dtparam=audio=on/#dtparam=audio=on/' /boot/firmware/config.txt
 RUN raspi-config nonint do_serial_hw 0
 RUN raspi-config nonint do_serial_cons 1
 

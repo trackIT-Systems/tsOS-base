@@ -1,6 +1,3 @@
-[submodule "home/pi/sysdweb"]
-	path = home/pi/sysdweb
-	url = https://github.com/trackIT-Systems/sysdweb
 [submodule "home/pi/uhubctl"]
 	path = home/pi/uhubctl
 	url = https://github.com/mvp/uhubctl
@@ -10,9 +7,6 @@
 [submodule "home/pi/pysmartsolar"]
 	path = home/pi/pysmartsolar
 	url = https://github.com/trackIT-Systems/pysmartsolar
-[submodule "home/pi/snd-i2s_rpi"]
-	path = home/pi/snd-i2s_rpi
-	url = https://github.com/trackIT-Systems/snd-i2s_rpi.git
 [submodule "home/pi/.oh-my-zsh"]
 	path = home/pi/.oh-my-zsh
 	url = https://github.com/ohmyzsh/ohmyzsh
@@ -25,3 +19,6 @@
 [submodule "home/pi/vedirect_dump"]
 	path = home/pi/vedirect_dump
 	url = https://github.com/trackIT-Systems/vedirect_dump
+[submodule "home/pi/tsconfig"]
+	path = home/pi/tsconfig
+	url = https://github.com/trackIT-Systems/tsconfig

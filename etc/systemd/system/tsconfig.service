@@ -1,0 +1,12 @@
+[Unit]
+Description=Web-based configuration and system management interface for trackIT Systems sensor stations
+After=network.target
+
+[Service]
+User=pi
+Environment="TERM=xterm-256color"
+WorkingDirectory=/home/pi/tsconfig
+ExecStart=uvicorn app.main:app
+
+[Install]
+WantedBy=multi-user.target

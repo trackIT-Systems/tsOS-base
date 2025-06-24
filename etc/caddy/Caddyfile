@@ -1,18 +1,8 @@
 :80 {
     encode gzip
-
-    root * /home/pi/html
-    file_server
-    
-    handle_path /sysdweb/* {
-        reverse_proxy http://localhost:10080
-    }    
+    reverse_proxy http://localhost:8000
 
     handle_path /data/* {
         reverse_proxy http://localhost:8080
-    }
-
-    route /html/* {
-        reverse_proxy http://localhost:81
     }
 }
