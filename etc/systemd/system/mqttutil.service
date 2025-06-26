@@ -1,5 +1,5 @@
 [Unit]
-Description=MQTTUtil
+Description=Publish system information via MQTT
 After=network-online.target mosquitto.service time-sync.target hostname-config.service
 Wants=network-online.target
 
