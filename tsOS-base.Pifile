@@ -68,9 +68,9 @@ RUN useradd --system \
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.32.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.41.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.32.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.41.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
