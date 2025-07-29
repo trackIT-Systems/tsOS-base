@@ -5,12 +5,13 @@ set -eu -o pipefail
 echo "Running Raspberry Pi cmdline.txt configuration script..." 1>&2
 
 # Initialize parameters
+source /etc/os-release
 ID=$(cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2 | cut -c9-16)
 if [ "$ID" == "" ]; then
-    HOSTNAME=tsos-hw-unknown
+    HOSTNAME=$NAME-unknown
     echo "Error reading Raspberry Pi serial number, defaulting to $HOSTNAME" 1>&2
 else
-    HOSTNAME=tsos-hw-$ID
+    HOSTNAME=$NAME-$ID
 fi
 
 TIMEZONE=$(cat /etc/timezone)
