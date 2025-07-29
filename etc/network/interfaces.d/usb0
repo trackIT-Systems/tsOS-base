@@ -1,6 +1,4 @@
 allow-hotplug usb0
-iface usb0 inet static
-    address 192.168.8.100/24
-    gateway 192.168.8.1
+iface usb0 inet dhcp
     post-up   iptables --table nat --append POSTROUTING --out-interface $IFACE --jump MASQUERADE
     post-down iptables --table nat --delete POSTROUTING --out-interface $IFACE --jump MASQUERADE
