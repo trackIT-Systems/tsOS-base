@@ -202,7 +202,7 @@ RUN bash -c 'for k in /lib/modules/6.6.*; do dkms install -k $(basename $k) rtc-
 ### compile overlays and enable hardware
 RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=wittypi4
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=dtoverlay=gpio-shutdown,gpio_pin=4,debounce=0,gpio_pull=up,active_low=1
+RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-shutdown,gpio_pin=4,debounce=0,gpio_pull=up,active_low=1
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
 
 ### install python daemon
