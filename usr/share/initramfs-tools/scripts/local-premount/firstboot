@@ -33,8 +33,8 @@ get_variables () {
   ROOT_PART_START=$(cat /sys/block/$ROOT_DEV_NAME/$ROOT_PART_NAME/start)
   ROOT_PART_SIZE=$(cat /sys/block/$ROOT_DEV_NAME/$ROOT_PART_NAME/size)
   
-  # extend by 2M sectors of 512 byte, aka 1024MB
-  ROOT_PART_EXTEND=$((2*1024*1024))
+  # extend by 8M sectors of 512 byte, aka 4096MB
+  ROOT_PART_EXTEND=$((8*1024*1024))
 
   # compute root and data partition boundaries
   DATA_PART_END=$((TARGET_END))
