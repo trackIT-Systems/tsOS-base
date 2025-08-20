@@ -126,12 +126,12 @@ RUN sed -i 's/\(boot.*vfat.*defaults\)/\1,user,umask=000/g' /etc/fstab
 RUN tee -a /etc/fstab <<EOF
 # mounts for user-access
 PARTUUID=8a438930-03  /mnt/sdhc       exfat   defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
-/dev/sda1             /mnt/usb        vfat    defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
+/dev/sda1             /mnt/usb        auto    defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
 /boot/firmware        /mnt/boot       none    defaults,bind,x-mount.mkdir       0       0
 
 # oportunistic /data bind-mounts
-/mnt/usb              /data           none    defaults,bind,x-mount.mkdir       0       0
-/mnt/sdhc             /data           none    defaults,bind,x-mount.mkdir       0       0
+/mnt/usb              /data           none    defaults,bind,nofail,x-mount.mkdir       0       0
+#/mnt/sdhc             /data           none    defaults,bind,x-mount.mkdir       0       0
 EOF
 
 #################################################
