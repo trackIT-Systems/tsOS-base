@@ -186,7 +186,8 @@ RUN raspi-config nonint do_i2c 0
 # Disable Swap
 RUN systemctl mask rpi-resize-swap-file.service
 
-# Unblock bluetooth hci0 on pi4
+# Unblock bluetooth hci0 on pi3 and pi4
+RUN tee /var/lib/systemd/rfkill/platform-soc-amba-3f201000.serial:bluetooth <<<0
 RUN tee /var/lib/systemd/rfkill/platform-soc-amba-fe201000.serial:bluetooth <<<0
 
 # disable unnecessary services
