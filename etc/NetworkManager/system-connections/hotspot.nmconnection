@@ -1,0 +1,28 @@
+[connection]
+id=hotspot
+uuid=7cef9d23-a1b0-4de8-a0c7-e25b3233bd5e
+type=wifi
+interface-name=wlan0
+
+[wifi]
+band=bg
+mode=ap
+ssid=tsOS-base-00000000
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk=BirdsAndBats
+
+# wpa2-only configuration (disabled, does not work on older devices)
+# pairwise=ccmp;
+# proto=rsn;
+
+[ipv4]
+address1=169.254.0.1/24
+method=shared
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]

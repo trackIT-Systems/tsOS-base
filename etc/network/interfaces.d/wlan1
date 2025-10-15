@@ -1,5 +1,0 @@
-allow-hotplug wlan1
-iface wlan1 inet dhcp
-    wpa-conf /boot/firmware/wlan1.conf
-    post-up   iptables --table nat --append POSTROUTING --out-interface $IFACE --jump MASQUERADE
-    post-down iptables --table nat --delete POSTROUTING --out-interface $IFACE --jump MASQUERADE

@@ -40,6 +40,11 @@ EOF
     systemctl restart avahi-daemon.service
 }
 
+function set_hotspot_ssid() {
+    echo " Setting hotspot SSID via sed: $1." 1>&2
+    sed -i "s/^ssid=.*/ssid=$1/" /etc/NetworkManager/system-connections/hotspot.nmconnection
+}
+
 function set_timezone() {
     echo " Setting timezone via timedatectl: $1." 1>&2
     timedatectl set-timezone $1
@@ -67,6 +72,7 @@ for arg in "${CMDLINE[@]}"; do
 done
 
 set_hostname $HOSTNAME
+set_hotspot_ssid $HOSTNAME
 set_timezone $TIMEZONE
 
 echo "Done." 1>&2

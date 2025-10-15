@@ -1,21 +1,21 @@
 # Set default ARCH
 : ${ARCH:=arm64}
 
-FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2024-11-19/2024-11-19-raspios-bookworm-${ARCH}-lite.img.xz
+FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2025-10-02/2025-10-01-raspios-trixie-${ARCH}-lite.img.xz
 TO "tsOS-base-${ARCH}.img"
-PUMP 1100M
+PUMP 1000M
 
 # Set os-release info
 NAME="tsOS-base"
 VERSION_ID=`git describe --tags --always || true`
-VERSION_CODENAME=bookworm
+VERSION_CODENAME=trixie
 
 RUN tee /etc/os-release <<EOF
 PRETTY_NAME="$NAME $VERSION_ID ($VERSION_CODENAME)"
 NAME=$NAME
 VERSION_ID=$VERSION_ID
 VERSION="$VERSION_ID ($VERSION_CODENAME)"
-VERSION_CODENAME=bookworm
+VERSION_CODENAME=trixie
 ID=debian
 HOME_URL="https://trackit.systems/"
 SUPPORT_URL="https://github.com/trackIT-Systems/tsOS-base"
@@ -38,13 +38,11 @@ RUN apt-get install -y \
     libusb-1.0-0-dev \
     zsh
 
+RUN python3 -m pip config set global.break-system-packages true
+
 # Install networking tools
 RUN apt-get install -y \
     tcpdump \
-    hostapd \
-    dnsmasq \
-    bridge-utils \
-    iptables \
     wireguard-tools
 
 # Install dkms
@@ -52,9 +50,9 @@ RUN apt-get install -y dkms bc
 
 # Install caddy
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.0/caddy_2.10.0_linux_armv7.tar.gz | tar xz caddy"
+    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_armv7.tar.gz | tar xz caddy"
 else
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.0/caddy_2.10.0_linux_${ARCH}.tar.gz | tar xz caddy"
+    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_${ARCH}.tar.gz | tar xz caddy"
 fi
 RUN mv caddy /usr/bin/caddy
 RUN groupadd --system caddy
@@ -68,9 +66,9 @@ RUN useradd --system \
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.41.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.43.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.41.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.43.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
@@ -81,6 +79,7 @@ RUN apt-get install -y mosquitto mosquitto-clients
 RUN apt-get install -y python3-dbus libdbus-glib-1-dev
 
 # Install GPS / NTP software
+RUN apt-get remove -y systemd-timesyncd
 RUN apt-get install --no-install-recommends -y \
     gpsd \
     gpsd-clients \
@@ -123,15 +122,19 @@ RUN chown -R pi:pi /home/pi/
 RUN sed -i 's/\(boot.*vfat.*defaults\)/\1,user,umask=000/g' /etc/fstab
 
 # Mount data partition Mount
+RUN bash <<EOF
+DEVUUID=\`grep /boot/firmware /etc/fstab\`
+echo "\${DEVUUID:0:17}-03  /mnt/sdhc       exfat   defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2" | tee -a /etc/fstab
+EOF
+
 RUN tee -a /etc/fstab <<EOF
 # mounts for user-access
-PARTUUID=8a438930-03  /mnt/sdhc       exfat   defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
 /dev/sda1             /mnt/usb        auto    defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
 /boot/firmware        /mnt/boot       none    defaults,bind,x-mount.mkdir       0       0
 
 # oportunistic /data bind-mounts
-/mnt/usb              /data           none    defaults,bind,nofail,x-mount.mkdir       0       0
-#/mnt/sdhc             /data           none    defaults,bind,x-mount.mkdir       0       0
+#/mnt/usb              /data           none    defaults,bind,nofail,x-mount.mkdir       0       0
+/mnt/sdhc             /data           none    defaults,bind,x-mount.mkdir       0       0
 EOF
 
 #################################################
@@ -177,7 +180,6 @@ RUN chsh -s /bin/zsh pi
 RUN raspi-config nonint do_ssh 0
 
 RUN raspi-config nonint do_i2c 0
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=i2c-rtc,ds3231
 
 # Disable Swap
 RUN systemctl disable dphys-swapfile.service
@@ -186,6 +188,8 @@ RUN systemctl disable dphys-swapfile.service
 RUN systemctl disable e2scrub_reap.service 
 RUN systemctl disable rpi-eeprom-update.service
 RUN systemctl disable resize2fs_once.service
+RUN systemctl disable apt-daily.timer
+RUN touch /etc/cloud/cloud-init.disabled
 
 # rebuild initramfs
 RUN update-initramfs -k all -u -v
@@ -197,14 +201,17 @@ RUN bash -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27
 RUN systemctl enable hostname-config.service
 
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
-RUN systemctl enable chrony-waitsync.service systemd-time-wait-sync-prepare.service systemd-time-wait-sync.service
+RUN systemctl enable chrony-waitsync.service
+
+# Set build-timestamp to last known time
+RUN touch /var/lib/systemd/timesync/clock
 
 # Reboot on kernel panic
 RUN bash -c "echo kernel.panic=10 | tee -a /etc/sysctl.conf"
 
 # Install dependenies & enable WittyPi
-RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.6.y
-RUN bash -c 'for k in /lib/modules/6.6.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.6.y; done'
+RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
+RUN bash -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
 
 ### compile overlays and enable hardware
 RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
@@ -213,23 +220,13 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-shutdown,gpio_pin=4,debou
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
 
 ### install python daemon
-RUN python3 -m pip install --break-system-packages -e /home/pi/wittypi4
+RUN python3 -m pip install -e /home/pi/wittypi4
 RUN systemctl enable wittypid.service
 
 #################################################
 ### network configuration
 
-RUN apt-get install -y ifupdown
 RUN raspi-config nonint do_wifi_country "DE"
-
-# enable hostapd-config script (WiFi AP)
-RUN systemctl enable hostapd-config.service
-RUN systemctl enable hostapd.service
-
-# Modify default network settings
-RUN bash -c "echo net.ipv4.ip_forward=1 | tee -a /etc/sysctl.conf"
-RUN bash -c "echo net.ipv4.icmp_echo_ignore_broadcasts=0 | tee -a /etc/sysctl.conf"
-
 # enable wireguard
 RUN ln -s /boot/firmware/wireguard.conf /etc/wireguard/wireguard.conf
 RUN systemctl enable wg-quick@wireguard
@@ -242,8 +239,8 @@ RUN chattr +i /etc/resolv.conf
 
 # install and enable enable tsconfig
 RUN apt-get install -y portaudio19-dev
-RUN python3 -m pip install --break-system-packages -e /home/pi/tsconfig
-RUN systemctl enable tsconfig
+RUN python3 -m pip install -e /home/pi/tsconfig
+RUN systemctl enable tsconfig tsconfig-ble
 
 # enable caddy
 RUN systemctl enable caddy
@@ -255,14 +252,14 @@ RUN systemctl enable filebrowser
 RUN systemctl enable mosquitto.service
 
 # Install pysmartsolar
-RUN python3 -m pip install --break-system-packages -e /home/pi/pysmartsolar
+RUN python3 -m pip install -e /home/pi/pysmartsolar
 
 # Install vedirect_dump
-RUN python3 -m pip install --break-system-packages -e /home/pi/vedirect_dump
+RUN python3 -m pip install -e /home/pi/vedirect_dump
 
 # Install and enable pymqttutil
-RUN python3 -m pip install --break-system-packages -e /home/pi/pymqttutil
-RUN python3 -m pip install --break-system-packages psutil
+RUN python3 -m pip install -e /home/pi/pymqttutil
+RUN python3 -m pip install psutil
 RUN systemctl enable mqttutil.service
 
 # Enable dmesgdump
@@ -270,7 +267,7 @@ RUN systemctl enable dmesgdump
 
 # Install uhubctl (dependency) and enable huaweicheck
 RUN bash -c 'cd /home/pi/uhubctl; make; make install'
-RUN systemctl enable huaweicheck.timer
+# RUN systemctl enable huaweicheck.timer
 RUN systemctl enable brovi_startup.service
 
 # Blacklist DVB-T driver

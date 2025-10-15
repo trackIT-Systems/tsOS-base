@@ -1,5 +1,4 @@
 [Unit]
-Description=hostapd-config
 After=local-fs.target
 # hostapd is started with sysinit, write config beforehand
 Before=networking.service

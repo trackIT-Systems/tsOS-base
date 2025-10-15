@@ -4,14 +4,21 @@
 
 ACTION!="add", GOTO="modeswitch_rules_end"
 SUBSYSTEM!="usb", GOTO="modeswitch_rules_end"
-
-# All known install partitions are on interface 0
 ATTRS{bInterfaceNumber}!="00", GOTO="modeswitch_rules_end"
 
-GOTO="modeswitch_rules_begin"
-
 LABEL="modeswitch_rules_begin"
+
 # Huawei E3372-325
 ATTR{idVendor}=="3566", ATTR{idProduct}=="2001", RUN+="/usr/local/bin/brovi_switch %k %p"
 
 LABEL="modeswitch_rules_end"
+
+# Network interface naming rules 
+# Huawei/Brovi/Zowee E3372-325
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="3566", ATTRS{idProduct}=="2001", NAME="hua0"
+
+# Huawei E3372-320 12d1:14db
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14db", NAME="hua0"
+
+# Huawei E3372-153 12d1:14dc
+SUBSYSTEM=="net", ACTION=="add", ATTRS{idVendor}=="12d1", ATTRS{idProduct}=="14dc", NAME="hua0"

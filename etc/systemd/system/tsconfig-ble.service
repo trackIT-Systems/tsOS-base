@@ -1,0 +1,14 @@
+[Unit]
+Description=tsOS Configuration Manager - BLE GATT Gateway
+After=network.target bluetooth.target tsconfig.service
+Wants=bluetooth.target tsconfig.service
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/tsconfig
+ExecStart=python3 -m app.ble_gateway --api-url http://localhost:8000
+
+[Install]
+WantedBy=multi-user.target
+

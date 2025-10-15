@@ -1,6 +1,0 @@
-auto wlan0
-iface wlan0 inet manual
-    wireless-channel 1
-    post-up ifconfig $IFACE 169.254.0.1/16
-    post-up   iptables --table nat --append POSTROUTING --out-interface $IFACE --jump MASQUERADE
-    post-down iptables --table nat --delete POSTROUTING --out-interface $IFACE --jump MASQUERADE
