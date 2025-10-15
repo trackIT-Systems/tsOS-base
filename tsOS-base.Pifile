@@ -221,6 +221,13 @@ RUN bash -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc
 ### compile overlays and enable hardware
 RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
 
+# enable otg mode on pi4
+RUN tee -a /boot/firmware/config.txt <<EOF
+[pi4]
+otg_mode=1
+
+EOF
+
 ### enable wittypi on pi3 and pi4
 RUN tee -a /boot/firmware/config.txt <<EOF
 [pi4]
