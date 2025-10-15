@@ -45,6 +45,7 @@ RUN python3 -m pip config set global.break-system-packages true
 # Install networking tools
 RUN apt-get install -y \
     tcpdump \
+    samba \
     wireguard-tools
 
 # Install dkms
@@ -261,6 +262,9 @@ RUN systemctl enable wg-quick@wireguard
 
 # disable resolv.conf altering
 RUN chattr +i /etc/resolv.conf
+
+# install and enable samba share
+RUN systemctl enable smbd
 
 #################################################
 ### services configuration
