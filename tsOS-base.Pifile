@@ -186,6 +186,9 @@ RUN raspi-config nonint do_i2c 0
 # Disable Swap
 RUN systemctl mask rpi-resize-swap-file.service
 
+# Unblock bluetooth hci0 on pi4
+RUN tee /var/lib/systemd/rfkill/platform-soc-amba-fe201000.serial:bluetooth <<<0
+
 # disable unnecessary services
 RUN systemctl disable e2scrub_reap.service 
 RUN systemctl disable rpi-eeprom-update.service
