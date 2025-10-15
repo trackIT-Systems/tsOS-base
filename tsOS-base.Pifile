@@ -25,6 +25,8 @@ EOF
 #################################################
 ### install software
 
+ENV PIP_ROOT_USER_ACTION ignore
+
 # Update OS and sources
 RUN apt-get update
 
@@ -182,12 +184,11 @@ RUN raspi-config nonint do_ssh 0
 RUN raspi-config nonint do_i2c 0
 
 # Disable Swap
-RUN systemctl disable dphys-swapfile.service
+RUN systemctl mask rpi-resize-swap-file.service
 
 # disable unnecessary services
 RUN systemctl disable e2scrub_reap.service 
 RUN systemctl disable rpi-eeprom-update.service
-RUN systemctl disable resize2fs_once.service
 RUN systemctl disable apt-daily.timer
 RUN touch /etc/cloud/cloud-init.disabled
 
