@@ -220,9 +220,21 @@ RUN bash -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc
 
 ### compile overlays and enable hardware
 RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=wittypi4
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-shutdown,gpio_pin=4,debounce=0,gpio_pull=up,active_low=1
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
+
+### enable wittypi on pi3 and pi4
+RUN tee -a /boot/firmware/config.txt <<EOF
+[pi4]
+dtoverlay=wittypi4
+dtoverlay=gpio-shutdown,gpio_pin=4,debounce=0,gpio_pull=up,active_low=1
+dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
+
+[pi3]
+dtoverlay=wittypi4
+dtoverlay=gpio-shutdown,gpio_pin=4,debounce=0,gpio_pull=up,active_low=1
+dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
+
+[all]
+EOF
 
 ### install python daemon
 RUN python3 -m pip install -e /home/pi/wittypi4
@@ -232,6 +244,7 @@ RUN systemctl enable wittypid.service
 ### network configuration
 
 RUN raspi-config nonint do_wifi_country "DE"
+
 # enable wireguard
 RUN ln -s /boot/firmware/wireguard.conf /etc/wireguard/wireguard.conf
 RUN systemctl enable wg-quick@wireguard
