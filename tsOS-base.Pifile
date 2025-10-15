@@ -190,10 +190,6 @@ RUN systemctl mask rpi-resize-swap-file.service
 # Enable persistent journal
 RUN rm /usr/lib/systemd/journald.conf.d/40-rpi-volatile-storage.conf
 
-# Unblock bluetooth hci0 on pi3 and pi4
-RUN tee /var/lib/systemd/rfkill/platform-soc-amba-3f201000.serial:bluetooth <<<0
-RUN tee /var/lib/systemd/rfkill/platform-soc-amba-fe201000.serial:bluetooth <<<0
-
 # disable unnecessary services
 RUN systemctl disable e2scrub_reap.service 
 RUN systemctl disable rpi-eeprom-update.service
