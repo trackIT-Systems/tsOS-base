@@ -52,26 +52,13 @@ RUN apt-get install -y \
 RUN apt-get install -y dkms bc
 
 # Install caddy
-if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_armv7.tar.gz | tar xz caddy"
-else
-    RUN bash -c "curl -L https://github.com/caddyserver/caddy/releases/download/v2.10.2/caddy_2.10.2_linux_${ARCH}.tar.gz | tar xz caddy"
-fi
-RUN mv caddy /usr/bin/caddy
-RUN groupadd --system caddy
-RUN useradd --system \
-    --gid caddy \
-    --create-home \
-    --home-dir /var/lib/caddy \
-    --shell /usr/sbin/nologin \
-    --comment "Caddy web server" \
-    caddy
+RUN apt-get install -y caddy
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.43.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.44.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN bash -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.43.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.44.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
@@ -144,9 +131,9 @@ EOF
 ### basic configuration
 
 # Fix permissions on host ssh files
-RUN bash -c 'chown root:root /etc/ssh/ssh_host_*'
-RUN bash -c 'chmod 600 /etc/ssh/ssh_host_*_key'
-RUN bash -c 'chmod 644 /etc/ssh/ssh_host_*_key.pub'
+RUN sh -c 'chown root:root /etc/ssh/ssh_host_*'
+RUN sh -c 'chmod 600 /etc/ssh/ssh_host_*_key'
+RUN sh -c 'chmod 644 /etc/ssh/ssh_host_*_key.pub'
 RUN systemctl disable regenerate_ssh_host_keys
 
 # Install user ssh files and fix permissions
@@ -172,8 +159,8 @@ RUN systemctl enable copy-authorized-keys.service
 RUN systemctl enable copy-authorized-keys.path
 
 # Set default password
-RUN bash -c 'echo -n "pi:" > /boot/firmware/userconf.txt'
-RUN bash -c 'echo "natur" | openssl passwd -6 -stdin >> /boot/firmware/userconf.txt'
+RUN sh -c 'echo -n "pi:" > /boot/firmware/userconf.txt'
+RUN sh -c 'echo "natur" | openssl passwd -6 -stdin >> /boot/firmware/userconf.txt'
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
 
 # Change default shell for pi user
@@ -200,7 +187,7 @@ RUN touch /etc/cloud/cloud-init.disabled
 RUN update-initramfs -k all -u -v
 
 # install gitui
-RUN bash -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
+RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
 
 # enable hostname-config script and set default hostname
 RUN systemctl enable hostname-config.service
@@ -212,11 +199,11 @@ RUN systemctl enable chrony-waitsync.service
 RUN touch /var/lib/systemd/timesync/clock
 
 # Reboot on kernel panic
-RUN bash -c "echo kernel.panic=10 | tee -a /etc/sysctl.conf"
+RUN tee -a /etc/sysctl.conf <<<kernel.panic=10
 
 # Install dependenies & enable WittyPi
 RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
-RUN bash -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
+RUN sh -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
 
 ### compile overlays and enable hardware
 RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
@@ -244,7 +231,10 @@ dtoverlay=gpio-led,gpio=17,label=sysup,trigger=heartbeat
 EOF
 
 ### install python daemon
-RUN python3 -m pip install -e /home/pi/wittypi4
+RUN apt-get install -y python3-astral python3-pytimeparse
+RUN python3 -m pip install --no-deps i2cdevice
+RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2025.2.2.tar.gz
+RUN python3 -m pip install --no-deps -e /home/pi/wittypi4
 RUN systemctl enable wittypid.service
 
 #################################################
@@ -267,7 +257,8 @@ RUN systemctl enable smbd
 
 # install and enable enable tsconfig
 RUN apt-get install -y portaudio19-dev
-RUN python3 -m pip install -e /home/pi/tsconfig
+RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
+RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
 RUN systemctl enable tsconfig tsconfig-ble
 
 # enable caddy
@@ -280,21 +271,26 @@ RUN systemctl enable filebrowser
 RUN systemctl enable mosquitto.service
 
 # Install pysmartsolar
-RUN python3 -m pip install -e /home/pi/pysmartsolar
+RUN apt-get install -y python3-cbor2
+RUN python3 -m pip install --no-deps gatt
+RUN python3 -m pip install --no-deps -e /home/pi/pysmartsolar
 
 # Install vedirect_dump
-RUN python3 -m pip install -e /home/pi/vedirect_dump
+RUN python3 -m pip install --no-deps ve_utils vedirect_m8
+RUN python3 -m pip install --no-deps -e /home/pi/vedirect_dump
 
 # Install and enable pymqttutil
-RUN python3 -m pip install -e /home/pi/pymqttutil
-RUN python3 -m pip install psutil
+RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse
+RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
+RUN python3 -m pip install --no-deps psutil
 RUN systemctl enable mqttutil.service
 
 # Enable dmesgdump
 RUN systemctl enable dmesgdump
 
 # Install uhubctl (dependency) and enable huaweicheck
-RUN bash -c 'cd /home/pi/uhubctl; make; make install'
+RUN sh -c 'cd /home/pi/uhubctl; make; make install'
+
 # RUN systemctl enable huaweicheck.timer
 RUN systemctl enable brovi_startup.service
 

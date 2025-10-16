@@ -7,7 +7,12 @@ User=pi
 Group=pi
 Environment="TERM=xterm-256color"
 WorkingDirectory=/home/pi/tsconfig
-ExecStart=uvicorn app.main:app
+ExecStart=python3 -m uvicorn app.main:app
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
