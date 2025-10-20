@@ -1,0 +1,5 @@
+# Static location for the device (e.g., Statue of Liberty)
+40.6893129   # Latitude (North is positive)
+-74.0445531  # Longitude (East is positive, West is negative)
+96           # Altitude in meters
+1.83         # Accuracy radius in meters

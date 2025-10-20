@@ -73,6 +73,7 @@ RUN apt-get remove -y systemd-timesyncd
 RUN apt-get install --no-install-recommends -y \
     gpsd \
     gpsd-clients \
+    geoclue-2.0 \
     chrony
 
 RUN apt-get clean
@@ -308,6 +309,9 @@ RUN tee -a /boot/firmware/config.txt <<<dtoverlay=uart0-pi5
 
 # Enable gpsd
 RUN systemctl enable gpsd
+
+# Link static location file
+RUN ln -s /boot/firmware/geolocation /etc/geolocation
 
 # Enable i2s
 RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
