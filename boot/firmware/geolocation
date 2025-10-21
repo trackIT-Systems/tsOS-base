@@ -1,5 +1,5 @@
-# Static location for the device (e.g., Statue of Liberty)
-40.6893129   # Latitude (North is positive)
--74.0445531  # Longitude (East is positive, West is negative)
-96           # Altitude in meters
-1.83         # Accuracy radius in meters
+# Static location for the device (e.g., Brandenburger Tor)
+52.51627     # Latitude (North is positive)
+13.3777      # Longitude (East is positive, West is negative)
+34           # Altitude in meters
+31.0         # Accuracy radius in meters
