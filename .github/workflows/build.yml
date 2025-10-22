@@ -7,7 +7,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Create release
         uses: softprops/action-gh-release@v1
@@ -17,7 +17,7 @@ jobs:
           generate_release_notes: True
           
   build-arm64:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm
     needs: release
     steps:
       - name: Checkout repository
