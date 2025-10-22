@@ -1,7 +1,3 @@
-# define coordinates to calculate latitude specific times (sunrise, ...)
-lat: 50.85318
-lon: 8.78735
-
 # set false, to enable schedule
 force_on: true
 
