@@ -319,3 +319,4 @@ RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
 # Cleanup image
 RUN rm -rf /var/lib/apt/lists/
 RUN apt-get clean
+ZERO
