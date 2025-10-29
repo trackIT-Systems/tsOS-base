@@ -26,6 +26,7 @@ EOF
 ### install software
 
 ENV PIP_ROOT_USER_ACTION ignore
+ENV PIP_BREAK_SYSTEM_PACKAGES 1
 
 # Update OS and sources
 RUN apt-get update
@@ -40,13 +41,12 @@ RUN apt-get install -y \
     libusb-1.0-0-dev \
     zsh
 
-RUN python3 -m pip config set global.break-system-packages true
-
 # Install networking tools
 RUN apt-get install -y \
     tcpdump \
     samba \
-    wireguard-tools
+    wireguard-tools \
+    iwd 
 
 # Install dkms
 RUN apt-get install -y dkms bc
@@ -154,6 +154,9 @@ RUN chown root:root /root/.ssh/authorized_keys
 RUN chmod 755       /root
 RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
+
+# Fix permissions for network manager system connections
+RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 
 # Enable copy-authorized-keys
 RUN systemctl enable copy-authorized-keys.service
