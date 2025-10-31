@@ -1,0 +1,16 @@
+[connection]
+id=melita
+type=gsm
+uuid=3c653c04-b67e-4226-aa03-47df531e0768
+
+[gsm]
+apn=iot.melita.io
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+addr-gen-mode=default
+
+[proxy]
