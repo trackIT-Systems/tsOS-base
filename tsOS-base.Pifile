@@ -196,6 +196,9 @@ RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0
 # enable hostname-config script and set default hostname
 RUN systemctl enable hostname-config.service
 
+# enable hostname-config script and set default hostname
+RUN systemctl enable activate-hotspot.service
+
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
 RUN systemctl enable chrony-waitsync.service
 

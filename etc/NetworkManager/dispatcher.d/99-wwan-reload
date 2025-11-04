@@ -1,8 +1,0 @@
-#!/bin/bash
-
-if [ "$NM_DISPATCHER_ACTION" = "connectivity-change" ]; then
-    if [ "$CONNECTIVITY_STATE" = "LIMITED" ]; then
-        echo "Connectivity $CONNECTIVITY_STATE, bringing wwan up..." 1>&2
-        nmcli connection up teltonika 1>&2
-    fi
-fi

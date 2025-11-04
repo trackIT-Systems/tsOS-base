@@ -1,0 +1,13 @@
+[Unit]
+Description=Activate WiFi hotspot on wlan0
+After=network-online.target NetworkManager.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/activate-hotspot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
