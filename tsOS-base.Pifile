@@ -170,6 +170,9 @@ RUN rm /etc/ssh/sshd_config.d/rename_user.conf
 # Change default shell for pi user
 RUN chsh -s /bin/zsh pi
 
+# Change default editor to vim
+RUN update-alternatives --set editor /usr/bin/vim.basic
+
 # Allow basic connectivity (0 == success status code - enable)
 RUN raspi-config nonint do_ssh 0
 
