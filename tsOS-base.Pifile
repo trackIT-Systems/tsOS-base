@@ -201,9 +201,10 @@ RUN systemctl enable hostname-config.service
 
 # enable hostname-config script and set default hostname
 RUN systemctl enable activate-hotspot.service
+RUN systemctl disable wpa_supplicant
 
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
-RUN systemctl enable chrony-waitsync.service
+RUN systemctl enable chrony-wait.service
 
 # Set build-timestamp to last known time
 RUN touch /var/lib/systemd/timesync/clock
