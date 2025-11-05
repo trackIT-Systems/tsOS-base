@@ -204,7 +204,7 @@ RUN systemctl enable activate-hotspot.service
 RUN systemctl disable wpa_supplicant
 
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
-RUN systemctl enable chrony-wait.service
+RUN systemctl enable chrony-wait.service chrony-wait-stop.path
 
 # Set build-timestamp to last known time
 RUN touch /var/lib/systemd/timesync/clock

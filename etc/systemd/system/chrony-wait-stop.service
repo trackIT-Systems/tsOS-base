@@ -1,0 +1,6 @@
+[Unit]
+Description=Service to stop chrony-wait when timesync is achieved
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl stop chrony-wait.service

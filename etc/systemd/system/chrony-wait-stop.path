@@ -1,0 +1,8 @@
+[Unit]
+Description=Monitor for timesync synchronization file
+
+[Path]
+PathExists=/run/systemd/timesync/synchronized
+
+[Install]
+WantedBy=multi-user.target
