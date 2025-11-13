@@ -42,7 +42,7 @@ EOF
 
 function set_hotspot_ssid() {
     echo " Setting hotspot SSID via sed: $1." 1>&2
-    sed -i '/access-points:/{n; s/^\([[:space:]]*\)[^:[:space:]]*\(:\)/\1'"$1"'\2/;}' /etc/netplan/20-hotspot.yaml
+    sed -i '/access-points:/{n; s/^\([[:space:]]*\)[^:[:space:]]*\(:\)/\1'"$1"'\2/;}' /etc/netplan/90-NM-c0ffee00-a000-4000-8000-000000000001.yaml
 }
 
 function set_timezone() {
@@ -57,7 +57,7 @@ echo "Scanning kernel commandline for configuration parameters" 1>&2
 CMDLINE=($(cat /proc/cmdline))
 for arg in "${CMDLINE[@]}"; do
     case "${arg}" in
-    systemd.hostname=tsos-default-name)
+    systemd.hostname=tsOS-default-name)
         echo "... ignoring '${arg}' (default)" 1>&2
         ;;
     systemd.hostname=*)
