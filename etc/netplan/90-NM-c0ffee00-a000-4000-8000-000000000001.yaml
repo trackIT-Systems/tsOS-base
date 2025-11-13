@@ -1,0 +1,19 @@
+network:
+  version: 2
+  wifis:
+    hotspot:
+      renderer: NetworkManager
+      match:
+        name: "wlan0"
+      access-points:
+        "tsOS-base-681fdd16":
+          band: "5GHz"
+          auth:
+            key-management: "psk"
+            password: "BirdsAndBats"
+          mode: "ap"
+          networkmanager:
+            uuid: "c0ffee00-a000-4000-8000-000000000001"
+            name: "hotspot"
+            passthrough:
+              ipv4.address1: "169.254.0.1/24"

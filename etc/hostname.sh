@@ -42,7 +42,7 @@ EOF
 
 function set_hotspot_ssid() {
     echo " Setting hotspot SSID via sed: $1." 1>&2
-    sed -i "s/^ssid=.*/ssid=$1/" /etc/NetworkManager/system-connections/hotspot.nmconnection
+    sed -i '/access-points:/{n; s/^\([[:space:]]*\)[^:[:space:]]*\(:\)/\1'"$1"'\2/;}' /etc/netplan/20-hotspot.yaml
 }
 
 function set_timezone() {

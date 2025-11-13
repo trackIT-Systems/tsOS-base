@@ -1,0 +1,12 @@
+network:
+  version: 2
+  ethernets:
+    huawei:
+      renderer: NetworkManager
+      match:
+        name: "hua0"
+      dhcp4: true
+      dhcp6: true
+      networkmanager:
+        uuid: "4aaa0e10-3000-4000-8000-000000000001"
+        name: "huawei"

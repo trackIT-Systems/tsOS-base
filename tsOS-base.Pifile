@@ -156,7 +156,7 @@ RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
 
 # Fix permissions for network manager system connections
-RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
+RUN sh -c 'chmod 600 /etc/netplan/*'
 
 # Enable copy-authorized-keys
 RUN systemctl enable copy-authorized-keys.service
@@ -166,6 +166,9 @@ RUN systemctl enable copy-authorized-keys.path
 RUN sh -c 'echo -n "pi:" > /boot/firmware/userconf.txt'
 RUN sh -c 'echo "natur" | openssl passwd -6 -stdin >> /boot/firmware/userconf.txt'
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
+
+# Set elevated permissions
+RUN sudo usermod -aG netdev pi
 
 # Change default shell for pi user
 RUN chsh -s /bin/zsh pi
