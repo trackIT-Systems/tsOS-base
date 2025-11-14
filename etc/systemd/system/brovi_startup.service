@@ -1,10 +1,13 @@
 [Unit]
-Description=Initialize Brovi E3372-325 modem during bootup
+Description=Brovi E3372-325 USB Power Cycle Initialization
 DefaultDependencies=no
+After=systemd-udev-settle.service 
 Before=local-fs.target
 
 [Service]
+Type=oneshot
 ExecStart=/usr/local/bin/brovi_startup
+RemainAfterExit=yes
 
 [Install]
 WantedBy=sysinit.target
