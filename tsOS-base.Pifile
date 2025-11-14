@@ -303,7 +303,9 @@ RUN systemctl enable mqttutil.service
 RUN systemctl enable dmesgdump
 
 # Install uhubctl (dependency) and enable huaweicheck
-RUN sh -c 'cd /home/pi/uhubctl; make; make install'
+RUN sh -c 'cd /home/pi/uhubctl; make'
+RUN cp /home/pi/uhubctl/uhubctl /usr/local/sbin
+RUN cp /home/pi/uhubctl/udev/rules.d/52-usb.rules /etc/udev/rules.d
 
 # RUN systemctl enable huaweicheck.timer
 RUN systemctl enable brovi_startup.service
