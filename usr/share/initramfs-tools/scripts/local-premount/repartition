@@ -1,0 +1,306 @@
+#!/bin/sh
+
+set -e
+
+case "${1}" in
+  prereqs)
+    echo ""
+    exit 0
+    ;;
+esac
+
+# Check if repartition is requested
+if ! grep -q repartition /proc/cmdline; then
+  exit 0
+fi
+
+. /scripts/functions
+. /scripts/local
+
+# Local logging function for informational messages
+log_info_msg()
+{
+	_log_msg "Info: %s\\n" "$*"
+}
+
+# Configurable partition sizes (in GiB)
+ROOTFS_SIZE_GIB=6
+
+get_device_info()
+{
+	log_begin_msg "Getting device information"
+	
+	set +e
+	local_device_setup "$ROOT" "root file system"
+	set -e
+	
+	ROOT_PART_NAME="$(lsblk -no kname "$DEV")"
+	ROOT_DEV_NAME="$(lsblk -no pkname "$DEV")"
+	ROOT_DEV="/dev/$ROOT_DEV_NAME"
+	ROOT_PART_NUM=$(cat "/sys/block/$ROOT_DEV_NAME/$ROOT_PART_NAME/partition")
+	
+	log_info_msg "Root device: $ROOT_DEV"
+	log_info_msg "Root partition: $ROOT_PART_NAME (partition $ROOT_PART_NUM)"
+	
+	log_end_msg
+}
+
+check_mbr_and_read_layout()
+{
+	log_begin_msg "Checking partition table type"
+	
+	# Use parted to read partition table in machine-readable format (in sectors)
+	PARTED_OUTPUT=$(parted -m "$ROOT_DEV" u s print 2>&1)
+	if [ $? -ne 0 ]; then
+		log_warning_msg "Failed to read partition table"
+		return 1
+	fi
+	
+	# Extract partition table type from second line (format: device:size:transport:logical_sector:physical_sector:partition_table_type:model:)
+	# First line is "BYT;", second line has device info
+	PT_TYPE=$(echo "$PARTED_OUTPUT" | sed -n '2p' | cut -d: -f6)
+	log_info_msg "Partition table type: $PT_TYPE"
+	
+	# Check if already GPT
+	if [ "$PT_TYPE" = "gpt" ]; then
+		log_warning_msg "Already using GPT, skipping repartition"
+		return 1
+	fi
+	
+	# Check if MBR/msdos
+	if [ "$PT_TYPE" != "msdos" ]; then
+		log_warning_msg "Unknown partition table type: $PT_TYPE"
+		return 1
+	fi
+	
+	# Count partitions (skip header line)
+	PART_COUNT=$(echo "$PARTED_OUTPUT" | tail -n +3 | grep -c "^[0-9]")
+	log_info_msg "Found $PART_COUNT partitions"
+	
+	if [ "$PART_COUNT" -ne 2 ]; then
+		log_warning_msg "Expected 2 partitions, found $PART_COUNT. Skipping."
+		return 1
+	fi
+	
+	# Extract partition info (format: number:start:end:size:filesystem:name:flags)
+	BOOTFS_LINE=$(echo "$PARTED_OUTPUT" | tail -n +3 | sed -n '1p')
+	ROOTFS_LINE=$(echo "$PARTED_OUTPUT" | tail -n +3 | sed -n '2p')
+	
+	# Parse bootfs (partition 1)
+	BOOTFS_START=$(echo "$BOOTFS_LINE" | cut -d: -f2 | sed 's/s$//')
+	BOOTFS_END=$(echo "$BOOTFS_LINE" | cut -d: -f3 | sed 's/s$//')
+	
+	# Parse rootfs (partition 2)
+	ROOTFS_START=$(echo "$ROOTFS_LINE" | cut -d: -f2 | sed 's/s$//')
+	ROOTFS_END=$(echo "$ROOTFS_LINE" | cut -d: -f3 | sed 's/s$//')
+	
+	log_info_msg "Bootfs: sectors $BOOTFS_START - $BOOTFS_END"
+	log_info_msg "Rootfs: sectors $ROOTFS_START - $ROOTFS_END"
+	
+	log_end_msg
+	return 0
+}
+
+calculate_boundaries()
+{
+	log_begin_msg "Calculating new partition boundaries"
+	
+	# Get device size
+	ROOT_DEV_SIZE=$(cat "/sys/block/$ROOT_DEV_NAME/size")
+	# Reserve 33 sectors at the end for GPT backup header and partition table
+	DEVICE_END=$((ROOT_DEV_SIZE - 34))
+	
+	log_info_msg "Device size: $ROOT_DEV_SIZE sectors"
+	
+	# Calculate size constants in sectors
+	ROOTFS_SIZE_SECTORS=$((ROOTFS_SIZE_GIB * 1024 * 1024 * 1024 / 512))
+	LIMIT_16GIB_SECTORS=$((16 * 1024 * 1024 * 1024 / 512))
+	
+	# Calculate partition boundaries
+	# Partition 1 (bootfs): preserve original from MBR
+	NEW_BOOTFS_START=$BOOTFS_START
+	NEW_BOOTFS_END=$BOOTFS_END
+	
+	# Partition 2 (rootfs): keep original start, resize to ROOTFS_SIZE_GIB
+	NEW_ROOTFS_START=$ROOTFS_START
+	NEW_ROOTFS_END=$((NEW_ROOTFS_START + ROOTFS_SIZE_SECTORS - 1))
+	
+	# Partition 3 (clonefs): same size as rootfs
+	NEW_CLONEFS_START=$((NEW_ROOTFS_END + 1))
+	NEW_CLONEFS_END=$((NEW_CLONEFS_START + ROOTFS_SIZE_SECTORS - 1))
+	
+	# Partition 4 (upperfs): from clonefs end to 16GiB limit or device end
+	NEW_UPPERFS_START=$((NEW_CLONEFS_END + 1))
+	if [ "$LIMIT_16GIB_SECTORS" -lt "$DEVICE_END" ]; then
+		NEW_UPPERFS_END=$((LIMIT_16GIB_SECTORS - 1))
+		NEED_DATAFS=1
+	else
+		NEW_UPPERFS_END=$DEVICE_END
+		NEED_DATAFS=0
+	fi
+	
+	# Partition 5 (datafs): only if device > 16GiB
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		NEW_DATAFS_START=$LIMIT_16GIB_SECTORS
+		NEW_DATAFS_END=$DEVICE_END
+		log_info_msg "Datafs will be created (device > 16GiB)"
+	else
+		log_info_msg "Datafs not needed (device <= 16GiB)"
+	fi
+	
+	log_info_msg "New layout:"
+	log_info_msg "  Partition 1 (bootfs):  $NEW_BOOTFS_START - $NEW_BOOTFS_END"
+	log_info_msg "  Partition 2 (rootfs):  $NEW_ROOTFS_START - $NEW_ROOTFS_END"
+	log_info_msg "  Partition 3 (clonefs): $NEW_CLONEFS_START - $NEW_CLONEFS_END"
+	log_info_msg "  Partition 4 (upperfs): $NEW_UPPERFS_START - $NEW_UPPERFS_END"
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		log_info_msg "  Partition 5 (datafs):  $NEW_DATAFS_START - $NEW_DATAFS_END"
+	fi
+	
+	log_end_msg
+}
+
+create_gpt_layout()
+{
+	log_begin_msg "Converting MBR to GPT and creating partitions"
+	
+	# Zap existing partition table
+	# Note: sgdisk --zap-all may show warnings about invalid GPT when converting from MBR,
+	# but it will still successfully destroy the partition table
+	log_info_msg "Removing MBR partition table"
+	sgdisk --zap-all "$ROOT_DEV" 2>&1 || true
+	
+	# Give the system a moment to process the change
+	sleep 1
+	
+	# Create partition 1 (bootfs) - preserve exact boundaries, type EF00 (EFI)
+	log_info_msg "Creating partition 1 (bootfs): $NEW_BOOTFS_START:$NEW_BOOTFS_END"
+	if ! sgdisk --new=1:$NEW_BOOTFS_START:$NEW_BOOTFS_END --typecode=1:ef00 --change-name=1:bootfs "$ROOT_DEV"; then
+		log_failure_msg "Failed to create bootfs partition"
+		return 1
+	fi
+	
+	# Create partition 2 (rootfs) - type 8300 (Linux filesystem)
+	log_info_msg "Creating partition 2 (rootfs): $NEW_ROOTFS_START:$NEW_ROOTFS_END"
+	if ! sgdisk --new=2:$NEW_ROOTFS_START:$NEW_ROOTFS_END --typecode=2:8300 --change-name=2:rootfs "$ROOT_DEV"; then
+		log_failure_msg "Failed to create rootfs partition"
+		return 1
+	fi
+	
+	# Create partition 3 (clonefs) - type 8300 (Linux filesystem)
+	log_info_msg "Creating partition 3 (clonefs): $NEW_CLONEFS_START:$NEW_CLONEFS_END"
+	if ! sgdisk --new=3:$NEW_CLONEFS_START:$NEW_CLONEFS_END --typecode=3:8300 --change-name=3:clonefs "$ROOT_DEV"; then
+		log_failure_msg "Failed to create clonefs partition"
+		return 1
+	fi
+	
+	# Create partition 4 (upperfs) - type 8300 (Linux filesystem)
+	log_info_msg "Creating partition 4 (upperfs): $NEW_UPPERFS_START:$NEW_UPPERFS_END"
+	if ! sgdisk --new=4:$NEW_UPPERFS_START:$NEW_UPPERFS_END --typecode=4:8300 --change-name=4:upperfs "$ROOT_DEV"; then
+		log_failure_msg "Failed to create upperfs partition"
+		return 1
+	fi
+	
+	# Create partition 5 (datafs) if needed - type 0700 (Microsoft basic data, for ExFAT)
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		log_info_msg "Creating partition 5 (datafs): $NEW_DATAFS_START:$NEW_DATAFS_END"
+		# Use 0 for end sector to mean "use all remaining space"
+		if ! sgdisk --new=5:$NEW_DATAFS_START:0 --typecode=5:0700 --change-name=5:datafs "$ROOT_DEV"; then
+			log_failure_msg "Failed to create datafs partition"
+			return 1
+		fi
+	fi
+	
+	# Refresh partition table
+	log_info_msg "Refreshing partition table"
+	wait_for_udev 10
+	
+	if command -v blockdev >/dev/null 2>&1; then
+		blockdev --rereadpt "$ROOT_DEV" 2>/dev/null || true
+	fi
+	
+	if command -v partprobe >/dev/null 2>&1; then
+		partprobe "$ROOT_DEV" 2>/dev/null || true
+	fi
+	
+	wait_for_udev 10
+	
+	# Verify partitions were created
+	log_info_msg "Verifying partition creation"
+	PART_COUNT=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | wc -l)
+	log_info_msg "Detected $PART_COUNT partitions after GPT creation"
+	
+	log_end_msg
+}
+
+resize_rootfs()
+{
+	log_begin_msg "Resizing rootfs filesystem"
+	
+	# Resize ext4 filesystem to match new partition size
+	log_info_msg "Running resize2fs on $DEV"
+	if ! resize2fs -f -p "$DEV"; then
+		log_failure_msg "Failed to resize rootfs filesystem"
+		return 1
+	fi
+	
+	log_info_msg "Rootfs filesystem resized successfully"
+	log_end_msg
+}
+
+initialize_partitions()
+{
+	log_begin_msg "Initializing new partitions"
+	
+	# Get partition device names
+	CLONEFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '3p')
+	CLONEFS_DEV="/dev/$CLONEFS_DEV_NAME"
+	
+	UPPERFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '4p')
+	UPPERFS_DEV="/dev/$UPPERFS_DEV_NAME"
+	
+	# Format clonefs (ext4) with filesystem label
+	log_info_msg "Formatting clonefs partition: $CLONEFS_DEV"
+	if ! mkfs.ext4 -F -L clonefs "$CLONEFS_DEV"; then
+		log_failure_msg "Failed to format clonefs partition"
+		return 1
+	fi
+	
+	# Format upperfs (ext4) with filesystem label
+	log_info_msg "Formatting upperfs partition: $UPPERFS_DEV"
+	if ! mkfs.ext4 -F -L upperfs "$UPPERFS_DEV"; then
+		log_failure_msg "Failed to format upperfs partition"
+		return 1
+	fi
+	
+	# Format datafs (ExFAT) with filesystem label if needed
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		DATAFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '5p')
+		DATAFS_DEV="/dev/$DATAFS_DEV_NAME"
+		
+		log_info_msg "Formatting datafs partition: $DATAFS_DEV"
+		if ! mkfs.exfat -n datafs "$DATAFS_DEV"; then
+			log_failure_msg "Failed to format datafs partition"
+			return 1
+		fi
+	fi
+	
+	log_end_msg
+}
+
+# Main execution flow
+get_device_info
+
+if ! check_mbr_and_read_layout; then
+	exit 0
+fi
+
+calculate_boundaries
+create_gpt_layout
+resize_rootfs
+initialize_partitions
+
+log_success_msg "Repartition completed successfully"
+
+exit 0
+

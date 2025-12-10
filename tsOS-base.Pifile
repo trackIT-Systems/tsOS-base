@@ -48,6 +48,9 @@ RUN apt-get install -y \
     wireguard-tools \
     iwd 
 
+# Install overlayroot
+RUN apt-get install -y overlayroot
+
 # Install dkms
 RUN apt-get install -y dkms bc
 
@@ -81,6 +84,16 @@ RUN apt-get clean
 #################################################
 ### custom files
 
+# Backup fstab
+RUN cp /etc/fstab /etc/fstab.default 
+
+# Create mount points
+RUN mkdir -p /media/datafs
+RUN mkdir -p /media/clonefs
+RUN mkdir -p /media/root-rw
+RUN mkdir -p /media/root-ro
+RUN mkdir -p /data
+
 # Install custom folders 
 INSTALL boot /boot
 INSTALL etc /etc
@@ -108,25 +121,6 @@ INSTALL .git/modules/home/pi/wittypi4 /home/pi/wittypi4/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
-
-# Mount boot writable for users
-RUN sed -i 's/\(boot.*vfat.*defaults\)/\1,user,umask=000/g' /etc/fstab
-
-# Mount data partition Mount
-RUN bash <<EOF
-DEVUUID=\`grep /boot/firmware /etc/fstab\`
-echo "\${DEVUUID:0:17}-03  /mnt/sdhc       exfat   defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2" | tee -a /etc/fstab
-EOF
-
-RUN tee -a /etc/fstab <<EOF
-# mounts for user-access
-/dev/sda1             /mnt/usb        auto    defaults,user,umask=000,nofail,x-mount.mkdir,x-systemd.device-timeout=5  0       2
-/boot/firmware        /mnt/boot       none    defaults,bind,x-mount.mkdir       0       0
-
-# oportunistic /data bind-mounts
-#/mnt/usb              /data           none    defaults,bind,nofail,x-mount.mkdir       0       0
-/mnt/sdhc             /data           none    defaults,bind,x-mount.mkdir       0       0
-EOF
 
 #################################################
 ### basic configuration

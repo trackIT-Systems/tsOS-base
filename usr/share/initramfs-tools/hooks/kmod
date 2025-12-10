@@ -1,0 +1,36 @@
+#!/bin/sh -e
+# Copy the compatibility symlinks until initramfs-tools will be converted
+# to use the kmod program.
+
+if [ "$1" = "prereqs" ]; then exit 0; fi
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/bin/kmod
+cp -aZ /usr/sbin/modprobe /usr/sbin/rmmod "$DESTDIR/usr/sbin/"
+
+mkdir -p "$DESTDIR/usr/lib/modprobe.d/"
+if [ "$(echo /usr/lib/modprobe.d/*)" != "/usr/lib/modprobe.d/*" ]; then
+  cp -aZ /usr/lib/modprobe.d/* "$DESTDIR/usr/lib/modprobe.d/"
+fi
+
+kconfig_yes() {
+  [ -e "/boot/config-$version" ] || return 1
+  egrep -q "^$1=y$" "/boot/config-$version" || return 1
+  return 0
+}
+
+# If CONFIG_MODULE_DECOMPRESS=n and compressed modules have been copied to
+# the initramfs then also copy the library that kmod will use with dlopen(3)
+# to uncompress them.
+if ! kconfig_yes CONFIG_MODULE_DECOMPRESS; then
+  # Patch for race-condition in kmod build process in chroot environment
+  # Author: hoechst@trackit.systems
+  echo "patch: copying liblzma.so.5 and libzstd.so.1 without checking for compressed modules"
+  #if [ "$(find $DESTDIR/lib/modules/ -name "*.xz")" ]; then
+	  copy_exec /usr/lib/*-linux-gnu/liblzma.so.5
+  #fi
+  #if [ "$(find $DESTDIR/lib/modules/ -name "*.zst")" ]; then
+	  copy_exec /usr/lib/*-linux-gnu/libzstd.so.1
+  #fi
+fi
