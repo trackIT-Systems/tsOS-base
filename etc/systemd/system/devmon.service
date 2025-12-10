@@ -1,0 +1,13 @@
+[Unit]
+Description=Automount USB Drives using devmon (Bind mount to /data)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/devmon \
+    --exec-on-drive "systemctl stop data.mount; mount --bind %%d /data" \
+    --exec-on-remove "/usr/bin/umount -l %%f; systemctl start data.mount" \
+    --always-exec
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -3,7 +3,7 @@
 
 FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2025-10-02/2025-10-01-raspios-trixie-${ARCH}-lite.img.xz
 TO "tsOS-base-${ARCH}.img"
-PUMP 900M
+PUMP 1000M
 
 # Set os-release info
 NAME="tsOS-base"
@@ -78,6 +78,9 @@ RUN apt-get install --no-install-recommends -y \
     gpsd-clients \
     geoclue-2.0 \
     chrony
+
+# Install udevil / devmon automount packages
+RUN apt-get install -y udevil
 
 RUN apt-get clean
 
@@ -282,6 +285,9 @@ RUN apt-get install -y portaudio19-dev
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
 RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
 RUN systemctl enable tsconfig tsconfig-ble
+
+# enable devmon
+RUN systemctl enable devmon.service
 
 # enable caddy
 RUN systemctl enable caddy
