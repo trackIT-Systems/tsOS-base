@@ -182,15 +182,17 @@ RUN systemctl mask rpi-resize-swap-file.service
 RUN rm /usr/lib/systemd/journald.conf.d/40-rpi-volatile-storage.conf
 
 # disable unnecessary services
-RUN systemctl disable e2scrub_reap.service 
-RUN systemctl disable rpi-eeprom-update.service
-RUN systemctl disable apt-daily-upgrade.timer
-RUN systemctl disable apt-daily.timer
-RUN systemctl disable dpkg-db-backup.service
+RUN systemctl mask rpi-eeprom-update.service
+RUN systemctl mask apt-daily-upgrade.timer
+RUN systemctl mask apt-daily.timer
+RUN systemctl mask apt-listchanges.timer
+RUN systemctl mask dpkg-db-backup.timer dpkg-db-backup.service
 RUN touch /etc/cloud/cloud-init.disabled
 
 # rebuild initramfs
 RUN update-initramfs -k all -u -v
+RUN systemctl mask rpi-resize.service
+RUN systemctl mask systemd-remount-fs.service
 
 # install gitui
 RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
@@ -200,7 +202,7 @@ RUN systemctl enable hostname-config.service
 
 # enable hostname-config script and set default hostname
 RUN systemctl enable activate-hotspot.service
-RUN systemctl disable wpa_supplicant
+RUN systemctl mask wpa_supplicant.service
 
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
 RUN systemctl enable chrony-wait.service chrony-wait-stop.path
@@ -211,12 +213,12 @@ RUN touch /var/lib/systemd/timesync/clock
 # Reboot on kernel panic
 RUN tee -a /etc/sysctl.conf <<<kernel.panic=10
 
-# Install dependenies & enable WittyPi
-RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
-RUN sh -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
+# Enable UART0 on GPIO header in RPi5 
+RUN tee -a /boot/firmware/config.txt <<EOF
+[pi5]
+dtoverlay=uart0-pi5
 
-### compile overlays and enable hardware
-RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
+EOF
 
 # enable otg mode on pi4
 RUN tee -a /boot/firmware/config.txt <<EOF
@@ -224,6 +226,13 @@ RUN tee -a /boot/firmware/config.txt <<EOF
 otg_mode=1
 
 EOF
+
+# Install dependenies & enable WittyPi
+RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
+RUN sh -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
+
+### compile overlays and enable hardware
+RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
 
 ### enable wittypi on pi3 and pi4
 RUN tee -a /boot/firmware/config.txt <<EOF
@@ -261,6 +270,9 @@ RUN chattr +i /etc/resolv.conf
 
 # install and enable samba share
 RUN systemctl enable smbd
+
+# disable networkd-wait-online
+RUN systemctl mask systemd-networkd-wait-online.service
 
 #################################################
 ### services configuration
@@ -308,10 +320,6 @@ RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
 
 # Configure hardware connectivity
 RUN raspi-config nonint do_serial_hw 0
-RUN raspi-config nonint do_serial_cons 0
-
-# Enable UART0 on GPIO header in RPi5 
-RUN tee -a /boot/firmware/config.txt <<<dtoverlay=uart0-pi5
 
 # Enable gpsd
 RUN systemctl enable gpsd
