@@ -59,9 +59,9 @@ RUN apt-get install -y caddy
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.44.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.49.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.44.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.49.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
@@ -184,7 +184,9 @@ RUN rm /usr/lib/systemd/journald.conf.d/40-rpi-volatile-storage.conf
 # disable unnecessary services
 RUN systemctl disable e2scrub_reap.service 
 RUN systemctl disable rpi-eeprom-update.service
+RUN systemctl disable apt-daily-upgrade.timer
 RUN systemctl disable apt-daily.timer
+RUN systemctl disable dpkg-db-backup.service
 RUN touch /etc/cloud/cloud-init.disabled
 
 # rebuild initramfs
@@ -293,9 +295,6 @@ RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
 RUN python3 -m pip install --no-deps psutil
 RUN systemctl enable mqttutil.service
 
-# Enable dmesgdump
-RUN systemctl enable dmesgdump
-
 # Install uhubctl (dependency) and enable huaweicheck
 RUN sh -c 'cd /home/pi/uhubctl; make'
 RUN cp /home/pi/uhubctl/uhubctl /usr/local/sbin
@@ -309,9 +308,7 @@ RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
 
 # Configure hardware connectivity
 RUN raspi-config nonint do_serial_hw 0
-RUN raspi-config nonint do_serial_cons 1
-
-RUN systemctl disable serial-getty@ttyS0.service
+RUN raspi-config nonint do_serial_cons 0
 
 # Enable UART0 on GPIO header in RPi5 
 RUN tee -a /boot/firmware/config.txt <<<dtoverlay=uart0-pi5
@@ -328,4 +325,5 @@ RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
 # Cleanup image
 RUN rm -rf /var/lib/apt/lists/
 RUN apt-get clean
+RUN rm -rf /var/cache/
 ZERO
