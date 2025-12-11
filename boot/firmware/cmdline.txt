@@ -1,1 +1,1 @@
-root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait repartition systemd.hostname=tsOS-default-name timezone=Europe/Berlin
+repartition root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait audit=0 systemd.hostname=tsOS-default-name timezone=Europe/Berlin

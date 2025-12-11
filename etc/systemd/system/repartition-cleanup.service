@@ -1,0 +1,13 @@
+[Unit]
+Description=Check repartition completion and cleanup boot parameter
+Documentation=man:systemd.service(5)
+After=local-fs.target
+ConditionPathExists=/boot/firmware/cmdline.txt
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/check-repartition-complete.sh
+ExecStartPost=/bin/systemctl disable repartition-cleanup.service
+
+[Install]
+WantedBy=multi-user.target

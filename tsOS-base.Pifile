@@ -327,6 +327,9 @@ RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
 # Configure hardware connectivity
 RUN raspi-config nonint do_serial_hw 0
 
+# Enable repartition-cleanup
+RUN systemctl enable repartition-cleanup.service
+
 # Enable gpsd
 RUN systemctl enable gpsd
 
