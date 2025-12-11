@@ -7,6 +7,7 @@ Technical documentation for developers working on tsOS-base.
 - **[Architecture](architecture.md)** - System architecture and design
 - **[Build System](build.md)** - Build process and Pifile structure
 - **[Project Structure](structure.md)** - Repository organization
+- **[Updatability](updatability.md)** - Dual-boot update mechanism and tryboot
 
 ## Quick Reference
 
