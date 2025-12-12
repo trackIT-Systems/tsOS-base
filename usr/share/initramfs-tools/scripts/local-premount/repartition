@@ -23,6 +23,96 @@ log_info_msg()
 	_log_msg "Info: %s\\n" "$*"
 }
 
+# Watchdog variables
+WATCHDOG_DEV="/dev/watchdog0"
+WATCHDOG_SYSFS="/sys/class/watchdog/watchdog0"
+WATCHDOG_INTERVAL=10
+WATCHDOG_PID=""
+
+# Detect watchdog device and read its timeout
+detect_watchdog()
+{
+	# Check for watchdog device
+	if [ ! -c "$WATCHDOG_DEV" ]; then
+		log_info_msg "No watchdog device found, continuing without watchdog petting"
+		return 1
+	fi
+	
+	
+	# Check if watchdog is active
+	if [ -r "$WATCHDOG_SYSFS/state" ]; then
+		STATE=$(cat "$WATCHDOG_SYSFS/state" 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')
+		case "$STATE" in
+			inactive|0|disabled)
+				log_info_msg "Watchdog device found but not active, continuing without watchdog petting"
+				return 1
+				;;
+		esac
+	fi
+	
+	# Read timeout from sysfs
+	if [ -r "$WATCHDOG_SYSFS/timeout" ]; then
+		WATCHDOG_TIMEOUT=$(cat "$WATCHDOG_SYSFS/timeout" 2>/dev/null || echo "15")
+		# Calculate safe petting interval: max(5, min(timeout/2, 10))
+		WATCHDOG_INTERVAL=$((WATCHDOG_TIMEOUT / 2))
+		if [ "$WATCHDOG_INTERVAL" -lt 5 ]; then
+			WATCHDOG_INTERVAL=5
+		elif [ "$WATCHDOG_INTERVAL" -gt 10 ]; then
+			WATCHDOG_INTERVAL=10
+		fi
+		log_info_msg "Watchdog detected: $WATCHDOG_DEV (timeout: ${WATCHDOG_TIMEOUT}s, petting interval: ${WATCHDOG_INTERVAL}s)"
+	else
+		log_info_msg "Watchdog device found but cannot read timeout, using default interval"
+		WATCHDOG_INTERVAL=10
+	fi
+	return 0
+}
+
+# Pet the watchdog device
+pet_watchdog()
+{
+	if [ -c "$WATCHDOG_DEV" ]; then
+		echo 1 > "$WATCHDOG_DEV" 2>/dev/null || true
+	fi
+}
+
+# Start background watchdog petting process
+start_watchdog_petter()
+{
+	if [ ! -c "$WATCHDOG_DEV" ]; then
+		return 0
+	fi
+	
+	log_info_msg "Starting watchdog petter (interval: ${WATCHDOG_INTERVAL}s)"
+	(
+		while true; do
+			pet_watchdog
+			sleep "$WATCHDOG_INTERVAL"
+		done
+	) &
+	WATCHDOG_PID=$!
+}
+
+# Stop background watchdog petting process
+stop_watchdog_petter()
+{
+	if [ -n "$WATCHDOG_PID" ]; then
+		log_info_msg "Stopping watchdog petter"
+		kill "$WATCHDOG_PID" 2>/dev/null || true
+		wait "$WATCHDOG_PID" 2>/dev/null || true
+		WATCHDOG_PID=""
+	fi
+}
+
+# Trap handler to ensure watchdog petter is stopped on exit
+cleanup_watchdog()
+{
+	stop_watchdog_petter
+}
+
+# Set trap to cleanup watchdog on script exit
+trap cleanup_watchdog EXIT
+
 # Configurable partition sizes (in GiB)
 ROOTFS_SIZE_GIB=6
 
@@ -295,12 +385,19 @@ if ! check_mbr_and_read_layout; then
 	exit 0
 fi
 
+# Detect watchdog and start petter if available
+if detect_watchdog; then
+	start_watchdog_petter
+fi
+
 calculate_boundaries
 create_gpt_layout
 resize_rootfs
 initialize_partitions
 
+# Stop watchdog petter before final success message
+stop_watchdog_petter
+
 log_success_msg "Repartition completed successfully"
 
 exit 0
-
