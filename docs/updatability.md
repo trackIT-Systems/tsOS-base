@@ -24,8 +24,8 @@ Both partitions are identical in size and structure, allowing one to serve as a 
 
 2. **Bootloader Behavior**
    - In tryboot mode, the bootloader loads `tryboot.txt` instead of the standard `config.txt`
-   - `tryboot.txt` can specify a different commandline file using `cmdline=cmdline.try`
-   - `cmdline.try` can point to a different root partition (e.g., `root=/dev/mmcblk0p3` instead of `root=/dev/mmcblk0p2`)
+   - `tryboot.txt` can specify a different commandline file using `cmdline=tryline.txt`
+   - `tryline.txt` can point to a different root partition (e.g., `root=/dev/mmcblk0p3` instead of `root=/dev/mmcblk0p2`)
 
 3. **Boot Failure Detection**
    - If the boot fails, the bootloader detects this (exact detection mechanism depends on bootloader implementation)
@@ -46,7 +46,7 @@ Both partitions are identical in size and structure, allowing one to serve as a 
 
 2. **Configure Tryboot**
    - Create `tryboot.txt` in `/boot/firmware/` (or `/media/boot/`)
-   - Create `cmdline.try` with kernel parameters pointing to partition 3:
+   - Create `tryline.txt` with kernel parameters pointing to partition 3:
      ```
      root=/dev/mmcblk0p3 rootfstype=ext4 ...
      ```
@@ -66,12 +66,12 @@ Both partitions are identical in size and structure, allowing one to serve as a 
 - `config.txt`: Standard Raspberry Pi configuration
 - `cmdline.txt`: Kernel command line with `root=/dev/mmcblk0p2` (or current production root)
 
-### Tryboot Mode (`tryboot.txt` + `cmdline.try`)
+### Tryboot Mode (`tryboot.txt` + `tryline.txt`)
 - `tryboot.txt`: Tryboot-specific configuration, typically includes:
   ```
-  cmdline=cmdline.try
+  cmdline=tryline.txt
   ```
-- `cmdline.try`: Kernel command line with `root=/dev/mmcblk0p3` (or update candidate root)
+- `tryline.txt`: Kernel command line with `root=/dev/mmcblk0p3` (or update candidate root)
 
 ## Safety Features
 

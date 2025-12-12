@@ -8,6 +8,7 @@ Technical documentation for developers working on tsOS-base.
 - **[Build System](build.md)** - Build process and Pifile structure
 - **[Project Structure](structure.md)** - Repository organization
 - **[Updatability](updatability.md)** - Dual-boot update mechanism and tryboot
+- **[Hardware Watchdog](watchdog.md)** - Raspberry Pi hardware watchdog timer configuration
 
 ## Quick Reference
 

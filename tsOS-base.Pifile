@@ -213,8 +213,14 @@ RUN systemctl enable chrony-wait.service chrony-wait-stop.path
 # Set build-timestamp to last known time
 RUN touch /var/lib/systemd/timesync/clock
 
-# Reboot on kernel panic
-RUN tee -a /etc/sysctl.conf <<<kernel.panic=10
+# Configure hardware connectivity
+RUN raspi-config nonint do_serial_hw 0
+
+# assure high-reliabilty boot configuration
+RUN tee -a /boot/firmware/config.txt <<EOF
+kernel_watchdog_timeout=15
+
+EOF
 
 # Enable UART0 on GPIO header in RPi5 
 RUN tee -a /boot/firmware/config.txt <<EOF
@@ -323,9 +329,6 @@ RUN systemctl enable brovi_startup.service
 
 # Blacklist DVB-T driver
 RUN tee -a /etc/modprobe.d/raspi-blacklist.conf <<<'blacklist dvb_usb_rtl28xxu'
-
-# Configure hardware connectivity
-RUN raspi-config nonint do_serial_hw 0
 
 # Enable repartition-cleanup
 RUN systemctl enable repartition-cleanup.service
