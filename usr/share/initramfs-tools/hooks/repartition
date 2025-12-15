@@ -22,7 +22,9 @@ copy_exec /sbin/parted /bin
 copy_exec /sbin/resize2fs /bin
 copy_exec /sbin/mkfs.exfat /bin
 copy_exec /sbin/mkfs.ext4 /bin
+copy_exec /sbin/e2fsck /bin
 copy_exec /sbin/partprobe /bin
-copy_exec /sbin/sgdisk /bin
+copy_exec /sbin/blockdev /bin
+copy_exec /sbin/sfdisk /bin
 
 exit 0

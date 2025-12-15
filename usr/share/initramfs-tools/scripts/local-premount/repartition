@@ -68,14 +68,6 @@ detect_watchdog()
 	return 0
 }
 
-# Pet the watchdog device
-pet_watchdog()
-{
-	if [ -c "$WATCHDOG_DEV" ]; then
-		echo 1 > "$WATCHDOG_DEV" 2>/dev/null || true
-	fi
-}
-
 # Start background watchdog petting process
 start_watchdog_petter()
 {
@@ -85,10 +77,16 @@ start_watchdog_petter()
 	
 	log_info_msg "Starting watchdog petter (interval: ${WATCHDOG_INTERVAL}s)"
 	(
+		# Open watchdog device and keep it open
+		exec 3> "$WATCHDOG_DEV" || exit 1
+		
 		while true; do
-			pet_watchdog
+			echo 1 >&3 2>/dev/null || break
 			sleep "$WATCHDOG_INTERVAL"
 		done
+		
+		# Close file descriptor on exit
+		exec 3>&-
 	) &
 	WATCHDOG_PID=$!
 }
@@ -151,15 +149,9 @@ check_mbr_and_read_layout()
 	PT_TYPE=$(echo "$PARTED_OUTPUT" | sed -n '2p' | cut -d: -f6)
 	log_info_msg "Partition table type: $PT_TYPE"
 	
-	# Check if already GPT
-	if [ "$PT_TYPE" = "gpt" ]; then
-		log_warning_msg "Already using GPT, skipping repartition"
-		return 1
-	fi
-	
 	# Check if MBR/msdos
 	if [ "$PT_TYPE" != "msdos" ]; then
-		log_warning_msg "Unknown partition table type: $PT_TYPE"
+		log_warning_msg "Expected MBR partition table, found: $PT_TYPE. Skipping."
 		return 1
 	fi
 	
@@ -173,16 +165,11 @@ check_mbr_and_read_layout()
 	fi
 	
 	# Extract partition info (format: number:start:end:size:filesystem:name:flags)
-	BOOTFS_LINE=$(echo "$PARTED_OUTPUT" | tail -n +3 | sed -n '1p')
-	ROOTFS_LINE=$(echo "$PARTED_OUTPUT" | tail -n +3 | sed -n '2p')
-	
-	# Parse bootfs (partition 1)
-	BOOTFS_START=$(echo "$BOOTFS_LINE" | cut -d: -f2 | sed 's/s$//')
-	BOOTFS_END=$(echo "$BOOTFS_LINE" | cut -d: -f3 | sed 's/s$//')
-	
-	# Parse rootfs (partition 2)
-	ROOTFS_START=$(echo "$ROOTFS_LINE" | cut -d: -f2 | sed 's/s$//')
-	ROOTFS_END=$(echo "$ROOTFS_LINE" | cut -d: -f3 | sed 's/s$//')
+	PART_LINES=$(echo "$PARTED_OUTPUT" | tail -n +3)
+	BOOTFS_START=$(echo "$PART_LINES" | sed -n '1p' | cut -d: -f2 | sed 's/s$//')
+	BOOTFS_END=$(echo "$PART_LINES" | sed -n '1p' | cut -d: -f3 | sed 's/s$//')
+	ROOTFS_START=$(echo "$PART_LINES" | sed -n '2p' | cut -d: -f2 | sed 's/s$//')
+	ROOTFS_END=$(echo "$PART_LINES" | sed -n '2p' | cut -d: -f3 | sed 's/s$//')
 	
 	log_info_msg "Bootfs: sectors $BOOTFS_START - $BOOTFS_END"
 	log_info_msg "Rootfs: sectors $ROOTFS_START - $ROOTFS_END"
@@ -197,8 +184,8 @@ calculate_boundaries()
 	
 	# Get device size
 	ROOT_DEV_SIZE=$(cat "/sys/block/$ROOT_DEV_NAME/size")
-	# Reserve 33 sectors at the end for GPT backup header and partition table
-	DEVICE_END=$((ROOT_DEV_SIZE - 34))
+	# Reserve space at the end for MBR (EBR overhead is handled automatically by sfdisk)
+	DEVICE_END=$((ROOT_DEV_SIZE - 1))
 	
 	log_info_msg "Device size: $ROOT_DEV_SIZE sectors"
 	
@@ -220,9 +207,17 @@ calculate_boundaries()
 	NEW_CLONEFS_END=$((NEW_CLONEFS_START + ROOTFS_SIZE_SECTORS - 1))
 	
 	# Partition 4 (upperfs): from clonefs end to 16GiB limit or device end
-	NEW_UPPERFS_START=$((NEW_CLONEFS_END + 1))
+	# For MBR extended partitions:
+	# - Extended partition container starts before first logical partition
+	# - First logical partition's EBR goes at the start of extended partition
+	# - Logical partition data starts after EBR
+	# So we need: gap after partition 3, then extended partition, then EBR, then partition data
+	EXTENDED_START=$((NEW_CLONEFS_END + 1))
+	# First logical partition EBR goes at EXTENDED_START, data starts at EXTENDED_START + 1
+	NEW_UPPERFS_START=$((EXTENDED_START + 1))
 	if [ "$LIMIT_16GIB_SECTORS" -lt "$DEVICE_END" ]; then
-		NEW_UPPERFS_END=$((LIMIT_16GIB_SECTORS - 1))
+		# Reserve 1 sector for second EBR between upperfs and datafs
+		NEW_UPPERFS_END=$((LIMIT_16GIB_SECTORS - 2))
 		NEED_DATAFS=1
 	else
 		NEW_UPPERFS_END=$DEVICE_END
@@ -230,9 +225,11 @@ calculate_boundaries()
 	fi
 	
 	# Partition 5 (datafs): only if device > 16GiB
+	# Second logical partition: EBR goes at NEW_UPPERFS_END + 1, data starts at NEW_UPPERFS_END + 2
 	if [ "$NEED_DATAFS" -eq 1 ]; then
-		NEW_DATAFS_START=$LIMIT_16GIB_SECTORS
+		NEW_DATAFS_START=$((NEW_UPPERFS_END + 2))  # +1 for EBR, +1 for next sector
 		NEW_DATAFS_END=$DEVICE_END
+		DATAFS_SIZE=$((NEW_DATAFS_END - NEW_DATAFS_START + 1))
 		log_info_msg "Datafs will be created (device > 16GiB)"
 	else
 		log_info_msg "Datafs not needed (device <= 16GiB)"
@@ -250,75 +247,91 @@ calculate_boundaries()
 	log_end_msg
 }
 
-create_gpt_layout()
+create_mbr_layout()
 {
-	log_begin_msg "Converting MBR to GPT and creating partitions"
+	log_begin_msg "Creating MBR partition layout with extended partitions"
 	
-	# Zap existing partition table
-	# Note: sgdisk --zap-all may show warnings about invalid GPT when converting from MBR,
-	# but it will still successfully destroy the partition table
-	log_info_msg "Removing MBR partition table"
-	sgdisk --zap-all "$ROOT_DEV" 2>&1 || true
-	
-	# Give the system a moment to process the change
-	sleep 1
-	
-	# Create partition 1 (bootfs) - preserve exact boundaries, type EF00 (EFI)
-	log_info_msg "Creating partition 1 (bootfs): $NEW_BOOTFS_START:$NEW_BOOTFS_END"
-	if ! sgdisk --new=1:$NEW_BOOTFS_START:$NEW_BOOTFS_END --typecode=1:ef00 --change-name=1:bootfs "$ROOT_DEV"; then
-		log_failure_msg "Failed to create bootfs partition"
-		return 1
-	fi
-	
-	# Create partition 2 (rootfs) - type 8300 (Linux filesystem)
-	log_info_msg "Creating partition 2 (rootfs): $NEW_ROOTFS_START:$NEW_ROOTFS_END"
-	if ! sgdisk --new=2:$NEW_ROOTFS_START:$NEW_ROOTFS_END --typecode=2:8300 --change-name=2:rootfs "$ROOT_DEV"; then
-		log_failure_msg "Failed to create rootfs partition"
-		return 1
-	fi
-	
-	# Create partition 3 (clonefs) - type 8300 (Linux filesystem)
-	log_info_msg "Creating partition 3 (clonefs): $NEW_CLONEFS_START:$NEW_CLONEFS_END"
-	if ! sgdisk --new=3:$NEW_CLONEFS_START:$NEW_CLONEFS_END --typecode=3:8300 --change-name=3:clonefs "$ROOT_DEV"; then
-		log_failure_msg "Failed to create clonefs partition"
-		return 1
-	fi
-	
-	# Create partition 4 (upperfs) - type 8300 (Linux filesystem)
-	log_info_msg "Creating partition 4 (upperfs): $NEW_UPPERFS_START:$NEW_UPPERFS_END"
-	if ! sgdisk --new=4:$NEW_UPPERFS_START:$NEW_UPPERFS_END --typecode=4:8300 --change-name=4:upperfs "$ROOT_DEV"; then
-		log_failure_msg "Failed to create upperfs partition"
-		return 1
-	fi
-	
-	# Create partition 5 (datafs) if needed - type 0700 (Microsoft basic data, for ExFAT)
+	# Calculate extended partition boundaries
+	# EXTENDED_START was already calculated in calculate_boundaries()
+	# Extended partition ends at the last logical partition's end
 	if [ "$NEED_DATAFS" -eq 1 ]; then
-		log_info_msg "Creating partition 5 (datafs): $NEW_DATAFS_START:$NEW_DATAFS_END"
-		# Use 0 for end sector to mean "use all remaining space"
-		if ! sgdisk --new=5:$NEW_DATAFS_START:0 --typecode=5:0700 --change-name=5:datafs "$ROOT_DEV"; then
-			log_failure_msg "Failed to create datafs partition"
-			return 1
-		fi
+		EXTENDED_END=$NEW_DATAFS_END
+	else
+		EXTENDED_END=$NEW_UPPERFS_END
+	fi
+	
+	EXTENDED_SIZE=$((EXTENDED_END - EXTENDED_START + 1))
+	
+	# Calculate partition sizes in sectors
+	BOOTFS_SIZE=$((NEW_BOOTFS_END - NEW_BOOTFS_START + 1))
+	ROOTFS_SIZE=$((NEW_ROOTFS_END - NEW_ROOTFS_START + 1))
+	CLONEFS_SIZE=$((NEW_CLONEFS_END - NEW_CLONEFS_START + 1))
+	UPPERFS_SIZE=$((NEW_UPPERFS_END - NEW_UPPERFS_START + 1))
+	
+	log_info_msg "Extended partition will span: $EXTENDED_START - $EXTENDED_END"
+	
+	# Build sfdisk input script
+	# For MBR extended partitions:
+	# - Extended partition (4) is a container
+	# - Logical partitions (5, 6) are created within the extended partition
+	# - sfdisk expects logical partition start to be where partition data starts
+	# - sfdisk automatically places the EBR before the partition data
+	# - So extended partition must start before the first logical partition's data start
+	log_info_msg "Creating partition layout with sfdisk"
+	
+	# For logical partition 5: data starts at NEW_UPPERFS_START
+	# sfdisk will automatically place EBR at EXTENDED_START (NEW_UPPERFS_START - 1)
+	# Size is just the data size (EBR is handled by sfdisk)
+	
+	SFDISK_INPUT="label: dos
+unit: sectors
+
+${ROOT_DEV}1 : start=$NEW_BOOTFS_START, size=$BOOTFS_SIZE, type=c, bootable
+${ROOT_DEV}2 : start=$NEW_ROOTFS_START, size=$ROOTFS_SIZE, type=83
+${ROOT_DEV}3 : start=$NEW_CLONEFS_START, size=$CLONEFS_SIZE, type=83
+${ROOT_DEV}4 : start=$EXTENDED_START, size=$EXTENDED_SIZE, type=5
+${ROOT_DEV}5 : start=$NEW_UPPERFS_START, size=$UPPERFS_SIZE, type=83"
+	
+	# Add datafs partition if needed
+	# For logical partition 6: data starts at NEW_DATAFS_START
+	# sfdisk will automatically place EBR before it
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		log_info_msg "Adding datafs partition to layout"
+		SFDISK_INPUT="$SFDISK_INPUT
+${ROOT_DEV}6 : start=$NEW_DATAFS_START, size=$DATAFS_SIZE, type=c"
+	fi
+	
+	# Apply partition layout
+	log_info_msg "Applying partition layout"
+	if ! echo "$SFDISK_INPUT" | sfdisk "$ROOT_DEV" 2>&1; then
+		log_failure_msg "Failed to create MBR partition layout"
+		return 1
 	fi
 	
 	# Refresh partition table
 	log_info_msg "Refreshing partition table"
 	wait_for_udev 10
-	
-	if command -v blockdev >/dev/null 2>&1; then
-		blockdev --rereadpt "$ROOT_DEV" 2>/dev/null || true
-	fi
-	
-	if command -v partprobe >/dev/null 2>&1; then
-		partprobe "$ROOT_DEV" 2>/dev/null || true
-	fi
-	
+	blockdev --rereadpt "$ROOT_DEV" 2>/dev/null || partprobe "$ROOT_DEV" 2>/dev/null || true
 	wait_for_udev 10
 	
 	# Verify partitions were created
 	log_info_msg "Verifying partition creation"
 	PART_COUNT=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | wc -l)
-	log_info_msg "Detected $PART_COUNT partitions after GPT creation"
+	
+	# Expected count: 5 partitions (1,2,3,4,5) or 6 partitions (1,2,3,4,5,6) if datafs needed
+	# Note: partition 4 is the extended container, so it may or may not show up in lsblk
+	if [ "$NEED_DATAFS" -eq 1 ]; then
+		EXPECTED_MIN=5  # At minimum we need 1,2,3,5,6 (extended might not show)
+		log_info_msg "Detected $PART_COUNT partitions after MBR creation (expected 5-6 with datafs)"
+	else
+		EXPECTED_MIN=4  # At minimum we need 1,2,3,5 (extended might not show)
+		log_info_msg "Detected $PART_COUNT partitions after MBR creation (expected 4-5 without datafs)"
+	fi
+	
+	if [ "$PART_COUNT" -lt "$EXPECTED_MIN" ]; then
+		log_failure_msg "Partition creation verification failed: expected at least $EXPECTED_MIN, found $PART_COUNT"
+		return 1
+	fi
 	
 	log_end_msg
 }
@@ -326,6 +339,13 @@ create_gpt_layout()
 resize_rootfs()
 {
 	log_begin_msg "Resizing rootfs filesystem"
+	
+	# After repartitioning, the filesystem needs to be checked before resizing
+	log_info_msg "Checking filesystem on $DEV"
+	if ! e2fsck -fy "$DEV"; then
+		log_failure_msg "Failed to check/repair rootfs filesystem"
+		return 1
+	fi
 	
 	# Resize ext4 filesystem to match new partition size
 	log_info_msg "Running resize2fs on $DEV"
@@ -342,12 +362,21 @@ initialize_partitions()
 {
 	log_begin_msg "Initializing new partitions"
 	
-	# Get partition device names
-	CLONEFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '3p')
-	CLONEFS_DEV="/dev/$CLONEFS_DEV_NAME"
+	# Build partition device names directly using partition numbers
+	# Determine if device uses 'p' separator (e.g., mmcblk0p1 vs sda1)
+	if echo "$ROOT_DEV_NAME" | grep -q '[0-9]$'; then
+		# Device name ends in a number, needs 'p' separator
+		PART_SEP="p"
+	else
+		# Device name doesn't end in a number, no separator needed
+		PART_SEP=""
+	fi
 	
-	UPPERFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '4p')
-	UPPERFS_DEV="/dev/$UPPERFS_DEV_NAME"
+	# Partition 3 = clonefs
+	CLONEFS_DEV="${ROOT_DEV}${PART_SEP}3"
+	
+	# Partition 5 = upperfs (logical partition in extended)
+	UPPERFS_DEV="${ROOT_DEV}${PART_SEP}5"
 	
 	# Format clonefs (ext4) with filesystem label
 	log_info_msg "Formatting clonefs partition: $CLONEFS_DEV"
@@ -365,8 +394,8 @@ initialize_partitions()
 	
 	# Format datafs (ExFAT) with filesystem label if needed
 	if [ "$NEED_DATAFS" -eq 1 ]; then
-		DATAFS_DEV_NAME=$(lsblk -n -o kname "$ROOT_DEV" | grep -E "^${ROOT_DEV_NAME}p?[0-9]+$" | sed -n '5p')
-		DATAFS_DEV="/dev/$DATAFS_DEV_NAME"
+		# Partition 6 = datafs (logical partition in extended)
+		DATAFS_DEV="${ROOT_DEV}${PART_SEP}6"
 		
 		log_info_msg "Formatting datafs partition: $DATAFS_DEV"
 		if ! mkfs.exfat -n datafs "$DATAFS_DEV"; then
@@ -391,7 +420,7 @@ if detect_watchdog; then
 fi
 
 calculate_boundaries
-create_gpt_layout
+create_mbr_layout
 resize_rootfs
 initialize_partitions
 
