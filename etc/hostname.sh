@@ -5,13 +5,13 @@ set -eu -o pipefail
 echo "Running Raspberry Pi cmdline.txt configuration script..." 1>&2
 
 # Initialize parameters
+SERIAL=$(cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2 | cut -c9-16)
 source /etc/os-release
-ID=$(cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2 | cut -c9-16)
-if [ "$ID" == "" ]; then
-    HOSTNAME=$NAME-unknown
+if [ "$SERIAL" == "" ]; then
+    HOSTNAME=$ID-$VARIANT_ID-unknown
     echo "Error reading Raspberry Pi serial number, defaulting to $HOSTNAME" 1>&2
 else
-    HOSTNAME=$NAME-$ID
+    HOSTNAME=$ID-$VARIANT_ID-$SERIAL
 fi
 
 TIMEZONE=$(cat /etc/timezone)
@@ -57,7 +57,7 @@ echo "Scanning kernel commandline for configuration parameters" 1>&2
 CMDLINE=($(cat /proc/cmdline))
 for arg in "${CMDLINE[@]}"; do
     case "${arg}" in
-    systemd.hostname=tsOS-default-name)
+    systemd.hostname=tsos-default-name)
         echo "... ignoring '${arg}' (default)" 1>&2
         ;;
     systemd.hostname=*)

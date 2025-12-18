@@ -6,20 +6,32 @@ TO "tsOS-base-${ARCH}.img"
 PUMP 1000M
 
 # Set os-release info
-NAME="tsOS-base"
+NAME="tsOS"
+VARIANT="Base"
+VERSION_CODENAME="Barbastella"
+
 VERSION_ID=`git describe --tags --always || true`
-VERSION_CODENAME=trixie
+VERSION_COMMIT=`git rev-parse --verify HEAD`
 
 RUN tee /etc/os-release <<EOF
-PRETTY_NAME="$NAME $VERSION_ID ($VERSION_CODENAME)"
+PRETTY_NAME="$NAME $VARIANT $VERSION_ID ($VERSION_CODENAME)"
 NAME=$NAME
+ID="${NAME,,}"
+ID_LIKE=debian
+VARIANT=$VARIANT
+VARIANT_ID=${VARIANT,,}
 VERSION_ID=$VERSION_ID
 VERSION="$VERSION_ID ($VERSION_CODENAME)"
-VERSION_CODENAME=trixie
-ID=debian
+VERSION_COMMIT=$VERSION_COMMIT
+VERSION_CODENAME=$VERSION_CODENAME
 HOME_URL="https://trackit.systems/"
 SUPPORT_URL="https://github.com/trackIT-Systems/tsOS-base"
 BUG_REPORT_URL="https://github.com/trackIT-Systems/tsOS-base/issues"
+EOF
+
+# write build process entry
+RUN tee -a /boot/firmware/issue.txt <<EOF
+Modified using pimod, https://github.com/trackIT-Systems/tsOS-base, $VERSION_COMMIT, $VERSION_ID
 EOF
 
 #################################################

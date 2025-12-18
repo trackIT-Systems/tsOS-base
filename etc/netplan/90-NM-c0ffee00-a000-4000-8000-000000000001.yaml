@@ -6,7 +6,7 @@ network:
       match:
         name: "wlan0"
       access-points:
-        "tsOS-default-name":
+        "tsos-default-name":
           band: "5GHz"
           auth:
             key-management: "psk"
