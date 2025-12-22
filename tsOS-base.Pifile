@@ -127,6 +127,8 @@ RUN rm /home/pi/pysmartsolar/.git
 INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysmartsolar/.git
 RUN rm /home/pi/tsconfig/.git
 INSTALL .git/modules/home/pi/tsconfig /home/pi/tsconfig/.git
+RUN rm /home/pi/tsupdate/.git
+INSTALL .git/modules/home/pi/tsupdate /home/pi/tsupdate/.git
 RUN rm /home/pi/uhubctl/.git
 INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
 RUN rm /home/pi/vedirect_dump/.git
@@ -303,6 +305,9 @@ RUN apt-get install -y portaudio19-dev
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
 RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
 RUN systemctl enable tsconfig tsconfig-ble
+
+# install tsupdate
+RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
 
 # enable devmon
 RUN systemctl enable devmon.service

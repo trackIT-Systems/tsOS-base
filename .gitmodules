@@ -22,3 +22,6 @@
 [submodule "home/pi/tsconfig"]
 	path = home/pi/tsconfig
 	url = https://github.com/trackIT-Systems/tsconfig
+[submodule "home/pi/tsupdate"]
+	path = home/pi/tsupdate
+	url = https://github.com/trackIT-Systems/tsupdate.git
