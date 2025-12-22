@@ -54,7 +54,7 @@ docker-compose run --rm pimod pimod.sh tsOS-base-armhf.Pifile
 ## CI/CD
 
 GitHub Actions builds on tag push:
-- Uses `Nature40/pimod@v0.9.0` action
+- Uses `Nature40/pimod@v0.9.1` action
 - Builds both architectures
 - Packages images as `.zip` files
 - Uploads to GitHub Releases
