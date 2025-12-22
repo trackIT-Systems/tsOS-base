@@ -65,20 +65,14 @@ jobs:
 
       - name: Generate update file with pidiff
         if: steps.get_latest_release.outputs.latest_release != ''
-        run: |
-          PREVIOUS_TAG="${{ steps.get_latest_release.outputs.latest_release }}"
-          CURRENT_TAG="${{ github.ref_name }}"
-          
-          # Run pidiff with exclude-from to use .pidiffignore
-          docker run --rm --privileged \
-            -v $PWD:/pimod \
-            nature40/pimod:v0.9.1 \
-            pidiff.sh --tar \
-            --partition=2 \
-            --exclude-from=.pidiffignore \
-            --output="tsOS-base-arm64-update-${PREVIOUS_TAG}-to-${CURRENT_TAG}.batch" \
-            "tsOS-base-arm64-${PREVIOUS_TAG}.img" \
-            "tsOS-base-arm64.img"
+        uses: Nature40/pimod/pidiff@master
+        with:
+          base_image: tsOS-base-arm64-${{ steps.get_latest_release.outputs.latest_release }}.img
+          updated_image: tsOS-base-arm64-${{ github.ref_name }}.img
+          partition: 2
+          output: tsOS-base-arm64-update-${{ steps.get_latest_release.outputs.latest_release }}-to-${{ github.ref_name }}
+          tar: true
+          rsync_options: --exclude-from=.pidiffignore
 
       - name: Upload update file to release
         if: steps.get_latest_release.outputs.latest_release != '' && startsWith(github.ref, 'refs/tags/')
