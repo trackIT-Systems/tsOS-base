@@ -1,7 +1,7 @@
 # Set default ARCH
 : ${ARCH:=arm64}
 
-FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2025-10-02/2025-10-01-raspios-trixie-${ARCH}-lite.img.xz
+FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2025-12-04/2025-12-04-raspios-trixie-${ARCH}-lite.img.xz
 TO "tsOS-base-${ARCH}.img"
 PUMP 1000M
 
@@ -358,4 +358,5 @@ RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
 RUN rm -rf /var/lib/apt/lists/
 RUN apt-get clean
 RUN rm -rf /var/cache/
-ZERO
+
+SHRINK

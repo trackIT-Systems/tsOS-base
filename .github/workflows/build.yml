@@ -27,7 +27,7 @@ jobs:
           token: ${{ secrets.PAT_JONASHOECHST }}
 
       - name: Run tsOS-base.Pifile
-        uses: Nature40/pimod@v0.8.0
+        uses: Nature40/pimod@v0.9.0
         with:
           pifile: tsOS-base.Pifile
 
