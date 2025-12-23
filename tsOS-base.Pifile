@@ -307,7 +307,9 @@ RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
 RUN systemctl enable tsconfig tsconfig-ble
 
 # install tsupdate
+RUN apt-get install -y python3-aiohttp python3-github gh
 RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
+RUN systemctl enable tsupdated
 
 # enable devmon
 RUN systemctl enable devmon.service

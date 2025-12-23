@@ -1,0 +1,5 @@
+check_interval: 86400
+include_prereleases: false
+max_releases: 5
+persist_timeout: 600
+update_countdown: 60

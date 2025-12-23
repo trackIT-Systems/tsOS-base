@@ -1,0 +1,15 @@
+[Unit]
+Description=tsupdate automatic update daemon
+Documentation=https://github.com/trackit-systems/tsupdate
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/tsupdated --config /boot/firmware/tsupdate.yml
+Restart=always
+RestartSec=30
+User=root
+
+[Install]
+WantedBy=multi-user.target
