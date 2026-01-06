@@ -221,6 +221,10 @@ RUN systemctl enable hostname-config.service
 RUN systemctl enable activate-hotspot.service
 RUN systemctl mask wpa_supplicant.service
 
+# Switch to chrony unrestricted service
+RUN systemctl disable chronyd-restricted.service
+RUN systemctl enable chrony.service
+
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
 RUN systemctl enable chrony-wait.service chrony-wait-stop.path
 
