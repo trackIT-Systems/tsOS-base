@@ -7,7 +7,7 @@ button_delay: "00:30"
 # schedules to run the device
 # start/stop to be modified by [sunrise, sunset, dusk, dawn] or as absolute timestamps
 schedule:
-  - name: debugging
+  - name: maintenance
     start: "10:00"
     stop: "13:00"
   - name: owls

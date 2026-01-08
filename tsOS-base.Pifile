@@ -133,8 +133,8 @@ RUN rm /home/pi/uhubctl/.git
 INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
 RUN rm /home/pi/vedirect_dump/.git
 INSTALL .git/modules/home/pi/vedirect_dump /home/pi/vedirect_dump/.git
-RUN rm /home/pi/wittypi4/.git
-INSTALL .git/modules/home/pi/wittypi4 /home/pi/wittypi4/.git
+RUN rm /home/pi/tsschedule/.git
+INSTALL .git/modules/home/pi/tsschedule /home/pi/tsschedule/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
@@ -279,8 +279,8 @@ EOF
 RUN apt-get install -y python3-astral python3-pytimeparse
 RUN python3 -m pip install --no-deps i2cdevice
 RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2025.2.2.tar.gz
-RUN python3 -m pip install --no-deps -e /home/pi/wittypi4
-RUN systemctl enable wittypid.service
+RUN python3 -m pip install --no-deps -e /home/pi/tsschedule
+RUN systemctl enable tsschedule.service
 
 #################################################
 ### network configuration
@@ -312,7 +312,7 @@ RUN systemctl enable tsconfig tsconfig-ble
 # install tsupdate
 RUN apt-get install -y python3-aiohttp python3-github gh
 RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
-RUN systemctl enable tsupdated
+RUN systemctl enable tsupdate
 
 # enable devmon
 RUN systemctl enable devmon.service

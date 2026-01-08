@@ -1,5 +1,8 @@
-check_interval: 86400
+check_interval: 3600
+do: check
 include_prereleases: false
+maintenance_check_interval: 3600
+maintenance_do: download
 max_releases: 5
 persist_timeout: 600
 update_countdown: 60

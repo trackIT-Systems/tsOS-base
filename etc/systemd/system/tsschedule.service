@@ -1,0 +1,15 @@
+[Unit]
+Description=Sensor station schedule daemon (wake/sleep)
+Documentation=https://github.com/trackit-systems/tsschedule
+After=time-set.target
+Before=time-sync.target
+Requires=time-set.target
+
+[Service]
+ExecStart=/usr/local/bin/tsscheduled --schedule /boot/firmware/schedule.yml -v
+Restart=always
+RestartSec=300s
+User=root
+
+[Install]
+WantedBy=multi-user.target

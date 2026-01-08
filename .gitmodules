@@ -25,3 +25,6 @@
 [submodule "home/pi/tsupdate"]
 	path = home/pi/tsupdate
 	url = https://github.com/trackIT-Systems/tsupdate.git
+[submodule "home/pi/tsschedule"]
+	path = home/pi/tsschedule
+	url = https://github.com/trackIT-Systems/tsschedule.git

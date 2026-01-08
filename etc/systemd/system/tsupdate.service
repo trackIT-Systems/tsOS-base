@@ -8,7 +8,7 @@ Wants=network-online.target
 Type=simple
 ExecStart=/usr/local/bin/tsupdated --config /boot/firmware/tsupdate.yml
 Restart=always
-RestartSec=30
+RestartSec=300s
 User=root
 
 [Install]
