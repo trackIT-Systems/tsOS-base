@@ -291,9 +291,6 @@ RUN raspi-config nonint do_wifi_country "DE"
 RUN ln -s /boot/firmware/wireguard.conf /etc/wireguard/wireguard.conf
 RUN systemctl enable wg-quick@wireguard
 
-# disable resolv.conf altering
-RUN chattr +i /etc/resolv.conf
-
 # install and enable samba share
 RUN systemctl enable smbd
 
