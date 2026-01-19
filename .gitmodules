@@ -28,3 +28,6 @@
 [submodule "home/pi/tsschedule"]
 	path = home/pi/tsschedule
 	url = https://github.com/trackIT-Systems/tsschedule.git
+[submodule "home/pi/tsflash"]
+	path = home/pi/tsflash
+	url = https://github.com/trackIT-Systems/tsflash.git

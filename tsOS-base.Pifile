@@ -129,6 +129,8 @@ RUN rm /home/pi/tsconfig/.git
 INSTALL .git/modules/home/pi/tsconfig /home/pi/tsconfig/.git
 RUN rm /home/pi/tsupdate/.git
 INSTALL .git/modules/home/pi/tsupdate /home/pi/tsupdate/.git
+RUN rm /home/pi/tsflash/.git
+INSTALL .git/modules/home/pi/tsflash /home/pi/tsflash/.git
 RUN rm /home/pi/uhubctl/.git
 INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
 RUN rm /home/pi/vedirect_dump/.git
@@ -310,6 +312,10 @@ RUN systemctl enable tsconfig tsconfig-ble
 RUN apt-get install -y python3-aiohttp python3-github gh
 RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
 RUN systemctl enable tsupdate
+
+# install tsflash
+RUN apt-get install -y python3-tqdm
+RUN python3 -m pip install --no-deps -e /home/pi/tsflash
 
 # enable devmon
 RUN systemctl enable devmon.service
