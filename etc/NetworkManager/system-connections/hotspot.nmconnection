@@ -15,9 +15,12 @@ method=ignore
 ssid=tsos-default-name
 mode=ap
 band=bg
+channel=1
+channel-width=20
 
 [wifi-security]
 key-mgmt=wpa-psk
+pmf=1
 psk=BirdsAndBats
 
 [proxy]
