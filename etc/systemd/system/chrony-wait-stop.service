@@ -1,5 +1,8 @@
 [Unit]
 Description=Service to stop chrony-wait when timesync is achieved
+# Rate limit: allow max 3 starts per 10 seconds
+StartLimitIntervalSec=10s
+StartLimitBurst=1
 
 [Service]
 Type=oneshot

@@ -3,6 +3,9 @@ Description=Monitor for timesync synchronization file
 
 [Path]
 PathExists=/run/systemd/timesync/synchronized
+# Rate limit: allow max 1 triggers per 10 seconds
+TriggerLimitIntervalSec=10s
+TriggerLimitBurst=1
 
 [Install]
 WantedBy=multi-user.target
