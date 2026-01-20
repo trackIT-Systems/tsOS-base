@@ -71,9 +71,9 @@ RUN apt-get install -y caddy
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.49.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.55.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.49.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.55.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
@@ -214,7 +214,7 @@ RUN systemctl mask rpi-resize.service
 RUN systemctl mask systemd-remount-fs.service
 
 # install gitui
-RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.27.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
+RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.28.0/gitui-linux-aarch64.tar.gz | tar -xzC /usr/local/bin/"
 
 # enable hostname-config script and set default hostname
 RUN systemctl enable hostname-config.service
