@@ -1,6 +1,7 @@
 address: "localhost"
 port: 8080
 baseurl: "/data/"
+root: "/data"
 
 auth:
   method: "noauth"
