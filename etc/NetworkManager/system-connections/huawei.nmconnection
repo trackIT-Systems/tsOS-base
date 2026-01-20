@@ -1,0 +1,17 @@
+[connection]
+id=huawei
+type=ethernet
+uuid=4aaa0e10-3000-4000-8000-000000000001
+interface-name=hua0
+
+[ethernet]
+wake-on-lan=0
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+ip6-privacy=0
+
+[proxy]

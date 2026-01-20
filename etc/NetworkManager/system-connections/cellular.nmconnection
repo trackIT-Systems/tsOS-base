@@ -1,0 +1,16 @@
+[connection]
+id=cellular
+type=gsm
+uuid=ce11111a-2000-4000-8000-000000000001
+
+[gsm]
+apn=iot.melita.io
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+ip6-privacy=0
+
+[proxy]

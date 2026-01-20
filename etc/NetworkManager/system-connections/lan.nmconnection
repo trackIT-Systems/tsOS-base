@@ -1,0 +1,17 @@
+[connection]
+id=lan
+type=ethernet
+uuid=1a111a11-4000-4000-8000-000000000001
+interface-name=eth0
+
+[ethernet]
+wake-on-lan=1
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+ip6-privacy=0
+
+[proxy]

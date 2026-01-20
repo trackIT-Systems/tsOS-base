@@ -1,0 +1,23 @@
+[connection]
+id=station
+type=wifi
+uuid=57a71000-5000-4000-8000-000000000001
+autoconnect=false
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+addr-gen-mode=default
+
+[wifi]
+ssid=trackIT Systems Gast
+mode=infrastructure
+
+[wifi-security]
+key-mgmt=wpa-psk
+psk=BirdsAndBats
+auth-alg=open
+
+[proxy]

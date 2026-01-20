@@ -169,7 +169,7 @@ RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
 
 # Fix permissions for network manager system connections
-RUN sh -c 'chmod 600 /etc/netplan/*'
+RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 
 # Enable copy-authorized-keys
 RUN systemctl enable copy-authorized-keys.service

@@ -41,8 +41,19 @@ EOF
 }
 
 function set_hotspot_ssid() {
-    echo " Setting hotspot SSID via sed: $1." 1>&2
-    sed -i '/access-points:/{n; s/^\([[:space:]]*\)[^:[:space:]]*\(:\)/\1'"$1"'\2/;}' /etc/netplan/90-NM-c0ffee00-a000-4000-8000-000000000001.yaml
+    local netplan_file="/etc/netplan/90-NM-c0ffee00-a000-4000-8000-000000000001.yaml"
+    local nm_file="/etc/NetworkManager/system-connections/hotspot.nmconnection"
+    
+    if [ -f "$netplan_file" ]; then
+        echo " Setting hotspot SSID via sed in netplan: $1." 1>&2
+        sed -i '/access-points:/{n; s/^\([[:space:]]*\)[^:[:space:]]*\(:\)/\1'"$1"'\2/;}' "$netplan_file"
+    elif [ -f "$nm_file" ]; then
+        echo " Setting hotspot SSID via sed in NetworkManager: $1." 1>&2
+        sed -i '/^ssid=/ s/=.*/='"$1"'/' "$nm_file"
+    else
+        echo "Error: Neither netplan config ($netplan_file) nor NetworkManager config ($nm_file) exists." 1>&2
+        exit 1
+    fi
 }
 
 function set_timezone() {
