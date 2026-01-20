@@ -1,7 +1,7 @@
 [Unit]
 After=local-fs.target
 # hostapd is started with sysinit, write config beforehand
-Before=networking.service
+Before=networking.service NetworkManager.service
 
 [Service]
 ExecStart=/bin/bash -c '/etc/hostname.sh'
