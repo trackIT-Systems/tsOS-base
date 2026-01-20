@@ -3,7 +3,7 @@ Description=filebrowser
 After=network.target
 
 [Service]
-WorkingDirectory=/media/
+WorkingDirectory=/data/
 ExecStart=/usr/bin/filebrowser -d /etc/filebrowser/filebrowser.db -c /etc/filebrowser/filebrowser.yml --noauth 
 Restart=always
 RestartSec=10s
