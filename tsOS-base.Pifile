@@ -66,6 +66,9 @@ RUN apt-get install -y overlayroot
 # Install dkms
 RUN apt-get install -y dkms bc
 
+# Install Raspberry Pi Tools
+RUN apt-get install -y rpiboot
+
 # Install caddy
 RUN apt-get install -y caddy
 
