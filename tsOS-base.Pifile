@@ -74,9 +74,9 @@ RUN apt-get install -y caddy
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.55.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.56.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.55.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.56.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
