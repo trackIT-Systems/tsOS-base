@@ -311,6 +311,9 @@ RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python
 RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
 RUN systemctl enable tsconfig tsconfig-ble
 
+# install default config
+RUN tsconfig zip -f -b forbid /home/pi/tsos-default-name_config.zip
+
 # install tsupdate
 RUN apt-get install -y python3-aiohttp python3-github gh
 RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
