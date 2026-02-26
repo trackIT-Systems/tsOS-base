@@ -259,11 +259,11 @@ otg_mode=1
 EOF
 
 # Install dependenies & enable WittyPi
-RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
+RUN cp -R /home/pi/tsschedule/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-6.12.y
 RUN sh -c 'for k in /lib/modules/6.12.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/6.12.y; done'
 
 ### compile overlays and enable hardware
-RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
+RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/tsschedule/wittypi4-overlay.dts
 
 ### enable wittypi on pi3 and pi4
 RUN tee -a /boot/firmware/config.txt <<EOF
