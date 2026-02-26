@@ -13,9 +13,6 @@
 [submodule "home/pi/Witty-Pi-4"]
 	path = home/pi/Witty-Pi-4
 	url = https://github.com/trackIT-Systems/Witty-Pi-4
-[submodule "home/pi/wittypi4"]
-	path = home/pi/wittypi4
-	url = https://github.com/trackIT-Systems/wittypi4
 [submodule "home/pi/vedirect_dump"]
 	path = home/pi/vedirect_dump
 	url = https://github.com/trackIT-Systems/vedirect_dump
