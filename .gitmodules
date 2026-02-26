@@ -28,3 +28,6 @@
 [submodule "home/pi/tsflash"]
 	path = home/pi/tsflash
 	url = https://github.com/trackIT-Systems/tsflash.git
+[submodule "home/pi/pysolarlife"]
+	path = home/pi/pysolarlife
+	url = https://github.com/trackIT-Systems/pysolarlife.git
