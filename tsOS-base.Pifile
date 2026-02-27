@@ -284,6 +284,7 @@ EOF
 RUN apt-get install -y python3-astral python3-pytimeparse
 RUN python3 -m pip install --no-deps i2cdevice
 RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2025.2.2.tar.gz
+RUN python3 -m pip install --no-deps -e /home/pi/wittypi4
 RUN python3 -m pip install --no-deps -e /home/pi/tsschedule
 RUN systemctl enable tsschedule.service
 
