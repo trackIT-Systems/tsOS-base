@@ -345,6 +345,10 @@ RUN python3 -m pip install --no-deps -e /home/pi/pysmartsolar
 RUN python3 -m pip install --no-deps ve_utils vedirect_m8
 RUN python3 -m pip install --no-deps -e /home/pi/vedirect_dump
 
+# Install solarlife
+RUN apt-get install -y python3-bleak
+RUN python3 -m pip install --no-deps -e /home/pi/pysolarlife
+
 # Install and enable pymqttutil
 RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse
 RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
