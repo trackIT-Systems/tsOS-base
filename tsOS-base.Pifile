@@ -127,6 +127,8 @@ RUN rm /home/pi/pymqttutil/.git
 INSTALL .git/modules/home/pi/pymqttutil /home/pi/pymqttutil/.git
 RUN rm /home/pi/pysmartsolar/.git
 INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysmartsolar/.git
+RUN rm /home/pi/pysolarlife/.git
+INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysolarlife/.git
 RUN rm /home/pi/tsconfig/.git
 INSTALL .git/modules/home/pi/tsconfig /home/pi/tsconfig/.git
 RUN rm /home/pi/tsupdate/.git
