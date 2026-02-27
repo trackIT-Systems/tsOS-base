@@ -94,7 +94,7 @@ On first boot with `repartition` kernel parameter:
 
 Core packages installed via `apt-get`:
 - Python 3 + pip
-- NetworkManager, iwd, wireguard-tools
+- NetworkManager, wireguard-tools
 - mosquitto (MQTT broker)
 - chrony (replaces systemd-timesyncd)
 - gpsd, gpsd-clients
@@ -148,7 +148,7 @@ Runtime configuration via `/boot/firmware/`:
 ## Network Stack
 
 - **NetworkManager**: Primary network management (replaces systemd-networkd)
-- **iwd**: WiFi backend
+- **wpa_supplicant**: WiFi backend
 - **WireGuard**: VPN support
 - **Samba**: File sharing enabled
 

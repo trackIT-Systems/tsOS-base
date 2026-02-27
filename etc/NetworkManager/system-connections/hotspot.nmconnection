@@ -20,6 +20,9 @@ channel-width=20
 
 [wifi-security]
 key-mgmt=wpa-psk
+proto=rsn;wpa;
+group=ccmp;
+pairwise=ccmp;
 pmf=1
 psk=BirdsAndBats
 

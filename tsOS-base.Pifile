@@ -57,8 +57,7 @@ RUN apt-get install -y \
 RUN apt-get install -y \
     tcpdump \
     samba \
-    wireguard-tools \
-    iwd 
+    wireguard-tools
 
 # Install overlayroot
 RUN apt-get install -y overlayroot
@@ -221,10 +220,6 @@ RUN sh -c "wget -O- https://github.com/gitui-org/gitui/releases/download/v0.28.0
 
 # enable hostname-config script and set default hostname
 RUN systemctl enable hostname-config.service
-
-# enable hostname-config script and set default hostname
-RUN systemctl enable activate-hotspot.service
-RUN systemctl mask wpa_supplicant.service
 
 # Switch to chrony unrestricted service
 RUN rm /usr/lib/systemd/system/chronyd-restricted.service
