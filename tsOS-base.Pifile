@@ -347,9 +347,8 @@ RUN apt-get install -y python3-bleak
 RUN python3 -m pip install --no-deps -e /home/pi/pysolarlife
 
 # Install and enable pymqttutil
-RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse
+RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse python3-dotenv
 RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
-RUN python3 -m pip install --no-deps psutil dotenv
 RUN systemctl enable mqttutil.service
 
 # Install uhubctl (dependency) and enable huaweicheck
