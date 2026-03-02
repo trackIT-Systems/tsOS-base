@@ -4,7 +4,7 @@ After=local-fs.target
 Before=networking.service NetworkManager.service
 
 [Service]
-ExecStart=/bin/bash -c '/etc/hostname.sh'
+ExecStart=/etc/hostname.sh
 Type=oneshot
 StandardOutput=journal
 
