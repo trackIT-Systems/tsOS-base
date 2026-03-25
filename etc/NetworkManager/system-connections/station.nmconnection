@@ -3,13 +3,17 @@ id=station
 type=wifi
 uuid=57a71000-5000-4000-8000-000000000001
 autoconnect=false
+autoconnect-priority=10
+autoconnect-retries=1
 
 [ipv4]
 method=auto
+dhcp-timeout=20
 
 [ipv6]
 method=auto
 addr-gen-mode=default
+ra-timeout=20
 
 [wifi]
 ssid=trackIT Systems Gast

@@ -125,7 +125,6 @@ Key enabled services:
 - `gpsd.service`
 - `chrony-wait.service` (time sync dependency)
 - `hostname-config.service`
-- `activate-hotspot.service`
 - `brovi_startup.service`
 - `repartition-cleanup.service`
 
