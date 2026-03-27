@@ -307,6 +307,7 @@ RUN systemctl mask systemd-networkd-wait-online.service
 RUN apt-get install -y portaudio19-dev
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
 RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
+INSTALL home/pi/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
 RUN systemctl enable tsconfig tsconfig-ble
 
 # install default config
