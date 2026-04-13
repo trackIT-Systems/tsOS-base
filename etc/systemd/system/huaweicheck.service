@@ -3,5 +3,6 @@ Description=Check Huawei cellular connection
 After=network.target
 
 [Service]
+Nice=10
 ExecStart=/usr/bin/python3 /home/pi/huaweicheck.py
 Type=oneshot

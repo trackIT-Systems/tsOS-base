@@ -5,6 +5,7 @@ Wants=bluetooth.target tsconfig.service
 Requires=tsconfig.service
 
 [Service]
+Nice=10
 User=pi
 Group=pi
 WorkingDirectory=/home/pi/tsconfig

@@ -6,6 +6,7 @@ Before=time-sync.target
 Requires=time-set.target
 
 [Service]
+Nice=10
 ExecStart=/usr/local/bin/tsscheduled --schedule /boot/firmware/schedule.yml -v
 Restart=always
 RestartSec=300s

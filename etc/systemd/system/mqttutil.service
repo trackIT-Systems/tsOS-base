@@ -4,6 +4,7 @@ Requires=mosquitto.service
 After=network-online.target mosquitto.service
 
 [Service]
+Nice=10
 ExecStart=/usr/bin/python3 -m mqttutil -c /boot/firmware/mqttutil.conf -v --outpath=/data
 Restart=always
 RestartSec=10s

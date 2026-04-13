@@ -3,6 +3,7 @@ Description=Web-based configuration and system management interface
 After=network.target
 
 [Service]
+Nice=10
 Environment="TERM=xterm-256color"
 Environment="LOG_LEVEL=INFO"
 Environment="TSCONFIG_CONFIG_FILE=/boot/firmware/tsconfig.yml"
