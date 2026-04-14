@@ -1,0 +1,1 @@
+firmware/mosquitto.d
