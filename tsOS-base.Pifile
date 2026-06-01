@@ -3,7 +3,7 @@
 
 FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2025-12-04/2025-12-04-raspios-trixie-${ARCH}-lite.img.xz
 TO "tsOS-base-${ARCH}.img"
-PUMP 1000M
+PUMP 1200M
 
 # Set os-release info
 NAME="tsOS"
@@ -73,9 +73,9 @@ RUN apt-get install -y caddy
 
 # Install filebrowser
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.56.0/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.63.5/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
 else
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.56.0/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.63.5/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
 fi
 RUN mv filebrowser /usr/bin/filebrowser
 
@@ -357,7 +357,9 @@ RUN sh -c 'cd /home/pi/uhubctl; make'
 RUN cp /home/pi/uhubctl/uhubctl /usr/local/sbin
 RUN cp /home/pi/uhubctl/udev/rules.d/52-usb.rules /etc/udev/rules.d
 
-# RUN systemctl enable huaweicheck.timer
+RUN systemctl enable huaweicheck.timer
+RUN systemctl enable wificheck.timer
+RUN systemctl enable wificheck.path
 RUN systemctl enable brovi_startup.service
 
 # Blacklist DVB-T driver

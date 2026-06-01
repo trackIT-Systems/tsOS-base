@@ -1,0 +1,8 @@
+[Unit]
+Description=Check and reconnect WiFi Station if in range
+After=network.target NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/wificheck
+Nice=10

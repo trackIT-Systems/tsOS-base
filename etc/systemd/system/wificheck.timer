@@ -1,0 +1,9 @@
+[Unit]
+Description=Periodic WiFi Station Connection Check Timer
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

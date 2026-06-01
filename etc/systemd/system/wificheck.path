@@ -1,0 +1,8 @@
+[Unit]
+Description=Trigger WiFi Reconnection Check on Station Config Save
+
+[Path]
+PathChanged=/etc/NetworkManager/system-connections/station.nmconnection
+
+[Install]
+WantedBy=multi-user.target

@@ -4,5 +4,5 @@ After=network.target
 
 [Service]
 Nice=10
-ExecStart=/usr/bin/python3 /home/pi/huaweicheck.py
+ExecStart=/usr/local/sbin/huaweicheck
 Type=oneshot
