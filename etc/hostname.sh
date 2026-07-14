@@ -36,8 +36,6 @@ EOF
         test -f $BOOTFS_HOSTS && cat $BOOTFS_HOSTS >>/etc/hosts
     fi
 
-    echo " Restarting avahi-daemon" 1>&2
-    systemctl restart avahi-daemon.service
 }
 
 function set_hotspot_ssid() {

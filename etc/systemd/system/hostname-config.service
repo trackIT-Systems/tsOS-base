@@ -1,12 +1,13 @@
 [Unit]
 After=local-fs.target
 # hostapd is started with sysinit, write config beforehand
-Before=networking.service NetworkManager.service
+Before=networking.service NetworkManager.service avahi-daemon.service avahi-daemon.socket sockets.target
 
 [Service]
 ExecStart=/etc/hostname.sh
 Type=oneshot
+RemainAfterExit=yes
 StandardOutput=journal
 
 [Install]
-RequiredBy=network.target
+RequiredBy=network.target sockets.target
