@@ -141,6 +141,8 @@ RUN rm /home/pi/vedirect_dump/.git
 INSTALL .git/modules/home/pi/vedirect_dump /home/pi/vedirect_dump/.git
 RUN rm /home/pi/tsschedule/.git
 INSTALL .git/modules/home/pi/tsschedule /home/pi/tsschedule/.git
+RUN rm /home/pi/vcgencmd/.git
+INSTALL .git/modules/home/pi/vcgencmd /home/pi/vcgencmd/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
@@ -346,6 +348,9 @@ RUN python3 -m pip install --no-deps -e /home/pi/vedirect_dump
 # Install solarlife
 RUN apt-get install -y python3-bleak
 RUN python3 -m pip install --no-deps -e /home/pi/pysolarlife
+
+# Install vcgencmd
+RUN python3 -m pip install --no-deps -e /home/pi/vcgencmd
 
 # Install and enable pymqttutil
 RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse python3-dotenv

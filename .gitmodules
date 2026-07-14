@@ -34,3 +34,6 @@
 [submodule "home/pi/pysolarlife"]
 	path = home/pi/pysolarlife
 	url = https://github.com/trackIT-Systems/pysolarlife.git
+[submodule "home/pi/vcgencmd"]
+	path = home/pi/vcgencmd
+	url = https://github.com/trackIT-Systems/vcgencmd.git
