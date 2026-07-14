@@ -7,16 +7,19 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+## [2026.7.1] - 2026-07-14
+
 ### Added
 
 - `vcgencmd` Python module for reading Raspberry Pi firmware metrics
 - `mqttutil` reporting of `vcgencmd` values (clocks, voltages, PMIC, throttling)
+- Changelog documenting project history
 
 ### Changed
 
 - Updated `tsconfig` and `tsschedule` (mqttutil.conf support, brownout recovery,
   `huaweicheck` / `wificheck` services, Docker CI on branch pushes)
-- GitHub release workflow build step updated
+- GitHub releases populated from changelog
 
 ## [2026.6.1] - 2026-06-01
 
