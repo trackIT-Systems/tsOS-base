@@ -14,6 +14,11 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 ### Changed
 
 - `hostname-config` runs before Avahi starts instead of restarting `avahi-daemon` after hostname changes
+- Updated `tsconfig` (enforce fixed clock times for system maintenance, synchronize and verify file mtimes on updates, and improve Soundscapepipe configuration/UI for optional fields and disabled output devices)
+
+### Fixed
+
+- `tsupdate` preserves `cmdline.txt` modification (`mtime`) and access (`atime`) times during tryboot operations to prevent `tsconfig` from incorrectly treating it as newer than the source configuration
 
 ## [2026.7.1] - 2026-07-14
 
