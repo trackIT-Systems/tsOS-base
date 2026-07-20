@@ -7,6 +7,8 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+## [2026.7.2] - 2026-07-20
+
 ### Added
 
 - Avahi daemon config restricting mDNS to `eth0` and `wlan0` (excludes macvlan and other virtual interfaces)
