@@ -1,0 +1,20 @@
+hardware:
+  i2c_bus: 0
+  interval_s: 60
+  sensors:
+    - id: inside
+      type: sht3x
+      address: 0x44    # ADDR to GND
+    - id: outside
+      type: sht3x
+      address: 0x45    # ADDR to VDD
+
+daemon:
+  csv:
+    enabled: true
+    path: /data
+  mqtt:
+    enabled: true
+    host: localhost
+    port: 1883
+    qos: 0

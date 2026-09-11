@@ -37,3 +37,6 @@
 [submodule "home/pi/vcgencmd"]
 	path = home/pi/vcgencmd
 	url = https://github.com/trackIT-Systems/vcgencmd.git
+[submodule "home/pi/pyenvsense"]
+	path = home/pi/pyenvsense
+	url = https://github.com/trackIT-Systems/pyenvsense.git

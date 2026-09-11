@@ -7,6 +7,15 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+### Added
+
+- `pyenvsense` environmental sensor daemon (`envsensed`) with default config at `/boot/firmware/envsense.yml`
+- Second I2C bus enabled (`dtparam=i2c_vc=on`)
+
+### Changed
+
+- ARM I2C (bus 1) baud rate set to 400 kHz
+
 ## [2026.7.2] - 2026-07-20
 
 ### Added

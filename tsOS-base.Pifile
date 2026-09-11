@@ -143,6 +143,8 @@ RUN rm /home/pi/tsschedule/.git
 INSTALL .git/modules/home/pi/tsschedule /home/pi/tsschedule/.git
 RUN rm /home/pi/vcgencmd/.git
 INSTALL .git/modules/home/pi/vcgencmd /home/pi/vcgencmd/.git
+RUN rm /home/pi/pyenvsense/.git
+INSTALL .git/modules/home/pi/pyenvsense /home/pi/pyenvsense/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
@@ -199,6 +201,12 @@ RUN update-alternatives --set editor /usr/bin/vim.basic
 RUN raspi-config nonint do_ssh 0
 
 RUN raspi-config nonint do_i2c 0
+# Enable second I2C bus (i2c_vc) and 400 kHz on ARM I2C (bus 1)
+RUN sed -i 's/^#\?dtparam=i2c_arm=.*/dtparam=i2c_arm=on,i2c_arm_baudrate=400000/' /boot/firmware/config.txt
+RUN tee -a /boot/firmware/config.txt <<EOF
+dtparam=i2c_vc=on
+
+EOF
 
 # Disable Swap
 RUN systemctl mask rpi-resize-swap-file.service
@@ -356,6 +364,11 @@ RUN python3 -m pip install --no-deps -e /home/pi/vcgencmd
 RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse python3-dotenv
 RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
 RUN systemctl enable mqttutil.service
+
+# Install pyenvsense and modules
+RUN python3 -m pip install --no-deps -e /home/pi/pyenvsense
+RUN python3 -m pip install sensirion-i2c-sht3x==1.0.0 sensirion-i2c-sht4x==1.0.0 
+RUN systemctl enable pyenvsense.service
 
 # Install uhubctl (dependency) and enable huaweicheck
 RUN sh -c 'cd /home/pi/uhubctl; make'
