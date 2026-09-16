@@ -7,9 +7,11 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+## [2026.9.1] - 2026-09-16
+
 ### Added
 
-- `pyenvsense` environmental sensor daemon (`envsensed`) with default config at `/boot/firmware/envsense.yml`
+- `pyenvsense` environmental sensor daemon (`envsensed`) with default config at `/boot/firmware/envsense.yml` (SoC temperature)
 - Second I2C bus enabled (`dtparam=i2c_vc=on`)
 
 ### Changed
