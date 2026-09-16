@@ -1,13 +1,9 @@
 hardware:
-  i2c_bus: 0
   interval_s: 60
   sensors:
-    - id: inside
-      type: sht3x
-      address: 0x44    # ADDR to GND
-    - id: outside
-      type: sht3x
-      address: 0x45    # ADDR to VDD
+    # Raspberry Pi CPU temperature
+    - id: soc
+      type: rpi_cpu
 
 daemon:
   csv:

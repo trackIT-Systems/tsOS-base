@@ -5,8 +5,6 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Uses /boot/firmware/envsense.yml by default. Override with:
-# ExecStart=/usr/bin/env envsensed --config /path/to/envsense.yml
 ExecStart=/usr/bin/env envsensed
 Restart=on-failure
 RestartSec=5

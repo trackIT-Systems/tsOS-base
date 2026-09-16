@@ -368,7 +368,7 @@ RUN systemctl enable mqttutil.service
 # Install pyenvsense and modules
 RUN python3 -m pip install --no-deps -e /home/pi/pyenvsense
 RUN python3 -m pip install sensirion-i2c-sht3x==1.0.0 sensirion-i2c-sht4x==1.0.0 
-RUN systemctl enable pyenvsense.service
+RUN systemctl enable envsense.service
 
 # Install uhubctl (dependency) and enable huaweicheck
 RUN sh -c 'cd /home/pi/uhubctl; make'
