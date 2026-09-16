@@ -16,6 +16,10 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 - ARM I2C (bus 1) baud rate set to 400 kHz
 
+### Fixed
+
+- `hostname-config` no longer orders itself before `sockets.target`, which created a systemd cycle and skipped the unit at boot. It now runs as a `network-pre.target` service before Avahi and NetworkManager, and sets hostname/timezone via files instead of D-Bus (`hostnamectl`/`timedatectl`).
+
 ## [2026.7.2] - 2026-07-20
 
 ### Added

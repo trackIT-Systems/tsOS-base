@@ -1,7 +1,11 @@
 [Unit]
+Description=Set hostname, hotspot SSID, and timezone from kernel cmdline
+DefaultDependencies=no
 After=local-fs.target
-# hostapd is started with sysinit, write config beforehand
-Before=networking.service NetworkManager.service avahi-daemon.service avahi-daemon.socket sockets.target
+Before=network-pre.target networking.service NetworkManager.service avahi-daemon.service
+Wants=network-pre.target
+Conflicts=shutdown.target
+Before=shutdown.target
 
 [Service]
 ExecStart=/etc/hostname.sh
@@ -10,4 +14,4 @@ RemainAfterExit=yes
 StandardOutput=journal
 
 [Install]
-RequiredBy=network.target sockets.target
+WantedBy=network-pre.target

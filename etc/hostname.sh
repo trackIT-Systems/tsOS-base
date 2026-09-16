@@ -17,8 +17,9 @@ fi
 TIMEZONE=$(cat /etc/timezone)
 
 function set_hostname() {
-    echo " Setting hostname via hostnamectl: $1." 1>&2
-    hostnamectl set-hostname $1
+    echo " Setting hostname: $1" 1>&2
+    printf '%s\n' "$1" >/etc/hostname
+    printf '%s' "$1" >/proc/sys/kernel/hostname
 
     echo " Setting hostname in /etc/hosts" 1>&2
     cat >/etc/hosts <<EOF
@@ -55,11 +56,14 @@ function set_hotspot_ssid() {
 }
 
 function set_timezone() {
-    echo " Setting timezone via timedatectl: $1." 1>&2
-    timedatectl set-timezone $1
-
-    echo " Updating tzdata /etc/timezone" 1>&2
-    dpkg-reconfigure -f noninteractive tzdata
+    local zone="/usr/share/zoneinfo/$1"
+    if [ ! -f "$zone" ]; then
+        echo "Error: timezone '$1' not found at $zone" 1>&2
+        exit 1
+    fi
+    echo " Setting timezone: $1" 1>&2
+    ln -sfn "$zone" /etc/localtime
+    printf '%s\n' "$1" >/etc/timezone
 }
 
 echo "Scanning kernel commandline for configuration parameters" 1>&2
