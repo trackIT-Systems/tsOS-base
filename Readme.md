@@ -67,7 +67,7 @@ Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.
 
 ## Build
 
-Images are built with [pimod](https://github.com/Nature40/pimod) `v0.9.1` ([docker-compose.yml](docker-compose.yml)):
+Images are built with [pimod](https://github.com/Nature40/pimod) `v0.9.2` ([docker-compose.yml](docker-compose.yml)):
 
 ```sh
 docker-compose run --rm pimod pimod.sh tsOS-base.Pifile

@@ -7,6 +7,10 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+### Changed
+
+- Build with pimod v0.9.2 (Docker image, GitHub Action, and pidiff)
+
 ## [2026.9.1] - 2026-09-16
 
 ### Added

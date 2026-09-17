@@ -51,7 +51,7 @@ jobs:
           token: ${{ secrets.TSDEPLOY_REPO_READ }}
 
       - name: Run tsOS-base.Pifile
-        uses: Nature40/pimod@v0.9.1
+        uses: Nature40/pimod@v0.9.2
         with:
           pifile: tsOS-base.Pifile
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Generate update file with pidiff
         if: steps.get_latest_release.outputs.latest_release != ''
-        uses: Nature40/pimod/pidiff@master
+        uses: Nature40/pimod/pidiff@v0.9.2
         with:
           base_image: tsOS-base-arm64-${{ steps.get_latest_release.outputs.latest_release }}.img
           updated_image: tsOS-base-arm64-${{ github.ref_name }}.img
