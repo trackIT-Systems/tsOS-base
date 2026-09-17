@@ -9,7 +9,9 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ### Changed
 
+- Raspberry Pi OS Lite base image updated to 2026-09-15 (Trixie, kernel 6.18)
 - Build with pimod v0.9.2 (Docker image, GitHub Action, and pidiff)
+- WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
 
 ## [2026.9.1] - 2026-09-16
 
