@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Nice=10
-ExecStart=/usr/bin/filebrowser -d /etc/filebrowser/filebrowser.db -c /etc/filebrowser/filebrowser.yml --noauth 
+ExecStart=/usr/bin/filebrowser -c /etc/filebrowser/filebrowser.yml
 Restart=always
 RestartSec=10s
 

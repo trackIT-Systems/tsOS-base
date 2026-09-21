@@ -99,7 +99,7 @@ Core packages installed via `apt-get`:
 - chrony (replaces systemd-timesyncd)
 - gpsd, gpsd-clients
 - caddy (web server)
-- filebrowser (web file manager)
+- FileBrowser Quantum (web file manager)
 - overlayroot, dkms, udevil
 
 ### Custom Services

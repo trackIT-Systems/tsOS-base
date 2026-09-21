@@ -13,6 +13,7 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 - Build with pimod v0.9.2 (Docker image, GitHub Action, and pidiff)
 - WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
+- Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 
 ## [2026.9.1] - 2026-09-16
 

@@ -1,7 +1,29 @@
-address: "localhost"
-port: 8080
-baseurl: "/data/"
-root: "/data"
-
+server:
+  port: 8080
+  listen: 127.0.0.1
+  baseURL: "/data"
+  database: /etc/filebrowser/database.db
+  cacheDir: /tmp/filebrowser
+  disableUpdateCheck: true
+  sources:
+    - path: /data
+      name: data
+      config:
+        defaultEnabled: true
 auth:
-  method: "noauth"
+  adminUsername: pi
+  methods:
+    noauth: true
+http:
+  trustedHeaders:
+    - X-Forwarded-Proto
+    - X-Forwarded-Host
+    - X-Forwarded-For
+    - X-Real-IP
+userDefaults:
+  account:
+    permissions:
+      modify: true
+      create: true
+      delete: true
+      download: true

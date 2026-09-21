@@ -71,12 +71,13 @@ RUN apt-get install -y rpiboot
 # Install caddy
 RUN apt-get install -y caddy
 
-# Install filebrowser
+# Install FileBrowser Quantum
 if [[ "$ARCH" == "armhf" ]]; then
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.63.5/linux-armv7-filebrowser.tar.gz | tar xz filebrowser"
+    RUN curl -L -o filebrowser https://github.com/gtsteffaniak/filebrowser/releases/download/v1.5.6-stable/linux-armv7-filebrowser
 else
-    RUN sh -c "curl -L https://github.com/filebrowser/filebrowser/releases/download/v2.63.5/linux-${ARCH}-filebrowser.tar.gz | tar xz filebrowser"
+    RUN curl -L -o filebrowser https://github.com/gtsteffaniak/filebrowser/releases/download/v1.5.6-stable/linux-${ARCH}-filebrowser
 fi
+RUN chmod +x filebrowser
 RUN mv filebrowser /usr/bin/filebrowser
 
 # Install mosquitto

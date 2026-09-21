@@ -15,7 +15,7 @@ tsOS-base/
 │   ├── netplan/            # Network configuration
 │   ├── mosquitto/          # Mosquitto config
 │   ├── caddy/              # Caddy web server config
-│   ├── filebrowser/        # Filebrowser config
+│   ├── filebrowser/        # FileBrowser Quantum config
 │   ├── chrony/             # Time sync config
 │   └── ...
 ├── usr/                     # User-space programs
@@ -60,9 +60,10 @@ Git submodules containing Python packages and tools:
 ### `usr/local/bin/`
 
 Custom compiled binaries:
-- `filebrowser` - Downloaded and installed
 - `uhubctl` - Compiled from source
 - `gitui` - Downloaded binary
+
+FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/filebrowser`.
 
 ## Build Artifacts
 
