@@ -14,6 +14,8 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 - WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
+- Default `pi` password and zsh login shell are set in the image; first-boot `userconfig.service` is disabled so Trixie `userconf-pi` cannot reset the shell to bash
+- Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)
 
 ## [2026.9.1] - 2026-09-16
 

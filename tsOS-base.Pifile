@@ -184,16 +184,17 @@ RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 RUN systemctl enable copy-authorized-keys.service
 RUN systemctl enable copy-authorized-keys.path
 
-# Set default password
-RUN sh -c 'echo -n "pi:" > /boot/firmware/userconf.txt'
-RUN sh -c 'echo "natur" | openssl passwd -6 -stdin >> /boot/firmware/userconf.txt'
+# Set default password and login shell in the image (do not use userconf.txt;
+# Trixie userconf-pi always resets the shell to bash on first boot)
+RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -stdin)" | chpasswd -e'
+RUN usermod -s /bin/zsh pi
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
+RUN systemctl disable userconfig.service
 
 # Set elevated permissions
 RUN sudo usermod -aG netdev pi
-
-# Change default shell for pi user
-RUN chsh -s /bin/zsh pi
+# 1 == disable sudo password (Trixie no longer ships 010_pi-nopasswd)
+RUN sh -c 'SUDO_USER=pi raspi-config nonint do_sudo_pass 1'
 
 # Change default editor to vim
 RUN update-alternatives --set editor /usr/bin/vim.basic

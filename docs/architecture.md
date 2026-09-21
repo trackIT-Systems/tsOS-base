@@ -155,5 +155,6 @@ Runtime configuration via `/boot/firmware/`:
 
 - Read-only root filesystem
 - SSH keys managed via `copy-authorized-keys.service`
-- Default password set in `userconf.txt` (boot partition)
+- Default password and zsh login shell set in the image (`chpasswd` / `usermod`; first-boot `userconfig.service` is disabled)
+- Passwordless `sudo` for `pi` (`raspi-config nonint do_sudo_pass 1`)
 - NetworkManager for network security
