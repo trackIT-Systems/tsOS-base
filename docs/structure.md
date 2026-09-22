@@ -19,14 +19,14 @@ tsOS-base/
 │   ├── chrony/             # Time sync config
 │   └── ...
 ├── usr/                     # User-space programs
-│   └── local/bin/          # Custom binaries
+│   └── local/
+│       ├── bin/            # Custom binaries
+│       └── src/            # Application git submodules
 ├── var/                     # Variable data
 │   └── lib/                # Persistent state
-├── home/pi/                 # Pi user home (git submodules)
-│   ├── tsconfig/           # Configuration service
-│   ├── wittypi4/           # WittyPi support
-│   ├── pymqttutil/         # MQTT utilities
-│   └── ...
+├── home/pi/                 # Pi user home
+│   ├── .oh-my-zsh/         # Zsh framework
+│   └── .ssh/               # SSH keys
 ├── .github/workflows/       # CI/CD workflows
 ├── docker-compose.yml      # Build environment
 ├── tsOS-base.Pifile        # Build config (arm64)
@@ -52,6 +52,13 @@ System configuration files:
 
 ### `home/pi/`
 
+Pi user home:
+- `.oh-my-zsh` - Zsh framework (git submodule)
+- `.ssh` - SSH authorized keys
+- Permissions set to `pi:pi`
+
+### `usr/local/src/`
+
 Git submodules containing Python packages and tools:
 - Each submodule is installed via `pip install -e`
 - `.git` directories are preserved during build
@@ -59,8 +66,7 @@ Git submodules containing Python packages and tools:
 
 ### `usr/local/bin/`
 
-Custom compiled binaries:
-- `uhubctl` - Compiled from source
+Custom binaries:
 - `gitui` - Downloaded binary
 
 FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/filebrowser`.
@@ -73,14 +79,16 @@ FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/fileb
 
 ## Git Submodules
 
-Submodules in `home/pi/`:
+Submodules in `usr/local/src/`:
 - `tsconfig` - Main configuration service
 - `wittypi4` - WittyPi hardware support
 - `pymqttutil` - MQTT system reporting
 - `pysmartsolar` - SmartSolar integration
 - `vedirect_dump` - VE.Direct protocol
-- `uhubctl` - USB hub control
 - `Witty-Pi-4` - WittyPi reference
+- `tsupdate`, `tsschedule`, `tsflash`, `pysolarlife`, `vcgencmd`, `pyenvsense`
+
+Submodule in `home/pi/`:
 - `.oh-my-zsh` - Zsh framework
 
 Submodules are installed during build by copying `.git` directories and running `pip install -e`.

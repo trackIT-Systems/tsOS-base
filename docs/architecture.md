@@ -101,17 +101,17 @@ Core packages installed via `apt-get`:
 - caddy (web server)
 - FileBrowser Quantum (web file manager)
 - overlayroot, dkms, udevil
+- uhubctl (USB hub per-port power control)
 
 ### Custom Services
 
-Python-based services installed from git submodules:
+Python-based services installed from git submodules under `/usr/local/src`:
 - `tsconfig` - Configuration service (FastAPI)
 - `tsconfig-ble` - Bluetooth Low Energy service
 - `pymqttutil` - System statistics via MQTT
 - `wittypi4` - RTC and power management (DKMS module + Python daemon)
 - `pysmartsolar` - SmartSolar integration
 - `vedirect_dump` - VE.Direct protocol handler
-- `uhubctl` - USB hub control (compiled from source)
 
 ### Systemd Services
 

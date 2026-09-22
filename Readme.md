@@ -54,7 +54,7 @@ Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.
 
 ## Updates
 
-`tsupdate` applies OTA images using Raspberry Pi tryboot, with automatic rollback if the new image fails to boot. Operator overview: [docs/updatability.md](docs/updatability.md). Daemon details: [home/pi/tsupdate/README.md](home/pi/tsupdate/README.md).
+`tsupdate` applies OTA images using Raspberry Pi tryboot, with automatic rollback if the new image fails to boot. Operator overview: [docs/updatability.md](docs/updatability.md). Daemon details: [usr/local/src/tsupdate/README.md](usr/local/src/tsupdate/README.md).
 
 ## Hardware
 

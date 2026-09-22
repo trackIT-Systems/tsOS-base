@@ -1,42 +1,39 @@
-[submodule "home/pi/uhubctl"]
-	path = home/pi/uhubctl
-	url = https://github.com/mvp/uhubctl
 [submodule "home/pi/pymqttutil"]
-	path = home/pi/pymqttutil
+	path = usr/local/src/pymqttutil
 	url = https://github.com/trackIT-Systems/pymqttutil
 [submodule "home/pi/pysmartsolar"]
-	path = home/pi/pysmartsolar
+	path = usr/local/src/pysmartsolar
 	url = https://github.com/trackIT-Systems/pysmartsolar
 [submodule "home/pi/.oh-my-zsh"]
 	path = home/pi/.oh-my-zsh
 	url = https://github.com/ohmyzsh/ohmyzsh
 [submodule "home/pi/Witty-Pi-4"]
-	path = home/pi/Witty-Pi-4
+	path = usr/local/src/Witty-Pi-4
 	url = https://github.com/trackIT-Systems/Witty-Pi-4
 [submodule "home/pi/wittypi4"]
-	path = home/pi/wittypi4
+	path = usr/local/src/wittypi4
 	url = https://github.com/trackIT-Systems/wittypi4.git
 [submodule "home/pi/vedirect_dump"]
-	path = home/pi/vedirect_dump
+	path = usr/local/src/vedirect_dump
 	url = https://github.com/trackIT-Systems/vedirect_dump
 [submodule "home/pi/tsconfig"]
-	path = home/pi/tsconfig
+	path = usr/local/src/tsconfig
 	url = https://github.com/trackIT-Systems/tsconfig
 [submodule "home/pi/tsupdate"]
-	path = home/pi/tsupdate
+	path = usr/local/src/tsupdate
 	url = https://github.com/trackIT-Systems/tsupdate.git
 [submodule "home/pi/tsschedule"]
-	path = home/pi/tsschedule
+	path = usr/local/src/tsschedule
 	url = https://github.com/trackIT-Systems/tsschedule.git
 [submodule "home/pi/tsflash"]
-	path = home/pi/tsflash
+	path = usr/local/src/tsflash
 	url = https://github.com/trackIT-Systems/tsflash.git
 [submodule "home/pi/pysolarlife"]
-	path = home/pi/pysolarlife
+	path = usr/local/src/pysolarlife
 	url = https://github.com/trackIT-Systems/pysolarlife.git
 [submodule "home/pi/vcgencmd"]
-	path = home/pi/vcgencmd
+	path = usr/local/src/vcgencmd
 	url = https://github.com/trackIT-Systems/vcgencmd.git
 [submodule "home/pi/pyenvsense"]
-	path = home/pi/pyenvsense
+	path = usr/local/src/pyenvsense
 	url = https://github.com/trackIT-Systems/pyenvsense.git

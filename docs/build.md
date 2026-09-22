@@ -75,8 +75,8 @@ Add to appropriate `RUN apt-get install` section in Pifile.
 
 ### New Python Package
 
-1. Add as git submodule in `home/pi/`
-2. Install in Pifile: `RUN python3 -m pip install --no-deps -e /home/pi/<package>`
+1. Add as git submodule in `usr/local/src/`
+2. Install in Pifile: `RUN python3 -m pip install --no-deps -e /usr/local/src/<package>`
 3. Install apt dependencies separately if needed
 
 ### Custom Files

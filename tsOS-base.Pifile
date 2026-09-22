@@ -50,7 +50,6 @@ RUN apt-get install -y \
     vim \
     git \
     mosh \
-    libusb-1.0-0-dev \
     zsh
 
 # Install networking tools
@@ -122,33 +121,32 @@ INSTALL usr /usr
 # Copy git repositories
 RUN rm /home/pi/.oh-my-zsh/.git
 INSTALL .git/modules/home/pi/.oh-my-zsh /home/pi/.oh-my-zsh/.git
-RUN rm /home/pi/Witty-Pi-4/.git
-INSTALL .git/modules/home/pi/Witty-Pi-4 /home/pi/Witty-Pi-4/.git
-RUN rm /home/pi/pymqttutil/.git
-INSTALL .git/modules/home/pi/pymqttutil /home/pi/pymqttutil/.git
-RUN rm /home/pi/pysmartsolar/.git
-INSTALL .git/modules/home/pi/pysmartsolar /home/pi/pysmartsolar/.git
-RUN rm /home/pi/pysolarlife/.git
-INSTALL .git/modules/home/pi/pysolarlife /home/pi/pysolarlife/.git
-RUN rm /home/pi/tsconfig/.git
-INSTALL .git/modules/home/pi/tsconfig /home/pi/tsconfig/.git
-RUN rm /home/pi/tsupdate/.git
-INSTALL .git/modules/home/pi/tsupdate /home/pi/tsupdate/.git
-RUN rm /home/pi/tsflash/.git
-INSTALL .git/modules/home/pi/tsflash /home/pi/tsflash/.git
-RUN rm /home/pi/uhubctl/.git
-INSTALL .git/modules/home/pi/uhubctl /home/pi/uhubctl/.git
-RUN rm /home/pi/vedirect_dump/.git
-INSTALL .git/modules/home/pi/vedirect_dump /home/pi/vedirect_dump/.git
-RUN rm /home/pi/tsschedule/.git
-INSTALL .git/modules/home/pi/tsschedule /home/pi/tsschedule/.git
-RUN rm /home/pi/vcgencmd/.git
-INSTALL .git/modules/home/pi/vcgencmd /home/pi/vcgencmd/.git
-RUN rm /home/pi/pyenvsense/.git
-INSTALL .git/modules/home/pi/pyenvsense /home/pi/pyenvsense/.git
+RUN rm /usr/local/src/Witty-Pi-4/.git
+INSTALL .git/modules/home/pi/Witty-Pi-4 /usr/local/src/Witty-Pi-4/.git
+RUN rm /usr/local/src/pymqttutil/.git
+INSTALL .git/modules/home/pi/pymqttutil /usr/local/src/pymqttutil/.git
+RUN rm /usr/local/src/pysmartsolar/.git
+INSTALL .git/modules/home/pi/pysmartsolar /usr/local/src/pysmartsolar/.git
+RUN rm /usr/local/src/pysolarlife/.git
+INSTALL .git/modules/home/pi/pysolarlife /usr/local/src/pysolarlife/.git
+RUN rm /usr/local/src/tsconfig/.git
+INSTALL .git/modules/home/pi/tsconfig /usr/local/src/tsconfig/.git
+RUN rm /usr/local/src/tsupdate/.git
+INSTALL .git/modules/home/pi/tsupdate /usr/local/src/tsupdate/.git
+RUN rm /usr/local/src/tsflash/.git
+INSTALL .git/modules/home/pi/tsflash /usr/local/src/tsflash/.git
+RUN rm /usr/local/src/vedirect_dump/.git
+INSTALL .git/modules/home/pi/vedirect_dump /usr/local/src/vedirect_dump/.git
+RUN rm /usr/local/src/tsschedule/.git
+INSTALL .git/modules/home/pi/tsschedule /usr/local/src/tsschedule/.git
+RUN rm /usr/local/src/vcgencmd/.git
+INSTALL .git/modules/home/pi/vcgencmd /usr/local/src/vcgencmd/.git
+RUN rm /usr/local/src/pyenvsense/.git
+INSTALL .git/modules/home/pi/pyenvsense /usr/local/src/pyenvsense/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
+RUN chown -R pi:pi /usr/local/src
 
 #################################################
 ### basic configuration
@@ -268,11 +266,11 @@ otg_mode=1
 EOF
 
 # Install dependenies & enable WittyPi
-RUN cp -R /home/pi/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-1.0
+RUN cp -R /usr/local/src/wittypi4/rtc-pcf85063-wittypi4 /usr/src/rtc-pcf85063-wittypi4-1.0
 RUN sh -c 'for k in /lib/modules/6.18.*; do dkms install -k $(basename $k) rtc-pcf85063-wittypi4/1.0; done'
 
 ### compile overlays and enable hardware
-RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /home/pi/wittypi4/wittypi4-overlay.dts
+RUN dtc -O dtb -o /boot/firmware/overlays/wittypi4.dtbo /usr/local/src/wittypi4/wittypi4-overlay.dts
 
 ### enable wittypi on pi3 and pi4
 RUN tee -a /boot/firmware/config.txt <<EOF
@@ -293,8 +291,8 @@ EOF
 RUN apt-get install -y python3-astral python3-pytimeparse
 RUN python3 -m pip install --no-deps i2cdevice
 RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2025.2.2.tar.gz
-RUN python3 -m pip install --no-deps -e /home/pi/wittypi4
-RUN python3 -m pip install --no-deps -e /home/pi/tsschedule
+RUN python3 -m pip install --no-deps -e /usr/local/src/wittypi4
+RUN python3 -m pip install --no-deps -e /usr/local/src/tsschedule
 RUN systemctl enable tsschedule.service
 
 #################################################
@@ -318,8 +316,8 @@ RUN systemctl mask systemd-networkd-wait-online.service
 # install and enable enable tsconfig
 RUN apt-get install -y portaudio19-dev
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
-RUN python3 -m pip install --no-deps -e /home/pi/tsconfig
-INSTALL home/pi/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
+RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
+INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
 RUN systemctl enable tsconfig tsconfig-ble
 
 # install default config
@@ -327,12 +325,12 @@ RUN tsconfig zip -f -b forbid /home/pi/tsos-default-name_config.zip
 
 # install tsupdate
 RUN apt-get install -y python3-aiohttp python3-github gh
-RUN python3 -m pip install --no-deps -e /home/pi/tsupdate
+RUN python3 -m pip install --no-deps -e /usr/local/src/tsupdate
 RUN systemctl enable tsupdate
 
 # install tsflash
 RUN apt-get install -y python3-tqdm
-RUN python3 -m pip install --no-deps -e /home/pi/tsflash
+RUN python3 -m pip install --no-deps -e /usr/local/src/tsflash
 
 # enable devmon
 RUN systemctl enable devmon.service
@@ -349,34 +347,31 @@ RUN systemctl enable mosquitto.service
 # Install pysmartsolar
 RUN apt-get install -y python3-cbor2
 RUN python3 -m pip install --no-deps gatt
-RUN python3 -m pip install --no-deps -e /home/pi/pysmartsolar
+RUN python3 -m pip install --no-deps -e /usr/local/src/pysmartsolar
 
 # Install vedirect_dump
 RUN python3 -m pip install --no-deps ve_utils vedirect_m8
-RUN python3 -m pip install --no-deps -e /home/pi/vedirect_dump
+RUN python3 -m pip install --no-deps -e /usr/local/src/vedirect_dump
 
 # Install solarlife
 RUN apt-get install -y python3-bleak
-RUN python3 -m pip install --no-deps -e /home/pi/pysolarlife
+RUN python3 -m pip install --no-deps -e /usr/local/src/pysolarlife
 
 # Install vcgencmd
-RUN python3 -m pip install --no-deps -e /home/pi/vcgencmd
+RUN python3 -m pip install --no-deps -e /usr/local/src/vcgencmd
 
 # Install and enable pymqttutil
 RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse python3-dotenv
-RUN python3 -m pip install --no-deps -e /home/pi/pymqttutil
+RUN python3 -m pip install --no-deps -e /usr/local/src/pymqttutil
 RUN systemctl enable mqttutil.service
 
 # Install pyenvsense and modules
-RUN python3 -m pip install --no-deps -e /home/pi/pyenvsense
+RUN python3 -m pip install --no-deps -e /usr/local/src/pyenvsense
 RUN python3 -m pip install sensirion-i2c-sht3x==1.0.0 sensirion-i2c-sht4x==1.0.0 
 RUN systemctl enable envsense.service
 
 # Install uhubctl (dependency) and enable huaweicheck
-RUN sh -c 'cd /home/pi/uhubctl; make'
-RUN cp /home/pi/uhubctl/uhubctl /usr/local/sbin
-RUN cp /home/pi/uhubctl/udev/rules.d/52-usb.rules /etc/udev/rules.d
-
+RUN apt-get install -y uhubctl
 RUN systemctl enable huaweicheck.timer
 RUN systemctl enable wificheck.timer
 RUN systemctl enable wificheck.path
