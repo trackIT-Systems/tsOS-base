@@ -16,4 +16,4 @@ Technical documentation for developers working on tsOS-base.
 
 **Base**: Raspberry Pi OS Lite (Debian Trixie)  
 **Tool**: [pimod](https://github.com/Nature40/pimod)  
-**Architectures**: arm64, armhf
+**Architecture**: arm64

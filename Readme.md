@@ -2,7 +2,7 @@
 [![Build tsOS-base Images](https://github.com/trackIT-Systems/tsOS-base/actions/workflows/build.yml/badge.svg)](https://github.com/trackIT-Systems/tsOS-base/actions/workflows/build.yml)
 ![GitHub Release](https://img.shields.io/github/v/release/trackIT-Systems/tsOS-base)
 
-tsOS-base is a Raspberry Pi OS Lite (Debian Trixie) image for unattended field sensor stations. It ships two architectures: **arm64** (Raspberry Pi 3+ / Compute Module) and **armhf** (older Pi models).
+tsOS-base is a Raspberry Pi OS Lite (Debian Trixie) **arm64** image for unattended field sensor stations (Raspberry Pi 3+ / Compute Module).
 
 The root filesystem is read-only with a persistent overlay. Partition layout, overlayroot, and first-boot repartitioning are described in [docs/architecture.md](docs/architecture.md).
 
@@ -19,7 +19,7 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 
 ## Download and flash
 
-Images are published in [GitHub Releases](https://github.com/trackIT-Systems/tsOS-base/releases). Use the arm64 build for Pi 3 and newer; use armhf for older boards.
+Images are published in [GitHub Releases](https://github.com/trackIT-Systems/tsOS-base/releases). The arm64 image runs on Raspberry Pi 3 and newer.
 
 Flash with Raspberry Pi Imager or `dd`. Default hostname is `tsos-default-name` ([boot/firmware/cmdline.txt](boot/firmware/cmdline.txt)).
 
@@ -71,8 +71,6 @@ Images are built with [pimod](https://github.com/Nature40/pimod) `v0.9.2` ([dock
 
 ```sh
 docker-compose run --rm pimod pimod.sh tsOS-base.Pifile
-# armhf:
-docker-compose run --rm pimod pimod.sh tsOS-base-armhf.Pifile
 ```
 
 See [docs/build.md](docs/build.md) and [docs/structure.md](docs/structure.md).

@@ -29,8 +29,7 @@ tsOS-base/
 │   └── .ssh/               # SSH keys
 ├── .github/workflows/       # CI/CD workflows
 ├── docker-compose.yml      # Build environment
-├── tsOS-base.Pifile        # Build config (arm64)
-└── tsOS-base-armhf.Pifile # Build config (armhf)
+└── tsOS-base.Pifile        # Build config (arm64)
 ```
 
 ## Key Directories
@@ -74,7 +73,6 @@ FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/fileb
 ## Build Artifacts
 
 - `tsOS-base-arm64.img` - Final arm64 image
-- `tsOS-base-armhf.img` - Final armhf image
 - `.cache/` - Cached base images (created by pimod)
 
 ## Git Submodules

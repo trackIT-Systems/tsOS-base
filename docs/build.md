@@ -7,9 +7,6 @@ tsOS-base uses [pimod](https://github.com/Nature40/pimod) to build custom Raspbe
 ## Build Files
 
 - `tsOS-base.Pifile` - arm64 build (Raspberry Pi 3+)
-- `tsOS-base-armhf.Pifile` - armhf build (older Pi models)
-
-Both files are nearly identical, differing only in the `ARCH` variable.
 
 ## Build Process
 
@@ -19,7 +16,7 @@ Both files are nearly identical, differing only in the `ARCH` variable.
    - File installation (`INSTALL`)
    - Configuration changes (`RUN`)
    - Service enablement (`RUN systemctl enable`)
-3. **Output**: Produces `tsOS-base-${ARCH}.img`
+3. **Output**: Produces `tsOS-base-arm64.img`
 
 ## Pifile Structure
 
@@ -44,19 +41,15 @@ Both files are nearly identical, differing only in the `ARCH` variable.
 ## Building Locally
 
 ```sh
-# Build arm64
 docker-compose run --rm pimod pimod.sh tsOS-base.Pifile
-
-# Build armhf
-docker-compose run --rm pimod pimod.sh tsOS-base-armhf.Pifile
 ```
 
 ## CI/CD
 
 GitHub Actions builds on tag push:
 - Uses `Nature40/pimod@v0.9.2` action
-- Builds both architectures
-- Packages images as `.zip` files
+- Builds the arm64 image
+- Packages the image as a `.zip` file
 - Uploads to GitHub Releases
 
 See `.github/workflows/build.yml` for details.

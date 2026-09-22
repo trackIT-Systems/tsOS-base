@@ -1,8 +1,5 @@
-# Set default ARCH
-: ${ARCH:=arm64}
-
-FROM https://downloads.raspberrypi.com/raspios_lite_${ARCH}/images/raspios_lite_${ARCH}-2026-09-15/2026-09-15-raspios-trixie-${ARCH}-lite.img.xz
-TO "tsOS-base-${ARCH}.img"
+FROM https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2026-09-15/2026-09-15-raspios-trixie-arm64-lite.img.xz
+TO "tsOS-base-arm64.img"
 PUMP 1200M
 
 # Set os-release info
@@ -71,11 +68,7 @@ RUN apt-get install -y rpiboot
 RUN apt-get install -y caddy
 
 # Install FileBrowser Quantum
-if [[ "$ARCH" == "armhf" ]]; then
-    RUN curl -L -o filebrowser https://github.com/gtsteffaniak/filebrowser/releases/download/v1.5.6-stable/linux-armv7-filebrowser
-else
-    RUN curl -L -o filebrowser https://github.com/gtsteffaniak/filebrowser/releases/download/v1.5.6-stable/linux-${ARCH}-filebrowser
-fi
+RUN curl -L -o filebrowser https://github.com/gtsteffaniak/filebrowser/releases/download/v1.5.6-stable/linux-arm64-filebrowser
 RUN chmod +x filebrowser
 RUN mv filebrowser /usr/bin/filebrowser
 
