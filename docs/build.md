@@ -47,7 +47,7 @@ docker-compose run --rm pimod pimod.sh tsOS-base.Pifile
 ## CI/CD
 
 GitHub Actions builds on tag push:
-- Uses `Nature40/pimod@v0.9.2` action
+- Uses `Nature40/pimod@v0.9.3` action
 - Builds the arm64 image
 - Packages the image as a `.zip` file
 - Uploads to GitHub Releases

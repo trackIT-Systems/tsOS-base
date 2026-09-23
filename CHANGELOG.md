@@ -13,7 +13,7 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 - Source trees for application git submodules live under `/usr/local/src` instead of `/home/pi`
 - Install `uhubctl` from apt instead of building the git submodule
 - Raspberry Pi OS Lite base image updated to 2026-09-15 (Trixie, kernel 6.18)
-- Build with pimod v0.9.2 (Docker image, GitHub Action, and pidiff)
+- Build with pimod v0.9.3 (Docker image, GitHub Action, and pidiff)
 - WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
