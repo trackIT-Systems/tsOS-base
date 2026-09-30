@@ -104,16 +104,17 @@ RUN mkdir -p /media/root-rw
 RUN mkdir -p /media/root-ro
 RUN mkdir -p /data
 
-# Install custom folders 
+# Install custom folders
 INSTALL boot /boot
 INSTALL etc /etc
 INSTALL home /home
+INSTALL opt /opt
 INSTALL var /var
 INSTALL usr /usr
 
 # Copy git repositories
-RUN rm /home/pi/.oh-my-zsh/.git
-INSTALL .git/modules/home/pi/.oh-my-zsh /home/pi/.oh-my-zsh/.git
+RUN rm /opt/oh-my-zsh/.git
+INSTALL .git/modules/opt/oh-my-zsh /opt/oh-my-zsh/.git
 RUN rm /usr/local/src/pymqttutil/.git
 INSTALL .git/modules/home/pi/pymqttutil /usr/local/src/pymqttutil/.git
 RUN rm /usr/local/src/pysmartsolar/.git
@@ -166,6 +167,17 @@ RUN chmod 755       /root
 RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
 
+# oh-my-zsh: one shared, root-owned install used by both pi and root (not a
+# separate copy per account) - root:root, readable by both, writable by
+# neither, same "pi can read, not write" pattern as /usr/local/src.
+RUN chown -R root:root /opt/oh-my-zsh
+RUN chmod -R go-w /opt/oh-my-zsh
+
+# Same .zshrc content for root as for pi (it hardcodes ZSH=/opt/oh-my-zsh
+# rather than $HOME/.oh-my-zsh, so it works unmodified for either account).
+INSTALL home/pi/.zshrc /root/.zshrc
+RUN chown root:root /root/.zshrc
+
 # Fix permissions for network manager system connections
 RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 
@@ -177,6 +189,7 @@ RUN systemctl enable copy-authorized-keys.path
 # Trixie userconf-pi always resets the shell to bash on first boot)
 RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -stdin)" | chpasswd -e'
 RUN usermod -s /bin/zsh pi
+RUN usermod -s /bin/zsh root
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
 RUN systemctl disable userconfig.service
 

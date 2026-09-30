@@ -4,8 +4,8 @@
 [submodule "home/pi/pysmartsolar"]
 	path = usr/local/src/pysmartsolar
 	url = https://github.com/trackIT-Systems/pysmartsolar
-[submodule "home/pi/.oh-my-zsh"]
-	path = home/pi/.oh-my-zsh
+[submodule "opt/oh-my-zsh"]
+	path = opt/oh-my-zsh
 	url = https://github.com/ohmyzsh/ohmyzsh
 [submodule "home/pi/wittypi4"]
 	path = usr/local/src/wittypi4
