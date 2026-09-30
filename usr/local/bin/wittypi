@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-exec /usr/local/src/Witty-Pi-4/Software/wittypi/wittyPi.sh "$@"

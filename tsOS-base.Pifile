@@ -114,8 +114,6 @@ INSTALL usr /usr
 # Copy git repositories
 RUN rm /home/pi/.oh-my-zsh/.git
 INSTALL .git/modules/home/pi/.oh-my-zsh /home/pi/.oh-my-zsh/.git
-RUN rm /usr/local/src/Witty-Pi-4/.git
-INSTALL .git/modules/home/pi/Witty-Pi-4 /usr/local/src/Witty-Pi-4/.git
 RUN rm /usr/local/src/pymqttutil/.git
 INSTALL .git/modules/home/pi/pymqttutil /usr/local/src/pymqttutil/.git
 RUN rm /usr/local/src/pysmartsolar/.git
