@@ -5,6 +5,16 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+# Only needs to read i2c sensors and SoC temperature, read its boot-partition
+# config, and write CSV output to /data - never needed root. See
+# docs/security.md.
+DynamicUser=yes
+SupplementaryGroups=i2c
+ReadWritePaths=/data
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
 ExecStart=/usr/bin/env envsensed
 Restart=on-failure
 RestartSec=5

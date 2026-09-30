@@ -4,6 +4,19 @@ After=network.target
 
 [Service]
 Nice=10
+# filebrowser is unauthenticated (auth.methods.noauth: true) and reachable
+# through Caddy on the network - it used to run as root with no sandboxing
+# at all, so any vulnerability in it was an instant unauthenticated root
+# compromise. It only ever needs to touch /data (its one configured source)
+# and its own state directory; everything else is locked down. See
+# docs/security.md.
+DynamicUser=yes
+StateDirectory=filebrowser
+ReadWritePaths=/data
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
 ExecStart=/usr/bin/filebrowser -c /etc/filebrowser/filebrowser.yml
 Restart=always
 RestartSec=10s

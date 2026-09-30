@@ -2,7 +2,7 @@ server:
   port: 8080
   listen: 127.0.0.1
   baseURL: "/data"
-  database: /etc/filebrowser/database.db
+  database: /var/lib/filebrowser/database.db
   cacheDir: /tmp/filebrowser
   disableUpdateCheck: true
   sources:
