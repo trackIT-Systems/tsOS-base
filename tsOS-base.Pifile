@@ -116,25 +116,25 @@ INSTALL usr /usr
 RUN rm /opt/oh-my-zsh/.git
 INSTALL .git/modules/opt/oh-my-zsh /opt/oh-my-zsh/.git
 RUN rm /usr/local/src/pymqttutil/.git
-INSTALL .git/modules/home/pi/pymqttutil /usr/local/src/pymqttutil/.git
+INSTALL .git/modules/usr/local/src/pymqttutil /usr/local/src/pymqttutil/.git
 RUN rm /usr/local/src/pysmartsolar/.git
-INSTALL .git/modules/home/pi/pysmartsolar /usr/local/src/pysmartsolar/.git
+INSTALL .git/modules/usr/local/src/pysmartsolar /usr/local/src/pysmartsolar/.git
 RUN rm /usr/local/src/pysolarlife/.git
-INSTALL .git/modules/home/pi/pysolarlife /usr/local/src/pysolarlife/.git
+INSTALL .git/modules/usr/local/src/pysolarlife /usr/local/src/pysolarlife/.git
 RUN rm /usr/local/src/tsconfig/.git
-INSTALL .git/modules/home/pi/tsconfig /usr/local/src/tsconfig/.git
+INSTALL .git/modules/usr/local/src/tsconfig /usr/local/src/tsconfig/.git
 RUN rm /usr/local/src/tsupdate/.git
-INSTALL .git/modules/home/pi/tsupdate /usr/local/src/tsupdate/.git
+INSTALL .git/modules/usr/local/src/tsupdate /usr/local/src/tsupdate/.git
 RUN rm /usr/local/src/tsflash/.git
-INSTALL .git/modules/home/pi/tsflash /usr/local/src/tsflash/.git
+INSTALL .git/modules/usr/local/src/tsflash /usr/local/src/tsflash/.git
 RUN rm /usr/local/src/vedirect_dump/.git
-INSTALL .git/modules/home/pi/vedirect_dump /usr/local/src/vedirect_dump/.git
+INSTALL .git/modules/usr/local/src/vedirect_dump /usr/local/src/vedirect_dump/.git
 RUN rm /usr/local/src/tsschedule/.git
-INSTALL .git/modules/home/pi/tsschedule /usr/local/src/tsschedule/.git
+INSTALL .git/modules/usr/local/src/tsschedule /usr/local/src/tsschedule/.git
 RUN rm /usr/local/src/vcgencmd/.git
-INSTALL .git/modules/home/pi/vcgencmd /usr/local/src/vcgencmd/.git
+INSTALL .git/modules/usr/local/src/vcgencmd /usr/local/src/vcgencmd/.git
 RUN rm /usr/local/src/pyenvsense/.git
-INSTALL .git/modules/home/pi/pyenvsense /usr/local/src/pyenvsense/.git
+INSTALL .git/modules/usr/local/src/pyenvsense /usr/local/src/pyenvsense/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
