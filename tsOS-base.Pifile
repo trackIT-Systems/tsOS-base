@@ -175,8 +175,12 @@ RUN chmod 755   /home/pi
 RUN chmod 700   /home/pi/.ssh
 RUN chmod 644   /home/pi/.ssh/authorized_keys
 
-# Install root ssh files and fix permissions
-INSTALL home/pi/.ssh /root/.ssh
+# Install root ssh files and fix permissions. This is a manufacturer-
+# controlled key file (root/.ssh/authorized_keys in this repo, one entry per
+# named admin), independent of the operator-editable boot partition that
+# seeds pi's keys - see docs/security.md. Add/remove admin keys by editing
+# that file, not by copying pi's.
+INSTALL root/.ssh /root/.ssh
 RUN chown root:root /root
 RUN chown root:root /root/.ssh
 RUN chown root:root /root/.ssh/authorized_keys
@@ -214,6 +218,13 @@ RUN systemctl disable userconfig.service
 RUN sudo usermod -aG netdev pi
 # 1 == disable sudo password (Trixie no longer ships 010_pi-nopasswd)
 RUN sh -c 'SUDO_USER=pi raspi-config nonint do_sudo_pass 1'
+
+# Lock root's password entirely - no password login, no su fallback. See the
+# "No root password" section in docs/security.md for why: it removes a
+# shared secret that would otherwise need distributing, rotating and
+# protecting from capture in a pi shell session, in favor of the strictly
+# stronger SSH-key-only path already set up above.
+RUN passwd -l root
 
 # Change default editor to vim
 RUN update-alternatives --set editor /usr/bin/vim.basic

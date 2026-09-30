@@ -1,13 +1,25 @@
 [Unit]
-Description=Copy /boot/firmware/authorized_keys file to root/pi user .ssh/authorized_keys2
+Description=Copy /boot/firmware/authorized_keys file to pi's .ssh/authorized_keys2
 ConditionPathExists=/boot/firmware/authorized_keys
 After=local-fs.target
 
 [Service]
+# Runs as pi, and only ever writes into pi's own home directory now - see
+# docs/security.md. It used to also run as root and copy into
+# /root/.ssh/authorized_keys2, which meant anyone who could write the boot
+# partition (the whole point of this file) could grant themselves root SSH
+# access; root's keys are manufacturer-controlled now (root/.ssh in this
+# repo), independent of the boot partition entirely.
+#
+# Running this as pi instead of root also closes a separate hole: as root,
+# this service's `cp` would follow a symlink pi planted at
+# ~/.ssh/authorized_keys2 and write root-derived content wherever that
+# symlink pointed - pi's own `cp` can only reach what pi could already
+# write directly.
+User=pi
+Group=pi
 UMask=0177
-ExecStart=/usr/bin/cp /boot/firmware/authorized_keys /root/.ssh/authorized_keys2
 ExecStart=/usr/bin/cp /boot/firmware/authorized_keys /home/pi/.ssh/authorized_keys2
-ExecStart=/usr/bin/chown pi:pi /home/pi/.ssh/authorized_keys2
 ExecStart=/usr/bin/chmod 644 /home/pi/.ssh/authorized_keys2
 Type=oneshot
 StandardOutput=journal
