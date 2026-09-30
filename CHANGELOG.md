@@ -7,6 +7,38 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 ## [Unreleased]
 
+**This release changes the root/pi privilege model - see [docs/security.md](docs/security.md).
+It ships as a reflash boundary: no delta update is published into it, existing devices keep
+today's model until replaced or re-flashed.**
+
+### Security
+
+- `pi` no longer has general sudo (was passwordless via `raspi-config nonint do_sudo_pass 1`,
+  which itself was added earlier in this Unreleased cycle - see below); it's removed from the
+  `sudo`, `adm` and `netdev` groups. Its only privileged actions are an explicit `systemctl
+  restart` allowlist and a wrapper into `tsconfig`'s new `app.privileged` module, both gated by
+  `etc/sudoers.d/tsos-pi`.
+- `root` has no password at all (`passwd -l root`) and is reachable only via SSH with a
+  manufacturer key (`root/.ssh/authorized_keys`, independent of the boot partition). SSH host
+  keys are no longer copied to `/root/.ssh` from the operator-editable boot partition.
+- `/boot/firmware` is now root-owned (`0755`) instead of world-writable; `/usr/local/src` is
+  now `root:root` instead of `pi:pi`. `tsconfig.service` runs as `pi` and writes configuration,
+  restarts services, and changes network settings through the new privileged helper instead of
+  directly.
+- Samba now shares only `/data`, not all of `/media` (which included the boot partition and a
+  read-only root filesystem mount).
+- `filebrowser` and `envsense` run with `DynamicUser`/`ProtectSystem=strict` sandboxing instead
+  of unsandboxed root.
+- `tsupdate` only accepts update sources from the `trackIT-Systems` GitHub org (enforced in
+  code), and verifies cached/downloaded files against the GitHub API's asset digest instead of
+  trusting the (world-writable) download cache by name.
+- The web shell execs the operator's own login shell directly instead of `su`-ing to a
+  separately configurable user.
+
+### Fixed
+
+- Explicitly install `modemmanager` (no longer pulled in by default on Trixie) ([#33](https://github.com/trackIT-Systems/tsOS-base/issues/33))
+
 ### Changed
 
 - Dropped armhf builds; images are arm64 only
@@ -18,7 +50,7 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 - Default `pi` password and zsh login shell are set in the image; first-boot `userconfig.service` is disabled so Trixie `userconf-pi` cannot reset the shell to bash
-- Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)
+- ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
 
 ## [2026.9.1] - 2026-09-16
 
