@@ -157,6 +157,24 @@ RUN chmod -R go-w /usr/local/src
 # doesn't need updating whenever a submodule is added or removed.
 RUN sh -c 'for d in /usr/local/src/*/; do git config --system --add safe.directory "${d%/}"; done'
 
+# polkitd provides the polkit D-Bus service (the JS .rules engine, and
+# pkcheck) that every etc/polkit-1/rules.d/*.rules file needs to actually be
+# evaluated; pkexec is a separate binary package on Debian/Raspberry Pi OS
+# (Trixie split what used to be the single policykit-1 package in two).
+# Neither ships with the base image the way `sudo` does - unlike sudo, `pi`
+# never had any polkit-mediated access before this design, so nothing
+# already pulled these in as a dependency.
+RUN apt-get install -y polkitd pkexec
+
+# pi's privileged helper: a root-owned wrapper (not writable by pi), run as
+# root via pkexec, authorized by the systems.trackit.tsos.tsconfig-privileged
+# polkit action (usr/share/polkit-1/actions/) plus a rule granting pi
+# (etc/polkit-1/rules.d/30-tsos-privileged.rules). It execs into tsconfig's
+# app.privileged module. See docs/security.md - `pi` has no sudo access at
+# all, so there is no sudoers drop-in for this any more.
+RUN chown root:root /usr/local/sbin/tsconfig-privileged
+RUN chmod 755 /usr/local/sbin/tsconfig-privileged
+
 #################################################
 ### basic configuration
 
@@ -214,10 +232,32 @@ RUN usermod -s /bin/zsh root
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
 RUN systemctl disable userconfig.service
 
-# Set elevated permissions
-RUN sudo usermod -aG netdev pi
-# 1 == disable sudo password (Trixie no longer ships 010_pi-nopasswd)
-RUN sh -c 'SUDO_USER=pi raspi-config nonint do_sudo_pass 1'
+# pi has no sudo access at all and no root password exists at all (see
+# docs/security.md) - root is reachable only over SSH with one of the
+# manufacturer keys installed above. Every privileged capability pi has is
+# authorized by an explicit, committed polkit rule instead (or, for logs,
+# plain group membership - journald gates journal reads by file permission,
+# not polkit). Remove pi from `sudo` (full root via pi's own known password)
+# and `adm` (would grant broad /var/log/*.log text-file access - broader
+# than the `systemd-journal` grant below, which is journal-reads-only).
+# `|| true` because group membership varies by base image and a missing
+# membership isn't a failure.
+#
+# pi stays in `netdev` (the Raspberry Pi OS default), deliberately: it's
+# pi's passwordless path to NetworkManager, gated by the explicit polkit
+# rule at etc/polkit-1/rules.d/10-tsos-netdev.rules - see docs/security.md's
+# "Service control" section for the trade-off this makes against the
+# previous root-mediated nm-* ops.
+RUN sh -c 'deluser pi sudo || true'
+RUN sh -c 'deluser pi adm || true'
+
+# pi is NOT a default member of `systemd-journal` (unlike `netdev` above),
+# so this needs an explicit add: full journal read access (every unit,
+# kernel, everything) - the direct equivalent of the netdev/polkit pattern,
+# since there is no polkit action for journal reads. A deliberate
+# broadening from the previous per-unit allowlist app.privileged's `logs`
+# op enforced - see docs/security.md's "Service control" section.
+RUN usermod -aG systemd-journal pi
 
 # Lock root's password entirely - no password login, no su fallback. See the
 # "No root password" section in docs/security.md for why: it removes a

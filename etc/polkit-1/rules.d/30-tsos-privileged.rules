@@ -1,0 +1,15 @@
+// Grants `pi` passwordless authorization to run /usr/local/sbin/tsconfig-privileged as root
+// via pkexec - see usr/share/polkit-1/actions/systems.trackit.tsos.tsconfig-privileged.policy
+// for the action definition (pinned to that exact executable path via the
+// org.freedesktop.policykit.exec.path annotation - pkexec refuses to run anything whose
+// canonicalized path doesn't match). See docs/security.md's "Service control" section.
+//
+// This decides ONLY whether `pi` may invoke the wrapper at all - exactly the role sudoers
+// played before. It is not the argument-validation layer: app.privileged.ops re-validates
+// every argument itself regardless of what's passed here (see app/privileged/__init__.py in
+// the tsconfig source).
+polkit.addRule(function(action, subject) {
+    if (action.id == "systems.trackit.tsos.tsconfig-privileged" && subject.user == "pi") {
+        return polkit.Result.YES;
+    }
+});

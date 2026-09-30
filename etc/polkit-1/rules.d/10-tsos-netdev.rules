@@ -1,0 +1,26 @@
+// Grants members of the `netdev` group (pi, in tsOS-base's default group
+// membership - see tsOS-base.Pifile) full, passwordless control of
+// NetworkManager: modifying/adding/activating connections, reloading, and
+// reading secrets (PSK, GSM password/PIN).
+//
+// This is the authorization boundary for NetworkManager access - see
+// docs/security.md's "Network management" section. It replaces an earlier
+// design where `pi` had no NetworkManager access at all and every nmcli
+// write went through a root-owned sudo-mediated wrapper that re-validated
+// connection names and property names against a fixed allowlist. That
+// allowlist bought defense-in-depth against a compromised/buggy tsconfig
+// process, at the cost of operators (and anyone debugging over SSH as pi)
+// being unable to touch NetworkManager directly at all. Granting native,
+// coarse-grained NetworkManager control back to `pi` was a deliberate
+// trade-off in favor of operator/debugging flexibility.
+//
+// Committed explicitly here rather than relying on whatever polkit rule (if
+// any) the NetworkManager package happens to ship for the netdev group on a
+// given Debian/Raspberry Pi OS release - that behavior isn't something this
+// project controls or wants to depend on implicitly.
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") === 0 &&
+        subject.isInGroup("netdev")) {
+        return polkit.Result.YES;
+    }
+});

@@ -156,5 +156,6 @@ Runtime configuration via `/boot/firmware/`:
 - SSH keys managed via `copy-authorized-keys.service` (runs as `pi`; `root`'s keys are a
   separate manufacturer-controlled file, not sourced from the boot partition)
 - Default password and zsh login shell set in the image (`chpasswd` / `usermod`; first-boot `userconfig.service` is disabled)
-- Passwordless `sudo` for `pi` (`raspi-config nonint do_sudo_pass 1`)
+- `pi` has no general sudo (only an explicit restart allowlist); `root` has no password at
+  all, reachable only via SSH with a manufacturer key - see [Security Design](security.md)
 - NetworkManager for network security

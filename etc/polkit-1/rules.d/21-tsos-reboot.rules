@@ -1,0 +1,8 @@
+// Grants `pi` passwordless reboot via logind's native polkit action - see
+// docs/security.md's "Service control" section. A separate file from 20-tsos-systemctl.rules
+// since org.freedesktop.login1.* is logind's action namespace, not systemd1's.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.login1.reboot" && subject.user == "pi") {
+        return polkit.Result.YES;
+    }
+});

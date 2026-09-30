@@ -1,0 +1,33 @@
+// Grants `pi` passwordless control of every non-persistent systemd action
+// (org.freedesktop.systemd1.manage-units: start/stop/restart/reload/kill/reset-failed/...) on
+// a fixed allowlist of units - see docs/security.md's "Service control" section. Mirrors
+// 10-tsos-netdev.rules's pattern, applied to systemd instead of NetworkManager.
+//
+// Deliberately does NOT grant org.freedesktop.systemd1.manage-unit-files (enable/disable/mask/
+// link/preset/revert) - a categorically separate action id this rule never matches, so
+// persistent unit-file changes stay denied (falling through to the vendor default,
+// auth_admin*) regardless of what's granted here. That split is what gives "any temporary
+// action, never a persistent one" without needing to filter by verb at all.
+//
+// Keyed on subject.user (not a group, the way the NetworkManager rule uses `netdev`) because
+// there's no pre-existing group with "may act on these units" semantics - inventing one just
+// to re-derive a single uid check would add indirection with no benefit.
+//
+// This allowlist is deliberately hardcoded here, not sourced from tsconfig.yml's operator-
+// editable services list - that file may only narrow what an operator sees, never widen what
+// they may act on.
+const TSOS_MANAGED_UNITS = [
+    "tsconfig.service", "tsconfig-ble.service", "tsschedule.service",
+    "tsupdate.service", "mqttutil.service", "mosquitto.service",
+    "envsense.service", "filebrowser.service", "gpsd.service",
+    "devmon.service", "wg-quick@wireguard.service",
+    "radiotracking.service", "soundscapepipe.service",
+];
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        TSOS_MANAGED_UNITS.indexOf(action.lookup("unit")) != -1 &&
+        subject.user == "pi") {
+        return polkit.Result.YES;
+    }
+});

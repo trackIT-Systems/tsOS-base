@@ -1,0 +1,30 @@
+#!/bin/sh
+# Sudoers-granted entry point for pi's privileged operations. Root-owned,
+# not writable by pi (see etc/sudoers.d/tsos-pi and docs/security.md).
+#
+# This is a separate, minimal wrapper rather than exec'ing `tsconfig` (the
+# full CLI) directly, for two reasons:
+#
+# 1. Namespace: the full `tsconfig` CLI also has `zip`/`system-reset`
+#    subcommands that trust their input in ways only appropriate for an
+#    already-privileged caller (e.g. a whole cmdline.txt, or a wireguard.conf
+#    with hook directives). This wrapper can only ever reach
+#    `app.privileged`, whose every operation independently re-validates its
+#    own input - see app/privileged/__init__.py in the tsconfig source.
+# 2. Isolation: `-I` (Python isolated mode) ignores PYTHON* environment
+#    variables and pi's user site-packages (~/.local), so a .pth file or
+#    module planted there by pi is never imported here. `env -i` on top of
+#    that means nothing in pi's own shell/service environment reaches this
+#    process at all - not even indirectly - except the fixed variable set
+#    explicitly below.
+#
+# sudoers grants `tsconfig-privileged *` (wildcard) - safe because every
+# argument is re-validated by app.privileged itself, not by sudoers pattern
+# matching.
+
+cd /usr/local/src/tsconfig || exit 1
+
+exec env -i \
+    PATH=/usr/bin:/bin \
+    TSCONFIG_CONFIG_FILE=/boot/firmware/tsconfig.yml \
+    /usr/bin/python3 -I -m app.privileged "$@"
