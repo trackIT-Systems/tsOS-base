@@ -50,7 +50,7 @@ Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.
 
 ## Storage
 
-`/data` is the station data volume: ExFAT `datafs` after first-boot repartition, or a USB disk bind-mounted by `devmon`. Filebrowser roots at `/data`. Samba share `[media]` exports `/media` guest-writable.
+`/data` is the station data volume: ExFAT `datafs` after first-boot repartition, or a USB disk bind-mounted by `devmon`. Filebrowser roots at `/data`. Samba share `[data]` exports `/data` guest-writable.
 
 ## Updates
 

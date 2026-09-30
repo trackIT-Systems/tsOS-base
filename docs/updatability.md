@@ -45,7 +45,7 @@ Both partitions are identical in size and structure, allowing one to serve as a 
    - Or install a new system image to clonefs partition
 
 2. **Configure Tryboot**
-   - Create `tryboot.txt` in `/boot/firmware/` (or `/media/boot/`)
+   - Create `tryboot.txt` in `/boot/firmware/`
    - Create `tryline.txt` with kernel parameters pointing to partition 3:
      ```
      root=/dev/mmcblk0p3 rootfstype=ext4 ...

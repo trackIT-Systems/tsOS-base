@@ -13,8 +13,8 @@ The system uses GPT partition table (converted from MBR on first boot via initra
 1. **bootfs** (Partition 1)
    - Type: EFI System Partition (EF00)
    - Filesystem: VFAT
-   - Mount: `/boot/firmware` (read-write)
-   - Bind mount: `/media/boot` (user access)
+   - Mount: `/boot/firmware` (root-owned, `0755` - readable by everyone, writable by root
+     only; see [Security Design](security.md))
    - Contains: Kernel, initramfs, device tree, runtime configs
 
 2. **rootfs** (Partition 2)
@@ -62,12 +62,11 @@ Runtime changes are written to upperfs overlay and persist across reboots. Base 
 
 ```
 proc                    /proc               proc    defaults                                0 0
-LABEL=bootfs            /boot/firmware      vfat    defaults,user,umask=000,fmask=111       0 2
+LABEL=bootfs            /boot/firmware      vfat    defaults,uid=0,gid=0,dmask=0022,fmask=0133  0 2
 /dev/root               /                   ext4    defaults,noatime                        0 1
 LABEL=datafs            /media/datafs       exfat   defaults,user,umask=000,fmask=111,nofail,x-systemd.device-timeout=5  0 2
 
-# Bind mounts for user access
-/boot/firmware          /media/boot         none    defaults,bind,x-mount.mkdir             0 0
+# Bind mount for user access
 /media/datafs           /data               none    defaults,bind,nofail                    0 0
 ```
 

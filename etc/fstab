@@ -1,8 +1,13 @@
 proc                    /proc               proc    defaults                                0 0
-LABEL=bootfs            /boot/firmware      vfat    defaults,user,umask=000,fmask=111       0 2
+# bootfs: root-owned, 0755 (readable by everyone, writable by root only -
+# see docs/security.md). VFAT has no per-file owner/permission bits, so this
+# is expressed via mount options: no `user` (that option lets any user mount
+# it, and implies noexec/nosuid/nodev, but more importantly signals "this is
+# meant to be user-writable", which it no longer is), uid=0/gid=0, dmask
+# giving directories 0755 and fmask giving files 0644.
+LABEL=bootfs            /boot/firmware      vfat    defaults,uid=0,gid=0,dmask=0022,fmask=0133  0 2
 /dev/root               /                   ext4    defaults,noatime                        0 1
 LABEL=datafs            /media/datafs       exfat   defaults,user,umask=000,fmask=111,nofail,x-systemd.device-timeout=5  0 2
 
 # mounts for user-access
-/boot/firmware          /media/boot         none    defaults,bind,x-mount.mkdir             0 0
 /media/datafs           /data               none    defaults,bind,nofail                    0 0
