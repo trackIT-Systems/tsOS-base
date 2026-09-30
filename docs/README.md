@@ -9,6 +9,7 @@ Technical documentation for developers working on tsOS-base.
 - **[Project Structure](structure.md)** - Repository organization
 - **[Updatability](updatability.md)** - Dual-boot update mechanism and tryboot
 - **[Hardware Watchdog](watchdog.md)** - Raspberry Pi hardware watchdog timer configuration
+- **[Security Design](security.md)** - `root`/`pi` privilege separation model
 
 ## Quick Reference
 
