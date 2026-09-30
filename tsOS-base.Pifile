@@ -139,7 +139,23 @@ INSTALL .git/modules/usr/local/src/pyenvsense /usr/local/src/pyenvsense/.git
 
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
-RUN chown -R pi:pi /usr/local/src
+
+# Application source trees: root-owned, readable by pi (e.g. to inspect
+# installed code while debugging) but not writable - pi must not be able to
+# modify what actually runs. See docs/security.md. This used to be
+# chown -R pi:pi, on the theory that `pip install -e` needed it - it
+# doesn't; every `pip install -e` below runs as root regardless of who owns
+# the target directory, since the whole Pifile runs as root at build time.
+RUN chown -R root:root /usr/local/src
+RUN chmod -R go-w /usr/local/src
+
+# Root now owns /usr/local/src, so `git` commands pi runs there (e.g. to
+# inspect installed code) would otherwise fail with "detected dubious
+# ownership" - allow it explicitly for every submodule directory found
+# there, rather than disabling the safety check globally with
+# safe.directory=*. A loop instead of one line per submodule so this
+# doesn't need updating whenever a submodule is added or removed.
+RUN sh -c 'for d in /usr/local/src/*/; do git config --system --add safe.directory "${d%/}"; done'
 
 #################################################
 ### basic configuration
