@@ -8,6 +8,19 @@ on:
 permissions:
   contents: write
 
+env:
+  # The tag of the security-hardening release (docs/security.md): root/pi
+  # privilege separation, root-owned boot partition and source trees, etc.
+  # A device on any release older than this is on an incompatible security
+  # model, so no delta update is published into it - it needs a fresh
+  # reflash instead (see "Migration" in docs/security.md). Update this to
+  # this release's actual tag once it's cut. Until then it's a placeholder
+  # that sorts after any real calver tag (YYYY.M.PATCH), so every release
+  # currently looks older than the baseline and delta generation is always
+  # skipped - safe-by-default rather than silently publishing a delta
+  # across the security boundary if this got forgotten.
+  DELTA_BASELINE: "9999.12.999"
+
 jobs:
   release:
     runs-on: ubuntu-24.04-arm
@@ -76,8 +89,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download previous release image
+      - name: Check delta baseline
+        id: check_baseline
         if: steps.get_latest_release.outputs.latest_release != ''
+        run: |
+          PREVIOUS_TAG="${{ steps.get_latest_release.outputs.latest_release }}"
+          BASELINE="${{ env.DELTA_BASELINE }}"
+          # Strip a leading "v" defensively in case a tag is ever prefixed
+          # that way; this repo's calver tags aren't, but the comparison
+          # shouldn't silently misbehave if that ever changes.
+          NEWEST=$(printf '%s\n%s\n' "${PREVIOUS_TAG#v}" "${BASELINE#v}" | sort -V | tail -n1)
+          if [ "$NEWEST" = "${PREVIOUS_TAG#v}" ]; then
+            # PREVIOUS_TAG is at least as new as BASELINE (this also covers
+            # PREVIOUS_TAG == BASELINE, which sorts as a tie either way):
+            # proceed with the delta.
+            echo "skip_delta=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_delta=true" >> "$GITHUB_OUTPUT"
+            echo "Previous release $PREVIOUS_TAG is older than the security baseline $BASELINE - skipping delta update generation (see docs/security.md, Migration)."
+          fi
+
+      - name: Download previous release image
+        if: steps.get_latest_release.outputs.latest_release != '' && steps.check_baseline.outputs.skip_delta != 'true'
         run: |
           PREVIOUS_TAG="${{ steps.get_latest_release.outputs.latest_release }}"
           echo "Downloading tsOS-base-arm64-${PREVIOUS_TAG}.zip"
@@ -88,7 +121,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate update file with pidiff
-        if: steps.get_latest_release.outputs.latest_release != ''
+        if: steps.get_latest_release.outputs.latest_release != '' && steps.check_baseline.outputs.skip_delta != 'true'
         uses: Nature40/pimod/pidiff@v0.9.3
         with:
           base_image: tsOS-base-arm64-${{ steps.get_latest_release.outputs.latest_release }}.img
@@ -99,7 +132,7 @@ jobs:
           rsync_options: --exclude-from=.pidiffignore
 
       - name: Upload update file to release
-        if: steps.get_latest_release.outputs.latest_release != '' && startsWith(github.ref, 'refs/tags/')
+        if: steps.get_latest_release.outputs.latest_release != '' && steps.check_baseline.outputs.skip_delta != 'true' && startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
