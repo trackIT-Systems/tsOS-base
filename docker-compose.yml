@@ -8,4 +8,5 @@ services:
     working_dir: /tsOS-base
     environment:
       - IMG
+      - TSOS_ROOT_PASSWORD
     command: pimod.sh tsOS-base.Pifile

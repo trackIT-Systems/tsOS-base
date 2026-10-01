@@ -73,6 +73,13 @@ Images are built with [pimod](https://github.com/Nature40/pimod) `v0.9.3` ([dock
 docker-compose run --rm pimod pimod.sh tsOS-base.Pifile
 ```
 
+Optionally set `TSOS_ROOT_PASSWORD` to give `root` a real password (otherwise it stays locked, the
+default) — see [docs/security.md](docs/security.md), "Root password (build-time, optional)":
+
+```sh
+TSOS_ROOT_PASSWORD=<your-password> docker-compose run --rm pimod pimod.sh tsOS-base.Pifile
+```
+
 See [docs/build.md](docs/build.md) and [docs/structure.md](docs/structure.md).
 
 ## Further reading

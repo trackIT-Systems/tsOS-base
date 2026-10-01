@@ -28,7 +28,10 @@ domain:
 
 - Every privileged action `tsconfig` performs on `pi`'s behalf goes through the same gate an
   interactive `pi` shell session would hit (see "Service control" below). A bug or injection in
-  `tsconfig` is capped at what `pi` could already do, not instant root.
+  `tsconfig` is capped at what `pi` could already do, not instant root — **except when a
+  build-time `root` password has been configured** (see "Root password (build-time, optional)"
+  below), in which case `pi` can reach `root` via `su`, by design, the same as any `pi` session
+  can.
 - **Implemented:** `tsconfig.service` runs as `pi` and has **no sudo access of any kind** —
   `etc/sudoers.d/tsos-pi` doesn't exist. Every privileged operation is authorized by one of
   three mechanisms, whichever is native to what's being controlled: a native polkit action
@@ -127,35 +130,73 @@ boot partition, and individually issued per admin.**
   grant themselves root. It currently has **one entry** (the existing
   `hoechst@trackit.systems` key); more admins should be added here, one line each, before a
   real release ships (see Open items for the process question).
-- `sshd_config` enforces `PermitRootLogin prohibit-password`
+- `sshd_config` sets `PermitRootLogin yes`
   ([etc/ssh/sshd_config.d/10-tsos.conf](../etc/ssh/sshd_config.d/10-tsos.conf)) — root can
-  only authenticate over SSH with one of the manufacturer keys above.
+  always authenticate over SSH with one of the manufacturer keys above; it can *also*
+  authenticate with a password over SSH if a build-time `TSOS_ROOT_PASSWORD` was configured (see
+  "Root password (build-time, optional)" below) — with none configured, root stays
+  password-locked and this setting has no practical effect, same as `prohibit-password` would.
 
-### No root password
+### Root password (build-time, optional)
 
-**SSH with a manufacturer key is the only way to become `root`.** `root`'s password is locked
-(`passwd -l root`), so `su` to root, root console login and password-based SSH are all
-impossible. Together with the next point, there is no path from a `pi` session to `root` at
-all — an admin who is logged in as `pi` opens a separate SSH session as `root` with their own
-key.
+**SSH with a manufacturer key always works, independent of everything below** — `root`'s login
+shell is set to `zsh` unconditionally ([tsOS-base.Pifile](../tsOS-base.Pifile)) regardless of the
+choice described here, so key-based SSH access never depends on it. `sshd_config` now sets
+`PermitRootLogin yes` ([etc/ssh/sshd_config.d/10-tsos.conf](../etc/ssh/sshd_config.d/10-tsos.conf))
+rather than `prohibit-password`, so password-based SSH is also possible whenever a password
+exists — see below.
+
+**Whether `root` has a usable password at all is now a build-time decision**, not a fixed
+property of every image built from this repo: the image build reads a `TSOS_ROOT_PASSWORD`
+environment variable (passed through `docker-compose.yml` to `pimod`, never committed to this
+repo as a literal value, unlike `pi`'s baked-in default above).
+
+- **If `TSOS_ROOT_PASSWORD` is unset** — the default for anyone building from this public repo
+  without supplying their own value — `root` stays password-locked (`passwd -l root`) exactly
+  as in the original design: `su` to root, root console login, and password-based SSH are all
+  impossible (regardless of `PermitRootLogin yes` — there's no password to authenticate with),
+  and there is no path from a `pi` session to `root` at all.
+- **If `TSOS_ROOT_PASSWORD` is set**, `root` gets that password
+  (`chpasswd -e` on an `openssl passwd -6` hash, the same convention used for `pi`'s default
+  above). This is a **deliberate, explicit departure from "no path from `pi` to `root`"**, in two
+  ways at once: `su` from an authenticated `pi` session — over SSH, or through `tsconfig`'s
+  existing web shell
+  ([usr/local/src/tsconfig/app/routers/shell.py](../usr/local/src/tsconfig/app/routers/shell.py),
+  unmodified by this) — now reaches a real root shell; and password-based SSH login as `root`
+  directly now also works, alongside the existing key-based login. Both were accepted together:
+  an operator/admin already in a `pi` session has a way to reach `root` without a separate SSH
+  session and key, and `root` itself becomes reachable by password over the network, not only by
+  key.
+- **Whoever builds the image controls this secret's uniqueness and rotation — that choice is
+  now outside this repo's scope.** A builder who reuses one fixed `TSOS_ROOT_PASSWORD` across an
+  entire fleet (easy to do by accident, e.g. one CI secret reused for every build) reintroduces
+  the same shared-secret-across-devices risk the rest of this document argues against
+  elsewhere; this repo's job is to apply whatever value is supplied correctly, not to enforce
+  that it's unique per device.
+- Once set, this password is reachable by anyone who can reach a `pi` session — and per the "`pi`
+  access is network access" known weakness below, that currently includes anyone who can reach
+  the unauthenticated `tsconfig` web shell over the network, not just a `pi` SSH session.
+
+The rest of this section's reasoning is unaffected by this choice either way:
 
 - **`pi` has no sudo access at all.** `pi` is removed from the `sudo` group (`deluser pi sudo`)
   — Raspberry Pi OS adds it by default, and `%sudo ALL=(ALL:ALL) ALL` plus `pi`'s known
   password would otherwise be a direct path to root. There is no sudoers drop-in for `pi`
   either — `etc/sudoers.d/tsos-pi` was removed once every capability it granted moved to
   polkit or plain group membership (see "Service control" below); `pi` reaches root exactly
-  once, for one narrow, still-root-mediated case, and that's through `pkexec`, not sudo.
+  once through this mechanism, plus the narrow, still-root-mediated `pkexec` case, never sudo.
 - `pi` is also removed from `adm` (would grant broad `/var/log/*.log` text-file access) but
   **added to `systemd-journal`** — narrower than `adm` (journal reads only), but still a real
   broadening from this design's original stance: full journal read access for every unit,
   kernel included, not a per-unit allowlist. See "Service control" below for why. `pi` also
   stays in `netdev` for NetworkManager access — see [tsOS-base.Pifile](../tsOS-base.Pifile),
   "no general sudo" section.
-- There is no local fallback. If SSH to `root` is unavailable (network down, `sshd` broken),
-  recovery means physical access — taking out the SD card, or re-flashing. Since physical
+- There is no local fallback if SSH to `root` is unavailable (network down, `sshd` broken) and
+  `TSOS_ROOT_PASSWORD` was unset for this build — recovery means physical access. Since physical
   access already equals root (see Non-goals), this doesn't give up any security.
-- This also removes a whole class of risk: no shared secret to leak or rotate, nothing for a
-  compromised `pi` session to capture, and no password hash in the image to attack offline.
+- With `TSOS_ROOT_PASSWORD` unset, this still removes a whole class of risk: no shared secret to leak
+  or rotate, nothing for a compromised `pi` session to capture, and no password hash in the
+  image to attack offline. With it set, that risk is accepted deliberately — see above.
 
 ## Service control: polkit and group membership, not sudo
 
@@ -392,13 +433,25 @@ Accepted for now, documented so they aren't mistaken for solved:
   where "how much does that access actually yield" is meant to be tallied honestly.
 - **Physical access is root.** There is no secure boot, so anyone holding the SD card can read
   or change anything, including every secret stored on the device (see Non-goals).
+- **A build-time `root` password, if configured, is a fleet-wide secret unless the builder takes
+  care that it isn't, and it's directly SSH-brute-forceable.** Nothing in this repo enforces
+  that `TSOS_ROOT_PASSWORD` is unique per device — see "Root password (build-time, optional)"
+  above. If one value is reused across a fleet (e.g. one CI secret for every build),
+  compromising it compromises every device built with it, not just one — and unlike the `su`
+  path, `PermitRootLogin yes` means it's guessable directly over the network via SSH, with no
+  `pi` session needed first. There's no rate limiting/lockout on sshd's password auth configured
+  here beyond its own defaults. Combined with the previous bullet, this password is also
+  reachable by anyone who can reach `tsconfig`'s unauthenticated web shell over the network, not
+  only someone with an SSH session as `pi`.
 
 ## Summary: before vs. after
 
 | Aspect | Before | After |
 |---|---|---|
-| `root` SSH keys | Same `authorized_keys` as `pi`, operator-editable | Individually-issued per-admin public keys, committed to this repo, baked in at build time, independent of boot partition; key-only, no password login |
-| `root` password | Locked; root reachable via `pi`'s passwordless sudo | Locked, no password at all; no path from `pi` to `root` — SSH with a manufacturer key is the only way in |
+| `root` SSH keys | Same `authorized_keys` as `pi`, operator-editable | Individually-issued per-admin public keys, committed to this repo, baked in at build time, independent of boot partition; works regardless of the password setting below |
+| `root` SSH password login | N/A (prohibited) | `PermitRootLogin yes` — works only if `TSOS_ROOT_PASSWORD` was set at build time (otherwise `root` has no password to authenticate with, same net effect as before) |
+| `root` password | Locked; root reachable via `pi`'s passwordless sudo | **Build-time choice** via `TSOS_ROOT_PASSWORD` (never committed to the repo): unset → locked, no path from `pi` to `root`, same as the original design; set → `root` has that password, reachable via `su` from an authenticated `pi` session (SSH or `tsconfig`'s web shell) *and* directly over SSH — both a deliberate, accepted exception |
+| `userconf`/`userconf-service` (`pi`'s boot-partition password/rename flow) | N/A (new to this design) | Re-enabled (`userconfig.service`), with the upstream shell-reset bug (unconditional reset to `bash` on every invocation, `RPi-Distro/userconf-pi` commit `e58fd5ca`) patched in `usr/lib/userconf-pi/userconf-service` |
 | `pi` sudo | Member of `sudo`, passwordless (`do_sudo_pass 1`) | **No sudo access at all** — `etc/sudoers.d/tsos-pi` removed entirely; every privileged capability goes through polkit, group membership, or `pkexec` |
 | NetworkManager access | Member of `netdev`; access via whatever polkit rule the OS happened to ship | Member of `netdev`; access via an explicit, repo-committed polkit rule (`etc/polkit-1/rules.d/10-tsos-netdev.rules`), passwordless — `pi` calls `nmcli` directly, no root mediation except netplan GSM field removal |
 | Systemd unit actions | Sudoers allowlist, restart-only, 13 exact command lines | Polkit rule (`20-tsos-systemctl.rules`), every non-persistent verb (start/stop/restart/reload/...), same unit allowlist — `enable`/`disable`/`mask` categorically excluded (different polkit action) |

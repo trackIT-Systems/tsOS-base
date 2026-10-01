@@ -140,38 +140,17 @@ INSTALL .git/modules/usr/local/src/pyenvsense /usr/local/src/pyenvsense/.git
 # Fix permissions for pi user
 RUN chown -R pi:pi /home/pi/
 
-# Application source trees: root-owned, readable by pi (e.g. to inspect
-# installed code while debugging) but not writable - pi must not be able to
-# modify what actually runs. See docs/security.md. This used to be
-# chown -R pi:pi, on the theory that `pip install -e` needed it - it
-# doesn't; every `pip install -e` below runs as root regardless of who owns
-# the target directory, since the whole Pifile runs as root at build time.
+# Root-owned, readable by pi (e.g. for debugging) but not writable - see docs/security.md.
 RUN chown -R root:root /usr/local/src
 RUN chmod -R go-w /usr/local/src
 
-# Root now owns /usr/local/src, so `git` commands pi runs there (e.g. to
-# inspect installed code) would otherwise fail with "detected dubious
-# ownership" - allow it explicitly for every submodule directory found
-# there, rather than disabling the safety check globally with
-# safe.directory=*. A loop instead of one line per submodule so this
-# doesn't need updating whenever a submodule is added or removed.
+# Root now owns /usr/local/src - let pi's git commands there work without "dubious ownership" errors.
 RUN sh -c 'for d in /usr/local/src/*/; do git config --system --add safe.directory "${d%/}"; done'
 
-# polkitd provides the polkit D-Bus service (the JS .rules engine, and
-# pkcheck) that every etc/polkit-1/rules.d/*.rules file needs to actually be
-# evaluated; pkexec is a separate binary package on Debian/Raspberry Pi OS
-# (Trixie split what used to be the single policykit-1 package in two).
-# Neither ships with the base image the way `sudo` does - unlike sudo, `pi`
-# never had any polkit-mediated access before this design, so nothing
-# already pulled these in as a dependency.
+# polkitd/pkexec aren't in the base image the way sudo is - install explicitly.
 RUN apt-get install -y polkitd pkexec
 
-# pi's privileged helper: a root-owned wrapper (not writable by pi), run as
-# root via pkexec, authorized by the systems.trackit.tsos.tsconfig-privileged
-# polkit action (usr/share/polkit-1/actions/) plus a rule granting pi
-# (etc/polkit-1/rules.d/30-tsos-privileged.rules). It execs into tsconfig's
-# app.privileged module. See docs/security.md - `pi` has no sudo access at
-# all, so there is no sudoers drop-in for this any more.
+# pi's privileged helper, run as root via pkexec - see docs/security.md.
 RUN chown root:root /usr/local/sbin/tsconfig-privileged
 RUN chmod 755 /usr/local/sbin/tsconfig-privileged
 
@@ -193,11 +172,8 @@ RUN chmod 755   /home/pi
 RUN chmod 700   /home/pi/.ssh
 RUN chmod 644   /home/pi/.ssh/authorized_keys
 
-# Install root ssh files and fix permissions. This is a manufacturer-
-# controlled key file (root/.ssh/authorized_keys in this repo, one entry per
-# named admin), independent of the operator-editable boot partition that
-# seeds pi's keys - see docs/security.md. Add/remove admin keys by editing
-# that file, not by copying pi's.
+# Install root ssh files and fix permissions. Manufacturer-controlled keys,
+# independent of the operator-editable boot partition - see docs/security.md.
 INSTALL root/.ssh /root/.ssh
 RUN chown root:root /root
 RUN chown root:root /root/.ssh
@@ -206,14 +182,11 @@ RUN chmod 755       /root
 RUN chmod 700       /root/.ssh
 RUN chmod 644       /root/.ssh/authorized_keys
 
-# oh-my-zsh: one shared, root-owned install used by both pi and root (not a
-# separate copy per account) - root:root, readable by both, writable by
-# neither, same "pi can read, not write" pattern as /usr/local/src.
+# oh-my-zsh: one shared, root-owned install for pi and root - not writable by either.
 RUN chown -R root:root /opt/oh-my-zsh
 RUN chmod -R go-w /opt/oh-my-zsh
 
-# Same .zshrc content for root as for pi (it hardcodes ZSH=/opt/oh-my-zsh
-# rather than $HOME/.oh-my-zsh, so it works unmodified for either account).
+# Same .zshrc for root (hardcodes ZSH=/opt/oh-my-zsh, so it works for either account).
 INSTALL home/pi/.zshrc /root/.zshrc
 RUN chown root:root /root/.zshrc
 
@@ -224,47 +197,32 @@ RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 RUN systemctl enable copy-authorized-keys.service
 RUN systemctl enable copy-authorized-keys.path
 
-# Set default password and login shell in the image (do not use userconf.txt;
-# Trixie userconf-pi always resets the shell to bash on first boot)
-RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -stdin)" | chpasswd -e'
+# Seed pi's default password as a userconf file - userconfig.service (below)
+# applies and deletes it on first boot, same as an operator-supplied one.
+RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -stdin)" > /boot/firmware/userconf.txt'
 RUN usermod -s /bin/zsh pi
 RUN usermod -s /bin/zsh root
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
-RUN systemctl disable userconfig.service
 
-# pi has no sudo access at all and no root password exists at all (see
-# docs/security.md) - root is reachable only over SSH with one of the
-# manufacturer keys installed above. Every privileged capability pi has is
-# authorized by an explicit, committed polkit rule instead (or, for logs,
-# plain group membership - journald gates journal reads by file permission,
-# not polkit). Remove pi from `sudo` (full root via pi's own known password)
-# and `adm` (would grant broad /var/log/*.log text-file access - broader
-# than the `systemd-journal` grant below, which is journal-reads-only).
-# `|| true` because group membership varies by base image and a missing
-# membership isn't a failure.
-#
-# pi stays in `netdev` (the Raspberry Pi OS default), deliberately: it's
-# pi's passwordless path to NetworkManager, gated by the explicit polkit
-# rule at etc/polkit-1/rules.d/10-tsos-netdev.rules - see docs/security.md's
-# "Service control" section for the trade-off this makes against the
-# previous root-mediated nm-* ops.
+# userconf-service is patched to fix Trixie's shell-reset bug - see docs/security.md.
+RUN systemctl enable userconfig.service
+
+# pi has no sudo access at all - every privileged action is gated by polkit
+# or group membership instead (see docs/security.md). Stays in `netdev` for
+# NetworkManager access; `|| true` since group membership varies by base image.
 RUN sh -c 'deluser pi sudo || true'
 RUN sh -c 'deluser pi adm || true'
 
-# pi is NOT a default member of `systemd-journal` (unlike `netdev` above),
-# so this needs an explicit add: full journal read access (every unit,
-# kernel, everything) - the direct equivalent of the netdev/polkit pattern,
-# since there is no polkit action for journal reads. A deliberate
-# broadening from the previous per-unit allowlist app.privileged's `logs`
-# op enforced - see docs/security.md's "Service control" section.
+# Full journal read access - journald gates this by group, not polkit (see docs/security.md).
 RUN usermod -aG systemd-journal pi
 
-# Lock root's password entirely - no password login, no su fallback. See the
-# "No root password" section in docs/security.md for why: it removes a
-# shared secret that would otherwise need distributing, rotating and
-# protecting from capture in a pi shell session, in favor of the strictly
-# stronger SSH-key-only path already set up above.
-RUN passwd -l root
+# root's password is a build-time secret via TSOS_ROOT_PASSWORD, never
+# committed here - see docs/security.md, "Root password (build-time, optional)".
+RUN sh -c 'if [ -n "$TSOS_ROOT_PASSWORD" ]; then \
+        echo "root:$(echo "$TSOS_ROOT_PASSWORD" | openssl passwd -6 -stdin)" | chpasswd -e; \
+    else \
+        passwd -l root; \
+    fi'
 
 # Change default editor to vim
 RUN update-alternatives --set editor /usr/bin/vim.basic
