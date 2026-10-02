@@ -148,7 +148,6 @@ Runtime configuration via `/boot/firmware/`:
 - **NetworkManager**: Primary network management (replaces systemd-networkd)
 - **wpa_supplicant**: WiFi backend
 - **WireGuard**: VPN support
-- **Samba**: File sharing enabled
 
 ## Security
 

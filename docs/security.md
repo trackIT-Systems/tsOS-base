@@ -103,14 +103,15 @@ that must stay root-only don't belong there.
 **WireGuard config:** the key itself is not considered sensitive — `pi` reading or holding it is
 acceptable. Writing the file is a different matter (see the `PostUp` note above).
 
-## Network shares (Samba)
+## Network shares: none (Samba removed)
 
-Only `/data` is shared via SMB ([etc/samba/smb.conf](../etc/samba/smb.conf)) — previously the
-`[media]` share exposed all of `/media` (guest, writeable), which included the boot partition
-and a read-only root filesystem mount, so an unauthenticated network peer could read the root
-filesystem and write the boot partition. `/data` is world-accessible by design (see Non-goals),
-so guest access to that one share is consistent with that; authentication for it belongs with
-the operator-password work (see Open items).
+Samba is not part of the image any more. It used to share `/data` to any guest on the network
+(and, in earlier releases, all of `/media`, which included the boot partition and a read-only
+root filesystem mount, so an unauthenticated peer could read the root filesystem and write the
+boot partition). Even the reduced `/data` share could not be put behind the operator login:
+SMB needs an NT hash, which cannot be derived from the crypt hash `userconf.txt` carries, so it
+would have needed a second credential delivered separately. `/data` is reachable over HTTP
+(`/data/`, behind the operator login - see "Operator authentication") and over SSH/SFTP as `pi`.
 
 ## SSH & key provisioning
 
@@ -174,8 +175,11 @@ repo as a literal value, unlike `pi`'s baked-in default above).
   elsewhere; this repo's job is to apply whatever value is supplied correctly, not to enforce
   that it's unique per device.
 - Once set, this password is reachable by anyone who can reach a `pi` session — and per the "`pi`
-  access is network access" known weakness below, that currently includes anyone who can reach
-  the unauthenticated `tsconfig` web shell over the network, not just a `pi` SSH session.
+  access is network access" known weakness below, that includes anyone who knows `pi`'s password
+  and can reach the `tsconfig` web shell over the network (or any local process, which is exempt
+  from the web login), not just a `pi` SSH session. The same password is also the **staff login** to
+  tsconfig, WebDAV and BLE (see "Operator authentication"), so it is reachable by anyone who can
+  reach those over the network, with no `pi` session or password needed first.
 
 The rest of this section's reasoning is unaffected by this choice either way:
 
@@ -224,8 +228,8 @@ regardless of what's granted for `manage-units`; no verb-by-verb filtering is ne
 This also closed a real gap found while writing this doc: `tsconfig`'s systemd-control endpoint
 used to validate the requested service against a list read from the (then world-writable)
 `/boot/firmware/tsconfig.yml`, so anyone who could write that file could add an arbitrary unit
-name and `start`/`stop`/`restart` it as root through the network-reachable, unauthenticated
-`tsconfig` API. The boot partition is root-owned now, and the real fix regardless is that the
+name and `start`/`stop`/`restart` it as root through the network-reachable, (at the time)
+unauthenticated `tsconfig` API. The boot partition is root-owned now, and the real fix regardless is that the
 unit allowlist lives in the polkit rule above, not in anything operator-editable — `pi`
 attempting `systemctl restart <unit-not-on-the-list>` is refused by systemd/polkit itself no
 matter what `tsconfig.yml` says; `/api/systemd/action`'s own check against the configured
@@ -267,7 +271,7 @@ re-validated the requested unit against `tsconfig.yml`'s configured-services lis
 running `journalctl` as root). `systemd-journal` is narrower than the `adm` group would have
 been — journal reads only, not arbitrary `/var/log/*.log` text files — but it is still
 materially broader than a per-unit allowlist: `pi` (and, per the "`pi` access is network
-access" known weakness below, anyone who can reach `tsconfig`'s unauthenticated API) can now
+access" known weakness below, anyone who can log in to `tsconfig`, or run a local process) can now
 read any unit's logs, kernel messages included, not just the units `tsconfig.yml` configures.
 The "service must be in the configured list" check that remains in the router is a UI nicety
 for the same reason the systemd-unit one is — the real gate is group membership, which doesn't
@@ -290,8 +294,8 @@ against a compromised or buggy `tsconfig` process, at the cost of `pi` (includin
 debugging over SSH as `pi`, not just `tsconfig` itself) being unable to touch NetworkManager at
 all outside of what `tsconfig`'s own API exposed. Restoring native `nmcli` access was a
 deliberate trade-off for operator/debugging flexibility — **the consequence is that `pi` (and,
-per the "`pi` access is network access" known weakness below, anyone who can reach
-`tsconfig`'s unauthenticated API) can now modify, create, or inspect any NetworkManager
+per the "`pi` access is network access" known weakness below, anyone who can log in to
+`tsconfig`, or run a local process) can now modify, create, or inspect any NetworkManager
 connection and its secrets, not just the three `tsconfig` manages** — polkit's authorization
 here is coarse (all-or-nothing per group), not property- or connection-scoped the way the old
 root-mediated allowlist was.
@@ -304,7 +308,7 @@ NetworkManager permission gap.
 
 ### `tsconfig-privileged`: the one bespoke case, via `pkexec`
 
-Config file writes/deletes, the overlay wipe, and `unset-gsm-fields` have no D-Bus-native
+Config file writes/deletes/stats (`stat-config`, mtime only, for files in root-only directories), the overlay wipe, and `unset-gsm-fields` have no D-Bus-native
 service to attach to — there's no "polkit action for writing an arbitrary config file." These
 stay a bespoke root-owned wrapper
 ([usr/local/sbin/tsconfig-privileged](../usr/local/sbin/tsconfig-privileged), execing into the
@@ -407,6 +411,168 @@ pick any repo/tag/channel within that org.
   being trusted; asset filenames are reduced to a bare basename everywhere they're used, so a
   crafted name can't write outside the cache directory.
 
+## Operator authentication
+
+Until this release, anything that could reach the device could act as `pi`: tsconfig (including
+its web shell) and Filebrowser were open on :80, and BLE "pairing" was a stub. Operator
+authentication puts one credential - the `pi` account's password (default `natur`, replaced by a
+config bundle's `userconf.txt`) - in front of each network entry point. trackIT staff can use
+`root` and its password instead ("Staff login (`root`)" below), which exists only if the image
+was built with `TSOS_ROOT_PASSWORD`. Not in scope for this release: TLS, Mosquitto/Avahi
+exposure - see "Known weaknesses".
+
+### Web: tsconfig and `/data`
+
+- **Login.** Tracker-mode tsconfig shows a login form and checks `pi`'s password through PAM
+  ([app/auth/pam_auth.py](../usr/local/src/tsconfig/app/auth/pam_auth.py), PAM service
+  [etc/pam.d/tsconfig](../etc/pam.d/tsconfig), `pam_unix` only, no `nullok`). `tsconfig.service`
+  runs as `pi`, and `pam_unix` verifies a caller's own password through its `unix_chkpwd` helper
+  without root, so this needs no new privilege. Only `pi` and `root` can log in (see "Staff login"
+  below), whatever the system would say about other accounts. Server mode (OIDC) is unchanged.
+- **Session.** A signed HttpOnly cookie, 8-hour sliding expiry. The signing key exists only in
+  memory ([app/auth/session.py](../usr/local/src/tsconfig/app/auth/session.py)): restarting
+  `tsconfig.service` or rebooting - which is also when a bundle's new `pi` password takes effect -
+  logs everyone out.
+- **Guessing.** Failed logins back off exponentially (first three free, then 1 s, 2 s, ... up to
+  30 s) per client address and, more loosely, device-wide. There is deliberately no hard lockout:
+  these devices are often unattended and a lockout would let anyone deny the operator access.
+  The client address is Caddy's `X-Forwarded-For`.
+- **What is gated.** Every route, the API docs and the shell websocket (checked on the websocket
+  handshake, since the HTTP middleware does not see websockets). Public: the login form, static
+  assets, `/auth/status` and `/api/server-mode`.
+- **`/data` (Filebrowser) and WebDAV.** See "Filebrowser and WebDAV" below.
+- **Trusted local requests.** A request is exempt from the login when its TCP peer is loopback
+  **and** it carries none of the forwarding headers Caddy always adds (`X-Forwarded-For` and
+  friends - Caddy overwrites client-supplied values). Remote traffic always arrives through Caddy
+  and so can never satisfy this. This is how `mqttutil` (which reads `/api/configs/` and
+  `/api/network/modem/`, now from `127.0.0.1:8000` in [boot/firmware/mqttutil.conf](../boot/firmware/mqttutil.conf))
+  and `tsconfig-ble` keep calling the API with no credential of their own. The cost, accepted:
+  **any local process can use the whole API, including the shell websocket,** with `pi`'s
+  capabilities - including Mosquitto if it were compromised, or Filebrowser (which now runs as `pi`
+  anyway). That is a smaller step than it looks (they were unauthenticated before), but it means
+  sandboxed services no longer fully contain a compromise.
+
+### Staff login (`root`)
+
+trackIT staff can log in to the web form, WebDAV and the BLE gateway as **`root` with root's
+password** instead of the operator's. It grants nothing extra: the session, the API, the web
+shell and Filebrowser stay `pi`-level whoever logged in (a session cookie carries no identity,
+Caddy still names `pi` to Filebrowser). The login log lines say which account was used.
+
+- **It is optional, with no setting.** A root password exists only if the image was built with
+  `TSOS_ROOT_PASSWORD` (see "Root password (build-time, optional)"). Without it root is locked
+  (`passwd -l`), the check below fails, and the staff login does not exist.
+- **How root's password is checked.** Not by PAM directly: for a non-root caller `pam_unix`'s
+  `unix_chkpwd` helper only ever verifies the caller's *own* account, so `pi` cannot ask about `root`
+  (verified: it returns false even with the right password). The only in-process alternative is
+  putting `pi` in the `shadow` group, which would let it read every password hash - rejected. Instead
+  tsconfig runs the setuid `su` binary, which authenticates its *target* account as root:
+  `su -s /bin/sh -c true root` under a pty, password written once the `Password:` prompt has appeared,
+  success = exit status 0
+  ([app/auth/pam_auth.py](../usr/local/src/tsconfig/app/auth/pam_auth.py)). No code of ours runs as
+  root, and `pi` gains no capability: it could always try `su` itself. `pi` itself is still checked
+  directly through PAM.
+- **Throttling is stricter for root** and independent of the operator's: two free attempts, then
+  backing off up to 120 s per client, plus a root-wide bucket (five free, up to 60 s). A flood of root
+  guesses cannot lock the operator out or vice versa. At most two `su` checks run at once; further
+  concurrent attempts are refused rather than queued.
+- **Limits.** Root passwords containing control characters (or DEL) cannot be used here - typed into a
+  tty line they would be interpreted by the line discipline. The check follows the system's own
+  `/etc/pam.d/su`, so a stricter stack (e.g. `pam_wheel`) silently disables the staff login. Each
+  successful check leaves `session opened for user root by pi` in the journal: a useful audit trail,
+  and extra noise.
+- **BLE.** The Authenticate characteristic takes an optional `"username"` (`"pi"` by default,
+  or `"root"`).
+
+### Filebrowser and WebDAV
+
+[Filebrowser Quantum](https://github.com/gtsteffaniak/filebrowser) (v1.5.6) serves `/data` at
+`/data/` and, built in, WebDAV at **`/data/dav/data/`**. It has no PAM support and does not check
+passwords itself: it runs with `auth.methods.proxy` and trusts an `X-Forwarded-User` header from
+Caddy ([etc/filebrowser/filebrowser.yml](../etc/filebrowser/filebrowser.yml)). `pi`'s password is
+checked by tsconfig (PAM), before Caddy lets anything through
+([etc/caddy/Caddyfile](../etc/caddy/Caddyfile)):
+
+- **Web UI.** Caddy asks tsconfig `GET /auth/check` (`forward_auth`) with the original request; the
+  session cookie decides. On failure tsconfig's redirect to the login page, or 401, goes to the
+  client. On success Caddy sets `X-Forwarded-User: pi` and Filebrowser logs in its `pi` user.
+- **WebDAV.** Clients cannot use the session cookie and send HTTP Basic instead
+  (`pi` + the `pi` password; any other username is refused). For `/data/dav/*` - and only there -
+  `/auth/check` accepts the Basic header and verifies it with PAM, with the same backoff as the login
+  (`429` + `Retry-After` while backing off, `401` + `WWW-Authenticate: Basic` otherwise, so clients
+  prompt). A password verified in the last 60 seconds is remembered in memory (as a keyed digest) so
+  a sync's hundreds of requests do not each run PAM; a changed password therefore stops working within
+  a minute. A session cookie also works for `/data/dav/` (a browser).
+- **The header cannot be forged.** Caddy deletes any client-supplied `X-Forwarded-User` before the
+  check and only sets it afterwards; Filebrowser listens on loopback only. With the header and no
+  Caddy check there is no authentication at all, so Filebrowser must never be reachable except
+  through Caddy. (Any local process can reach `127.0.0.1:8080` and claim to be `pi`, which is the same
+  accepted exposure as the "Trusted local requests" rule above.)
+- **`pi`'s real password never reaches Filebrowser.** Its WebDAV handler insists on a Basic header
+  but, with proxy auth, ignores the password; Caddy replaces it with a dummy value.
+- **Configuration traps** (found by running v1.5.6, see the comments in the config): `noauth` must stay
+  off - it authenticates *every* request, so WebDAV would accept any Basic password; the built-in
+  `password` method is on by default and is disabled explicitly; `auth.adminUsername` must not be `pi`,
+  because that creates the account with the password method and a proxy login for it is then refused
+  (so `pi` is a regular Filebrowser user).
+- **Runs as `pi`** ([etc/systemd/system/filebrowser.service](../etc/systemd/system/filebrowser.service)),
+  so files created through the web UI or WebDAV belong to the operator account. The previous
+  `DynamicUser` contained a Filebrowser compromise to `/data`; a compromise is now `pi`-level. The
+  remaining sandbox (`ProtectSystem=strict`, `ProtectHome`, `ReadWritePaths=/data`, `PrivateTmp`)
+  limits what it can touch, and `NoNewPrivileges` keeps it away from `pkexec`/`tsconfig-privileged`.
+
+### BLE
+
+Two layers, both in `tsconfig-ble` (running as `pi`):
+
+- **Encrypted link.** Gated characteristics - and the login characteristic - use BlueZ's
+  `encrypt-read`/`encrypt-write`/`encrypt-notify` flags, so BlueZ forces LE pairing before serving
+  them. The gateway registers a `NoInputNoOutput` pairing agent and makes the adapter pairable, so
+  pairing is Just Works. That stops passive sniffing of the password; it does **not** stop an active
+  man-in-the-middle during pairing, because the device has no display or keypad for a passkey.
+- **Operator login.** A client writes `{"password": "<pi's password>"}` to the Authenticate
+  characteristic (`00001005-...`); the gateway checks it with the same PAM call as the web login.
+  A successful login unlocks that BLE connection only (the BlueZ device path); it ends on
+  disconnect, after 8 hours, or when the gateway restarts. Failed attempts back off per device and
+  device-wide, and are refused without consulting PAM while backing off. Gated: all writes (service
+  actions, reboot, logs, config and zip upload) and the systemd service list. Open: the System
+  Service's status characteristics (system status, server mode, timedatectl, available services),
+  so devices can still be identified before pairing. `--no-auth` (alias `--no-pairing`) turns the
+  whole thing off.
+
+### Hotspot password via the config bundle
+
+A config bundle (`tsconfig zip`, `POST /api/configs.zip`, or the BLE zip upload) may contain
+`hotspot.nmconnection`, the NetworkManager profile of the access point
+([app/configs/hotspot.py](../usr/local/src/tsconfig/app/configs/hotspot.py)). It is how a server sets
+the hotspot password (`BirdsAndBats` by default).
+
+- **The bundle cannot redefine the connection.** The bundle's `[connection]` section is discarded
+  and the on-disk one is kept (id, UUID, interface, autoconnect); the bundle's `[wifi]` `ssid` is
+  discarded too, because `etc/hostname.sh` derives it from the hostname at every boot. Everything
+  else - `[wifi-security]`, `[ipv4]`, band, channel, ... - is the bundle's to set. The only
+  structural requirements are that the profile parses, stays under 8 KiB, and is an access point
+  (`[wifi] mode=ap`).
+- **Applied as root, never readable by `pi`.** The file lives in `/etc/NetworkManager/system-connections`
+  (root, 0600), so the write goes through the privileged `write-config` op like every other bundle
+  member. `pi` cannot read it, `load()` returns nothing, and the config download endpoints skip it:
+  the password never leaves the device through tsconfig's API.
+- **Applying it restarts the hotspot - only if something changed.** After writing, the profile is
+  loaded into NetworkManager (`nmcli connection load`) and, if the hotspot is up, re-activated, which
+  drops connected clients - possibly the very operator who uploaded the bundle over the hotspot. A
+  bundle that changes nothing touches nothing.
+- **Rollback.** The hotspot is the device's recovery path, so if NetworkManager rejects the new
+  profile the previous file is restored before the error is reported. This catches malformed
+  profiles, not a profile that is valid but useless (a wrong channel, an unreachable subnet) - the
+  bundle's author is trusted with those.
+- **Cannot be deleted** through `delete-config` (it is the only config type that refuses).
+- **Timestamps.** `pi` cannot stat the file, so the usual "only overwrite if the bundle is newer"
+  check asks the privileged wrapper instead: `stat-config` reports whether the file exists and its
+  mtime (never content), and the writer stamps the bundle's mtime on the file after every apply -
+  including when nothing changed - so re-applying the same bundle without `--force` is skipped like
+  any other config file. If the lookup fails, the file is treated as updatable, which is still
+  harmless because unchanged content is skipped.
+
 ## Known weaknesses
 
 Accepted for now, documented so they aren't mistaken for solved:
@@ -418,21 +584,29 @@ Accepted for now, documented so they aren't mistaken for solved:
   key, but anything typed or shown in the session is exposed, and an admin who connects with
   agent forwarding (`ssh -A`) hands the attacker their agent — which then logs into real
   devices as `root`. Admins should never use agent forwarding to devices.
-- **`pi` access is network access.** Until operator authentication lands (see Open items), the
-  `pi` boundary doesn't keep anyone out: `tsconfig` is unauthenticated on `:80` on every
-  interface (no firewall), including its web shell (which now execs `pi`'s own login shell
-  directly rather than `su`-ing to a configurable user, but is still reachable by anyone who
-  can reach the device); some BLE services don't require pairing; and `pi`'s password is
-  public ([tsOS-base.Pifile](../tsOS-base.Pifile)). Every `pi` capability in this document is
-  available to anyone who can reach the device — now including over cellular. The `pi`/`root`
-  boundary still matters, because it caps what that access yields. This now explicitly
-  includes the **full systemd journal** (every unit's logs, kernel messages included, not just
-  the app-service subset `tsconfig.yml` configures — see "Service control") and **any
-  NetworkManager connection and secret**, not just the three `tsconfig` manages — both
-  deliberate broadenings made this session, worth naming plainly here since this bullet is
-  where "how much does that access actually yield" is meant to be tallied honestly.
+- **`pi` access is network access - now behind one shared password that is public by default.**
+  tsconfig, its web shell and `/data` over HTTP, and the BLE gateway all require `pi`'s password
+  (see "Operator authentication"), but until a config bundle changes it that password is `natur`,
+  the hotspot PSK is `BirdsAndBats`, both published in this repo, and SSH still accepts the same
+  password. There is one account and one password for everyone, so no per-person audit trail. The
+  login travels over plain HTTP (no TLS): anyone who can sniff or intercept the hotspot, the LAN
+  or the cellular path sees it, and it unlocks SSH as well. BLE's Just Works pairing protects
+  against passive sniffing only. Every local process is exempt from the web login (see "Trusted
+  local requests"). The `pi`/`root` boundary still matters, because it caps what that access
+  yields - which explicitly includes the **full systemd journal** (every unit's logs, kernel
+  messages included, not just the app-service subset `tsconfig.yml` configures - see "Service
+  control") and **any NetworkManager connection and secret**, not just the three `tsconfig`
+  manages; both deliberate broadenings.
+- **Mosquitto and Avahi.** The broker has no authentication or TLS configured; it binds loopback
+  unless an operator-supplied `mosquitto.d` config adds a listener, and Avahi advertises
+  `_mqtt._tcp` on a port that is closed by default. Not addressed here.
 - **Physical access is root.** There is no secure boot, so anyone holding the SD card can read
   or change anything, including every secret stored on the device (see Non-goals).
+- **WebDAV sends `pi`'s password in clear on every request.** HTTP Basic over plain HTTP, to a
+  password that also opens SSH and the BLE gateway: anyone who can sniff or intercept the hotspot,
+  the LAN or the cellular path sees it, and unlike the one-off login form it is repeated with every
+  WebDAV request. TLS (deferred) matters more for this than for anything else here; until then WebDAV
+  is best used over the hotspot's WPA2 link or a VPN (WireGuard).
 - **A build-time `root` password, if configured, is a fleet-wide secret unless the builder takes
   care that it isn't, and it's directly SSH-brute-forceable.** Nothing in this repo enforces
   that `TSOS_ROOT_PASSWORD` is unique per device — see "Root password (build-time, optional)"
@@ -441,8 +615,13 @@ Accepted for now, documented so they aren't mistaken for solved:
   path, `PermitRootLogin yes` means it's guessable directly over the network via SSH, with no
   `pi` session needed first. There's no rate limiting/lockout on sshd's password auth configured
   here beyond its own defaults. Combined with the previous bullet, this password is also
-  reachable by anyone who can reach `tsconfig`'s unauthenticated web shell over the network, not
-  only someone with an SSH session as `pi`.
+  reachable by anyone who knows `pi`'s password and can reach `tsconfig`'s web shell over the
+  network, not only someone with an SSH session as `pi`.
+- **The staff login makes a configured root password guessable over HTTP and BLE, not just SSH.**
+  If `TSOS_ROOT_PASSWORD` is set, `root` can be tried on the tsconfig login form, on WebDAV (in
+  clear, with the credential repeated on every request) and over BLE. Only backoff limits it (stricter
+  than for `pi`: see "Staff login"), and a fleet-wide value compromises every device at once.
+  Use a strong, ideally per-device value, or leave it unset to keep root locked and the staff login off.
 
 ## Summary: before vs. after
 
@@ -460,15 +639,21 @@ Accepted for now, documented so they aren't mistaken for solved:
 | `tsconfig-privileged` wrapper | Reached via `sudo -n`, sudoers is the "may pi invoke this" gate | Reached via `pkexec`, a custom polkit action (`systems.trackit.tsos.tsconfig-privileged`) is the "may pi invoke this" gate; scope narrowed to just config writes/deletes, overlay wipe, netplan GSM field removal |
 | `/usr/local/src` ownership | `pi:pi` | `root:root`, mode `755` — `pi` can read, not write |
 | `/boot/firmware` | VFAT, world-writable, bind-mounted to `/media/boot` | Root-owned mount, `0755` (readable by all, writable by root only); operator changes go through `tsconfig`'s privileged write-config op |
-| Samba | Guest-writable share of all of `/media` | Only `/data` is shared |
+| Samba | Guest-writable share of all of `/media` | Removed entirely; `/data` is reached over HTTP (login) or SSH/SFTP |
 | `copy-authorized-keys` | Runs as root, copies keys to `pi` and `root` | Runs as `pi`, copies `pi`'s keys only |
 | `tsconfig.service` | Runs as root, no explicit `User=` | `User=pi`; every privileged action goes through polkit, group membership, or `pkexec` |
 | `tsconfig`'s service allowlist | Read from world-writable `/boot/firmware/tsconfig.yml`, trusted directly (unauthenticated `start`/`stop`/`restart` on any listed unit) | No longer operator-writable (boot partition is root-owned); the real gate is the systemd polkit rule's hardcoded unit list |
 | `tsupdate` | `User=root`, any source URL from `tsupdate.yml` | Full trigger/source control retained, restricted in code to `trackIT-Systems` org repos |
-| `filebrowser` / `envsense` | Run as root, no sandboxing | `DynamicUser`, `ProtectSystem=strict`, scoped `ReadWritePaths` |
+| `filebrowser` / `envsense` | Run as root, no sandboxing | `envsense`: `DynamicUser`, `ProtectSystem=strict`, scoped `ReadWritePaths`. `filebrowser`: runs as `pi` with the same sandbox minus `DynamicUser` (see "Filebrowser and WebDAV") |
 | SSH host keys | Committed to the public repo, identical on every device | Unchanged for now — known weakness |
-| `/data` | World-accessible via `filebrowser` (noauth) | Unchanged — explicitly out of scope |
+| `/data` | World-accessible via `filebrowser` (noauth) | Behind the operator login over HTTP and WebDAV; still world-readable/writable on disk (explicitly out of scope) |
 | WireGuard config | Root-owned config, `pi` incidental access | `pi` may read the key; writes go through `write-config`, which rejects `PreUp`/`PostUp`-style hooks |
+| tsconfig web UI / API / shell | Unauthenticated on :80 | PAM login with `pi`'s password (8 h sliding session, backoff on failures); local loopback processes exempt |
+| `/data` over HTTP (Filebrowser) | `noauth` via Caddy | Caddy `forward_auth` to tsconfig (cookie, or Basic for WebDAV, checked by PAM); Filebrowser trusts `X-Forwarded-User: pi` from Caddy and runs as `pi` |
+| WebDAV | Not offered (Samba was the file-sharing route) | `/data/dav/data/` via Filebrowser, HTTP Basic with `pi`'s password, in clear over HTTP |
+| BLE gateway | "Pairing" stub that accepted every connection | Encrypted link (Just Works) + per-connection login with `pi`'s password (or `root`'s, if set) for writes, logs, and the systemd list |
+| Staff login | N/A | `root` + root's password works on the web form, WebDAV and BLE if the image has one (checked via `su`; locked root = no staff login); no extra rights; stricter throttling than `pi` |
+| Hotspot password | Fixed default `BirdsAndBats` | Default unchanged, settable from a bundle via `hotspot.nmconnection` (connection section and SSID stay local; root-only file, rolled back on NM rejection) |
 
 ## Migration
 
@@ -488,14 +673,13 @@ one being published across this boundary by mistake.
   release. Revocation needs a rebuild and reflash, so a departed admin keeps access on every
   device built before; an SSH CA with short-lived certificates (`TrustedUserCAKeys`) would
   avoid that.
-- **Operator authentication (later release):** an operator password for `pi`, and
-  authentication for network access, `tsconfig`, and BLE pairing — the "`pi` access is network
-  access" known weakness above.
+- **Operator authentication, remaining pieces:** TLS for the web login, and per-device unique `pi`/hotspot
+  credentials from the bundle server rather than the public defaults.
 - **Root SSH restricted to the WireGuard interface**, so manufacturer access requires being on
   the VPN.
 - **Per-device SSH host keys** (generated at first boot, removed from the repo) to fix the MITM
   known weakness.
 - **Fixes for already-released images.** The world-writable `tsconfig.yml` service-allowlist
-  bug and the guest-writable Samba share both predate this design and could be patched on
+  bug and the guest-writable Samba share (removed in this release) both predate this design and could be patched on
   their own timeline rather than waiting for a full reflash - worth a decision on whether
   that's worth doing given devices need a reflash for the rest of this anyway.

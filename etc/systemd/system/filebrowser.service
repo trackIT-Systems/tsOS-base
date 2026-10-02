@@ -4,13 +4,16 @@ After=network.target
 
 [Service]
 Nice=10
-# filebrowser is unauthenticated (auth.methods.noauth: true) and reachable
-# through Caddy on the network - it used to run as root with no sandboxing
-# at all, so any vulnerability in it was an instant unauthenticated root
-# compromise. It only ever needs to touch /data (its one configured source)
-# and its own state directory; everything else is locked down. See
-# docs/security.md.
-DynamicUser=yes
+# Runs as pi, like everything else that handles the station's data, so files
+# created through the web UI or WebDAV belong to the operator account. It does
+# not authenticate users itself: Caddy checks pi's password (through tsconfig,
+# PAM) and tells it who is calling (auth.methods.proxy in
+# /etc/filebrowser/filebrowser.yml), and it listens on loopback only. A
+# vulnerability in it is therefore a pi-level compromise; the sandbox below
+# limits it to /data and its own state directory, and NoNewPrivileges also
+# keeps it away from pkexec/tsconfig-privileged. See docs/security.md.
+User=pi
+Group=pi
 StateDirectory=filebrowser
 ReadWritePaths=/data
 ProtectSystem=strict

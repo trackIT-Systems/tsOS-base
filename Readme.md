@@ -14,7 +14,7 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 - **pyenvsense** — SHT3x / SHT4x environmental sensors
 - **Chrony** + **gpsd** time sync
 - **WittyPi 4** RTC / power management via **tsschedule**
-- **WireGuard**, **Samba**, LTE helpers (`huaweicheck`, Brovi)
+- **WireGuard**, LTE helpers (`huaweicheck`, Brovi)
 - Victron readout (**pysmartsolar**, **vedirect_dump**)
 
 ## Download and flash
@@ -27,9 +27,9 @@ Flash with Raspberry Pi Imager or `dd`. Default hostname is `tsos-default-name` 
 
 **SSH:** user `pi`, password `natur`. Drop a public-key file at `/boot/firmware/authorized_keys` on the card; [copy-authorized-keys.service](etc/systemd/system/copy-authorized-keys.service) installs it for `pi` on boot. `root` is reachable only via SSH with a manufacturer key ([root/.ssh/authorized_keys](root/.ssh/authorized_keys)), independent of the boot partition — see [docs/security.md](docs/security.md).
 
-**Wi-Fi hotspot:** SSID follows the hostname (default `tsos-default-name`), PSK `BirdsAndBats`. The station is `169.254.0.1` ([hotspot.nmconnection](etc/NetworkManager/system-connections/hotspot.nmconnection)). An optional client network is defined in [station.nmconnection](etc/NetworkManager/system-connections/station.nmconnection).
+**Wi-Fi hotspot:** SSID follows the hostname (default `tsos-default-name`), PSK `BirdsAndBats` (a config bundle can replace the profile with its own `hotspot.nmconnection`; the SSID always follows the hostname). The station is `169.254.0.1` ([hotspot.nmconnection](etc/NetworkManager/system-connections/hotspot.nmconnection)). An optional client network is defined in [station.nmconnection](etc/NetworkManager/system-connections/station.nmconnection).
 
-**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)). Avahi advertises HTTP as `_http._tcp`.
+**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)). Both ask for a login first: user `pi`, the same password as SSH (default `natur`); staff can use `root` and its password if the image has one. The BLE gateway uses the same password. Avahi advertises HTTP as `_http._tcp`.
 
 ## Boot configuration
 
@@ -50,7 +50,7 @@ Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.
 
 ## Storage
 
-`/data` is the station data volume: ExFAT `datafs` after first-boot repartition, or a USB disk bind-mounted by `devmon`. Filebrowser roots at `/data`. Samba share `[data]` exports `/data` guest-writable.
+`/data` is the station data volume: ExFAT `datafs` after first-boot repartition, or a USB disk bind-mounted by `devmon`. Filebrowser roots at `/data`. Reachable over HTTP at `/data/` (login required), over **WebDAV** at `http://<host>/data/dav/data/` (user `pi`, the `pi` password; plain HTTP, so prefer the hotspot or a VPN) and over SSH/SFTP as `pi`.
 
 ## Updates
 

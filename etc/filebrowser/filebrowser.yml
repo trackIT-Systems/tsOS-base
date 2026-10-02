@@ -10,10 +10,22 @@ server:
       name: data
       config:
         defaultEnabled: true
+# Authentication happens in front of this process: Caddy only forwards a request
+# after tsconfig has verified the caller against pi's Unix password (PAM) - the
+# session cookie for the web UI, HTTP Basic for WebDAV - and then names the
+# user in X-Forwarded-User (see etc/caddy/Caddyfile, docs/security.md).
+# - noauth must stay off: it authenticates every request, WebDAV included.
+# - password is on by default and would leave a default-password login behind.
+# - Do not set adminUsername to "pi": that creates the account with the
+#   password method, and a proxy login for it is then refused.
 auth:
-  adminUsername: pi
   methods:
-    noauth: true
+    noauth: false
+    password:
+      enabled: false
+    proxy:
+      enabled: true
+      header: X-Forwarded-User
 http:
   trustedHeaders:
     - X-Forwarded-Proto

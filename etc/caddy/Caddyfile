@@ -3,11 +3,33 @@
     reverse_proxy http://localhost:8000
 
     handle /data* {
-        reverse_proxy http://localhost:8080 {
-            header_up Host {host}
-            header_up X-Forwarded-Proto {scheme}
-            header_up X-Forwarded-For {remote_host}
-            flush_interval -1
+        # Filebrowser trusts X-Forwarded-User to say who is calling, so this block
+        # is the only place that header may come from. `route` keeps the written
+        # order (plain directives would be reordered, and the Authorization
+        # rewrite below would then hit the check instead of Filebrowser).
+        route {
+            request_header -X-Forwarded-User
+
+            # tsconfig verifies pi's password: the session cookie for the web UI,
+            # HTTP Basic for WebDAV (it only accepts Basic for /data/dav/). On
+            # failure its redirect to the login page, or 401/429, goes to the client.
+            forward_auth localhost:8000 {
+                uri /auth/check
+            }
+
+            # Filebrowser's WebDAV handler insists on a Basic header but, with
+            # proxy auth, ignores the password. Replace it so pi's real password
+            # never reaches Filebrowser.
+            @dav path /data/dav /data/dav/*
+            request_header @dav Authorization "Basic dTp4"
+
+            reverse_proxy http://localhost:8080 {
+                header_up Host {host}
+                header_up X-Forwarded-Proto {scheme}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-User pi
+                flush_interval -1
+            }
         }
     }
 }

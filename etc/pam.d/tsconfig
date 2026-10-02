@@ -1,0 +1,8 @@
+# PAM service used by tsconfig (app/auth/pam_auth.py) to verify the operator's
+# (pi's) password for the web login and BLE login. tsconfig and tsconfig-ble
+# run as pi; pam_unix checks the caller's own password through its setuid
+# unix_chkpwd helper, so no root access is needed. No nullok: an empty
+# password never authenticates. (Only pi is checked through this service; the
+# staff root login goes through su instead - see app/auth/pam_auth.py.)
+auth    required    pam_unix.so
+account required    pam_unix.so

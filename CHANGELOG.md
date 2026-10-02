@@ -13,6 +13,7 @@ today's model until replaced or re-flashed.**
 
 ### Security
 
+- Operator authentication: tsconfig (web UI, API, web shell) and `/data` over HTTP now require a login with `pi`'s password (PAM, new `etc/pam.d/tsconfig`; Caddy `forward_auth` guards Filebrowser), and the BLE gateway requires an encrypted link plus the same login. Staff can log in to tsconfig, WebDAV and BLE as `root` with root's password if the image was built with `TSOS_ROOT_PASSWORD` (checked through `su`; no extra rights; stricter throttling). Filebrowser now runs as `pi`, no longer authenticates itself (`noauth` off, proxy-header login from Caddy after tsconfig's PAM check) and serves WebDAV at `/data/dav/data/` with HTTP Basic `pi` + the `pi` password (verified by tsconfig, `/auth/check` accepts Basic only for `/data/dav/`). The hotspot password can be set from a config bundle via `hotspot.nmconnection`. Defaults are unchanged and public (`pi`/`natur`, hotspot `BirdsAndBats`) until a bundle sets real values. `boot/firmware/mqttutil.conf` now reads tsconfig's API on `127.0.0.1:8000` directly (bundles that ship their own `mqttutil.conf` must do the same). See [docs/security.md](docs/security.md)
 - `pi` no longer has general sudo (was passwordless via `raspi-config nonint do_sudo_pass 1`,
   which itself was added earlier in this Unreleased cycle - see below); it's removed from the
   `sudo`, `adm` and `netdev` groups. Its only privileged actions are an explicit `systemctl
@@ -25,10 +26,12 @@ today's model until replaced or re-flashed.**
   now `root:root` instead of `pi:pi`. `tsconfig.service` runs as `pi` and writes configuration,
   restarts services, and changes network settings through the new privileged helper instead of
   directly.
-- Samba now shares only `/data`, not all of `/media` (which included the boot partition and a
-  read-only root filesystem mount).
-- `filebrowser` and `envsense` run with `DynamicUser`/`ProtectSystem=strict` sandboxing instead
-  of unsandboxed root.
+- Samba is removed entirely (package, `smb.conf`, `smbd` service). It previously shared `/data` to
+  any guest on the network (and, in earlier releases, all of `/media`, which included the boot
+  partition and a read-only root filesystem mount). `/data` is reached over HTTP (`/data/`, login
+  required) or SSH/SFTP as `pi`.
+- `filebrowser` and `envsense` run with `ProtectSystem=strict` sandboxing instead of unsandboxed
+  root (`envsense` as a `DynamicUser`; `filebrowser` as `pi`, see the operator authentication entry).
 - `tsupdate` only accepts update sources from the `trackIT-Systems` GitHub org (enforced in
   code), and verifies cached/downloaded files against the GitHub API's asset digest instead of
   trusting the (world-writable) download cache by name.

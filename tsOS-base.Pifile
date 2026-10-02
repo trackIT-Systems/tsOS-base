@@ -52,7 +52,6 @@ RUN apt-get install -y \
 # Install networking tools
 RUN apt-get install -y \
     tcpdump \
-    samba \
     wireguard-tools \
     modemmanager
 
@@ -334,9 +333,6 @@ RUN raspi-config nonint do_wifi_country "DE"
 RUN ln -s /boot/firmware/wireguard.conf /etc/wireguard/wireguard.conf
 RUN systemctl enable wg-quick@wireguard
 
-# install and enable samba share
-RUN systemctl enable smbd
-
 # disable networkd-wait-online
 RUN systemctl mask systemd-networkd-wait-online.service
 
@@ -345,7 +341,11 @@ RUN systemctl mask systemd-networkd-wait-online.service
 
 # install and enable enable tsconfig
 RUN apt-get install -y portaudio19-dev
-RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil
+# python3-httpx is imported at module level by tsconfig (auth, BLE gateway, routers). It is
+# listed here explicitly: this image sets APT::Install-Recommends "0" (etc/apt/apt.conf.d), so
+# it is not pulled in as a Recommends of python3-fastapi - it only used to arrive as a Recommends
+# of samba, which was installed before that setting took effect.
+RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
 INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
 RUN systemctl enable tsconfig tsconfig-ble
@@ -358,8 +358,8 @@ RUN apt-get install -y python3-aiohttp python3-github gh
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsupdate
 RUN systemctl enable tsupdate
 
-# install tsflash
-RUN apt-get install -y python3-tqdm
+# install tsflash (rich: same story as httpx above - it used to arrive via samba's Recommends)
+RUN apt-get install -y python3-tqdm python3-rich
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsflash
 
 # enable devmon
