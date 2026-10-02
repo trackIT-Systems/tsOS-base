@@ -217,8 +217,10 @@ RUN usermod -aG systemd-journal pi
 
 # root's password is a build-time secret via TSOS_ROOT_PASSWORD, never
 # committed here - see docs/security.md, "Root password (build-time, optional)".
+# Setting one also enables password SSH for root, which is key-only otherwise.
 RUN sh -c 'if [ -n "$TSOS_ROOT_PASSWORD" ]; then \
         echo "root:$(echo "$TSOS_ROOT_PASSWORD" | openssl passwd -6 -stdin)" | chpasswd -e; \
+        sed -i "s/^PermitRootLogin .*/PermitRootLogin yes/" /etc/ssh/sshd_config.d/10-tsos.conf; \
     else \
         passwd -l root; \
     fi'

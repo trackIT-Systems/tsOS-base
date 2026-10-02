@@ -25,11 +25,11 @@ Flash with Raspberry Pi Imager or `dd`. Default hostname is `tsos-default-name` 
 
 ## First access
 
-**SSH:** user `pi`, password `natur`. Drop a public-key file at `/boot/firmware/authorized_keys` on the card; [copy-authorized-keys.service](etc/systemd/system/copy-authorized-keys.service) installs it for `pi` on boot. `root` is reachable only via SSH with a manufacturer key ([root/.ssh/authorized_keys](root/.ssh/authorized_keys)), independent of the boot partition — see [docs/security.md](docs/security.md).
+**SSH:** user `pi`, password `natur`. Drop a public-key file at `/boot/firmware/authorized_keys` on the card; [copy-authorized-keys.service](etc/systemd/system/copy-authorized-keys.service) installs it for `pi` on boot. `root` is reachable via SSH with a manufacturer key ([root/.ssh/authorized_keys](root/.ssh/authorized_keys)), independent of the boot partition, and with a password only if the image was built with `TSOS_ROOT_PASSWORD` — see [docs/security.md](docs/security.md).
 
 **Wi-Fi hotspot:** SSID follows the hostname (default `tsos-default-name`), PSK `BirdsAndBats` (a config bundle can replace the profile with its own `hotspot.nmconnection`; the SSID always follows the hostname). The station is `169.254.0.1` ([hotspot.nmconnection](etc/NetworkManager/system-connections/hotspot.nmconnection)). An optional client network is defined in [station.nmconnection](etc/NetworkManager/system-connections/station.nmconnection).
 
-**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)). Both ask for a login first: user `pi`, the same password as SSH (default `natur`); staff can use `root` and its password if the image has one. The BLE gateway uses the same password. Avahi advertises HTTP as `_http._tcp`.
+**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)) — and optionally HTTPS on port 443 with a self-signed, per-device certificate (no redirect from HTTP). Both ask for a login first: user `pi`, the same password as SSH (default `natur`); staff can use `root` and its password if the image has one. The BLE gateway uses the same password. Avahi advertises HTTP as `_http._tcp`.
 
 ## Boot configuration
 

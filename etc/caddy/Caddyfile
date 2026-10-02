@@ -1,4 +1,17 @@
-:80 {
+{
+    # HTTPS is optional: plain HTTP on :80 keeps working and is never
+    # redirected to HTTPS.
+    auto_https disable_redirects
+    # Certificates come from Caddy's own local CA (`tls internal` below). Don't
+    # try to add its root to the device's trust store; clients that want to
+    # verify the device import that root themselves (see docs/security.md).
+    skip_install_trust
+    # Clients connecting by IP address send no SNI; give them the .local
+    # certificate instead of failing the handshake.
+    default_sni {$TSOS_HOSTNAME}.local
+}
+
+(tsos) {
     encode gzip
     reverse_proxy http://localhost:8000
 
@@ -32,4 +45,21 @@
             }
         }
     }
+}
+
+:80 {
+    import tsos
+}
+
+# TSOS_HOSTNAME comes from caddy.service.d/tsos-hostname.conf. 169.254.0.1 is
+# the device's address on its own hotspot.
+https://{$TSOS_HOSTNAME}, https://{$TSOS_HOSTNAME}.local, https://localhost, https://169.254.0.1 {
+    tls internal
+    import tsos
+}
+
+# Any other address (station or cellular IP): served the default_sni certificate.
+:443 {
+    tls internal
+    import tsos
 }

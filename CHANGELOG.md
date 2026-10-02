@@ -9,23 +9,31 @@ and this project uses [Calendar Versioning](https://calver.org/) (`YYYY.M.PATCH`
 
 **This release changes the root/pi privilege model - see [docs/security.md](docs/security.md).
 It ships as a reflash boundary: no delta update is published into it, existing devices keep
-today's model until replaced or re-flashed.**
+their previous model and are not patched; every device is reinstalled from scratch.**
 
 ### Security
 
 - Operator authentication: tsconfig (web UI, API, web shell) and `/data` over HTTP now require a login with `pi`'s password (PAM, new `etc/pam.d/tsconfig`; Caddy `forward_auth` guards Filebrowser), and the BLE gateway requires an encrypted link plus the same login. Staff can log in to tsconfig, WebDAV and BLE as `root` with root's password if the image was built with `TSOS_ROOT_PASSWORD` (checked through `su`; no extra rights; stricter throttling). Filebrowser now runs as `pi`, no longer authenticates itself (`noauth` off, proxy-header login from Caddy after tsconfig's PAM check) and serves WebDAV at `/data/dav/data/` with HTTP Basic `pi` + the `pi` password (verified by tsconfig, `/auth/check` accepts Basic only for `/data/dav/`). The hotspot password can be set from a config bundle via `hotspot.nmconnection`. Defaults are unchanged and public (`pi`/`natur`, hotspot `BirdsAndBats`) until a bundle sets real values. `boot/firmware/mqttutil.conf` now reads tsconfig's API on `127.0.0.1:8000` directly (bundles that ship their own `mqttutil.conf` must do the same). See [docs/security.md](docs/security.md)
-- `pi` no longer has general sudo (was passwordless via `raspi-config nonint do_sudo_pass 1`,
-  which itself was added earlier in this Unreleased cycle - see below); it's removed from the
-  `sudo`, `adm` and `netdev` groups. Its only privileged actions are an explicit `systemctl
-  restart` allowlist and a wrapper into `tsconfig`'s new `app.privileged` module, both gated by
-  `etc/sudoers.d/tsos-pi`.
-- `root` has no password at all (`passwd -l root`) and is reachable only via SSH with a
-  manufacturer key (`root/.ssh/authorized_keys`, independent of the boot partition). SSH host
-  keys are no longer copied to `/root/.ssh` from the operator-editable boot partition.
-- `/boot/firmware` is now root-owned (`0755`) instead of world-writable; `/usr/local/src` is
-  now `root:root` instead of `pi:pi`. `tsconfig.service` runs as `pi` and writes configuration,
-  restarts services, and changes network settings through the new privileged helper instead of
-  directly.
+- `pi` has no sudo at all (removed from `sudo` and `adm`; no sudoers drop-in). Its privileged
+  actions use polkit and group membership instead: non-persistent `systemctl` verbs on a fixed
+  unit allowlist (`20-tsos-systemctl.rules`; `enable`/`disable`/`mask` stay denied), reboot via
+  logind (`21-tsos-reboot.rules`), full NetworkManager control for `netdev` including secrets
+  (`10-tsos-netdev.rules`), the full journal via `systemd-journal`, and `pkexec` into the
+  root-owned `tsconfig-privileged` wrapper (config write/delete/stat, overlay wipe, GSM field
+  removal; `30-tsos-privileged.rules`). `polkitd` and `pkexec` are installed explicitly.
+- `root` is reachable via SSH with a manufacturer key (`root/.ssh/authorized_keys`, baked in,
+  independent of the boot partition); `copy-authorized-keys` runs as `pi` and copies `pi`'s keys
+  only. `root` gets a password only if the image is built with `TSOS_ROOT_PASSWORD` (otherwise
+  `passwd -l`); it then also works for `su`, the staff login and SSH (root password SSH is
+  enabled only in that case, `PermitRootLogin prohibit-password` otherwise).
+- `/boot/firmware` is now root-owned (`0755`) instead of world-writable, and no longer
+  bind-mounted to `/media/boot`; `/usr/local/src` is now `root:root` instead of `pi:pi`.
+  `tsconfig.service` runs as `pi` and writes root-owned configuration through
+  `tsconfig-privileged`, which re-validates it (WireGuard hook directives are rejected). The
+  service allowlist is no longer read from the operator-writable `tsconfig.yml`.
+- `pi`'s password comes from `userconf.txt` (default `natur`), applied by `userconfig.service`;
+  `userconf-service` is patched so it no longer resets the shell to bash.
+- Optional HTTPS: Caddy also serves the site on `:443` with certificates from its own per-device local CA (`tls internal`) for the hostname, `<hostname>.local`, `localhost` and `169.254.0.1`; clients connecting by IP get the `.local` certificate. Plain HTTP on `:80` stays and is not redirected. Logins over HTTPS get a `Secure` session cookie. See [docs/security.md](docs/security.md), "HTTPS (optional)"
 - Samba is removed entirely (package, `smb.conf`, `smbd` service). It previously shared `/data` to
   any guest on the network (and, in earlier releases, all of `/media`, which included the boot
   partition and a read-only root filesystem mount). `/data` is reached over HTTP (`/data/`, login
@@ -52,7 +60,7 @@ today's model until replaced or re-flashed.**
 - WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
-- Default `pi` password and zsh login shell are set in the image; first-boot `userconfig.service` is disabled so Trixie `userconf-pi` cannot reset the shell to bash
+- Default `pi` password and zsh login shell are set in the image; `userconfig.service` stays enabled with a patched `userconf-service` so Trixie `userconf-pi` cannot reset the shell to bash
 - ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
 
 ## [2026.9.1] - 2026-09-16

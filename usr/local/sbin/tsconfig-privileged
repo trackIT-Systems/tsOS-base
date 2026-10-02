@@ -1,6 +1,7 @@
 #!/bin/sh
-# Sudoers-granted entry point for pi's privileged operations. Root-owned,
-# not writable by pi (see etc/sudoers.d/tsos-pi and docs/security.md).
+# pkexec-granted entry point for pi's privileged operations. Root-owned,
+# not writable by pi (see etc/polkit-1/rules.d/30-tsos-privileged.rules and
+# docs/security.md).
 #
 # This is a separate, minimal wrapper rather than exec'ing `tsconfig` (the
 # full CLI) directly, for two reasons:
