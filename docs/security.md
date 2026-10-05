@@ -322,9 +322,8 @@ close that gap.
 - **A configured root password** is guessable over SSH, the web form, WebDAV (in clear) and BLE,
   limited only by backoff (sshd: its defaults). If reused across the fleet, it compromises every
   device at once. Use a strong per-device value, or leave it unset.
-- **Mosquitto and Avahi.** The broker has no authentication or TLS; it binds loopback unless an
-  operator-supplied `mosquitto.d` adds a listener. Avahi advertises `_mqtt._tcp` on a port that is
-  closed by default.
+- **Mosquitto.** The broker has no authentication or TLS; it binds loopback unless an
+  operator-supplied `mosquitto.d` adds a listener.
 - **Physical access is root** (no secure boot).
 
 ## Migration

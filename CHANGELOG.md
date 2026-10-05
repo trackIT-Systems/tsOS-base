@@ -62,6 +62,15 @@ their previous model and are not patched; every device is reinstalled from scrat
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 - Default `pi` password and zsh login shell are set in the image; `userconfig.service` stays enabled with a patched `userconf-service` so Trixie `userconf-pi` cannot reset the shell to bash
 - ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
+- Avahi publishes over IPv4 only (`use-ipv6=no`)
+
+### Added
+
+- Avahi announces HTTPS (`_https._tcp`, 443), WebDAV (`_webdav._tcp` on 80, `_webdavs._tcp` on 443, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
+
+### Removed
+
+- Avahi no longer announces `_mqtt._tcp`: Mosquitto listens on loopback only unless a `mosquitto.d` listener is added
 
 ## [2026.9.1] - 2026-09-16
 

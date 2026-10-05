@@ -29,7 +29,7 @@ Flash with Raspberry Pi Imager or `dd`. Default hostname is `tsos-default-name` 
 
 **Wi-Fi hotspot:** SSID follows the hostname (default `tsos-default-name`), PSK `BirdsAndBats` (a config bundle can replace the profile with its own `hotspot.nmconnection`; the SSID always follows the hostname). The station is `169.254.0.1` ([hotspot.nmconnection](etc/NetworkManager/system-connections/hotspot.nmconnection)). An optional client network is defined in [station.nmconnection](etc/NetworkManager/system-connections/station.nmconnection).
 
-**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)) — and optionally HTTPS on port 443 with a self-signed, per-device certificate (no redirect from HTTP). Both ask for a login first: user `pi`, the same password as SSH (default `natur`); staff can use `root` and its password if the image has one. The BLE gateway uses the same password. Avahi advertises HTTP as `_http._tcp`.
+**Web:** Caddy on port 80 — tsconfig at `/`, Filebrowser at `/data/` ([Caddyfile](etc/caddy/Caddyfile)) — and optionally HTTPS on port 443 with a self-signed, per-device certificate (no redirect from HTTP). Both ask for a login first: user `pi`, the same password as SSH (default `natur`); staff can use `root` and its password if the image has one. The BLE gateway uses the same password. Avahi (mDNS, IPv4 only) advertises `<host>.local` with HTTP/HTTPS (`_http._tcp`, `_https._tcp`), WebDAV (`_webdav._tcp`, `_webdavs._tcp`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`).
 
 ## Boot configuration
 

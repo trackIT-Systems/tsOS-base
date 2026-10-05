@@ -3,13 +3,11 @@
 <service-group>
     <name replace-wildcards="yes">%h</name>
     <service>
-        <type>_http._tcp</type>
-        <port>80</port>
-        <txt-record>path=/</txt-record>
+        <type>_ssh._tcp</type>
+        <port>22</port>
     </service>
     <service>
-        <type>_https._tcp</type>
-        <port>443</port>
-        <txt-record>path=/</txt-record>
+        <type>_sftp-ssh._tcp</type>
+        <port>22</port>
     </service>
 </service-group>

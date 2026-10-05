@@ -3,13 +3,15 @@
 <service-group>
     <name replace-wildcards="yes">%h</name>
     <service>
-        <type>_http._tcp</type>
+        <type>_webdav._tcp</type>
         <port>80</port>
-        <txt-record>path=/</txt-record>
+        <txt-record>path=/data/dav/data/</txt-record>
+        <txt-record>u=pi</txt-record>
     </service>
     <service>
-        <type>_https._tcp</type>
+        <type>_webdavs._tcp</type>
         <port>443</port>
-        <txt-record>path=/</txt-record>
+        <txt-record>path=/data/dav/data/</txt-record>
+        <txt-record>u=pi</txt-record>
     </service>
 </service-group>
