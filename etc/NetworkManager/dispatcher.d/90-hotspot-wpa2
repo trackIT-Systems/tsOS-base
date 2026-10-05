@@ -1,0 +1,39 @@
+#!/bin/bash
+# Make the hotspot advertise plain WPA2-PSK (CCMP), as hostapd did.
+#
+# With the wpa_supplicant backend, NetworkManager always configures an access
+# point with key_mgmt "WPA-PSK WPA-PSK-SHA256", even when PMF is disabled.
+# PSK-SHA256 is only meaningful with PMF (802.11w); firmware without PMF
+# support (e.g. BCM43430 on the Raspberry Pi 3 B) then fails to advertise a
+# usable RSN element, so clients cannot associate with a WPA2-only hotspot.
+# The profile has no setting for this, so on activation, if PMF is off, drop
+# PSK-SHA256 in the running wpa_supplicant and restart the access point
+# (a sub-second restart, NetworkManager keeps the connection activated).
+#
+# See https://github.com/trackIT-Systems/tsOS-base/issues/17 and #19.
+
+IFACE="$1"
+ACTION="$2"
+
+[ "$ACTION" = "up" ] || exit 0
+[ "${CONNECTION_ID:-}" = "hotspot" ] || exit 0
+
+wpa() { wpa_cli -i "$IFACE" "$@"; }
+
+# NetworkManager configures exactly one network; in AP mode it has mode 2.
+for id in $(wpa list_networks 2>/dev/null | awk 'NR > 1 { print $1 }'); do
+    [ "$(wpa get_network "$id" mode)" = "2" ] || continue
+
+    key_mgmt=$(wpa get_network "$id" key_mgmt)
+    pmf=$(wpa get_network "$id" ieee80211w)
+    case "$key_mgmt" in *WPA-PSK-SHA256*) ;; *) exit 0 ;; esac
+    [ "$pmf" = "0" ] || exit 0
+
+    logger -t hotspot-wpa2 "$IFACE: key_mgmt '$key_mgmt' without PMF, restarting access point with WPA-PSK"
+    wpa disable_network "$id" >/dev/null
+    wpa set_network "$id" key_mgmt WPA-PSK >/dev/null
+    wpa enable_network "$id" >/dev/null
+    exit 0
+done
+
+exit 0

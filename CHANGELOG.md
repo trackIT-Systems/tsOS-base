@@ -49,6 +49,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 ### Fixed
 
 - Explicitly install `modemmanager` (no longer pulled in by default on Trixie) ([#33](https://github.com/trackIT-Systems/tsOS-base/issues/33))
+- Hotspot is WPA2-only again (`proto=rsn`, was WPA/WPA2 mixed mode, flagged as insecure by macOS and refused by some Android clients). A NetworkManager dispatcher script (`90-hotspot-wpa2`) drops the `WPA-PSK-SHA256` key management NetworkManager adds without PMF, which firmware without PMF support (Raspberry Pi 3 B) cannot advertise ([#17](https://github.com/trackIT-Systems/tsOS-base/issues/17), [#19](https://github.com/trackIT-Systems/tsOS-base/issues/19))
 
 ### Changed
 
