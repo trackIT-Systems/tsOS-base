@@ -37,6 +37,13 @@ EOF
 ENV PIP_ROOT_USER_ACTION ignore
 ENV PIP_BREAK_SYSTEM_PACKAGES 1
 
+# No man pages, docs or translations: keep dpkg from installing them, and drop
+# the base image's - except what 01-tsos-nodoc keeps (copyright, locale.alias)
+INSTALL etc/dpkg/dpkg.cfg.d/01-tsos-nodoc /etc/dpkg/dpkg.cfg.d/01-tsos-nodoc
+RUN find /usr/share/man -mindepth 1 -delete
+RUN find /usr/share/doc /usr/share/locale -mindepth 1 ! -type d ! -name copyright ! -name locale.alias -delete
+RUN find /usr/share/doc /usr/share/locale -mindepth 1 -type d -empty -delete
+
 # Update OS and sources
 RUN apt-get update
 
@@ -145,6 +152,10 @@ RUN chmod -R go-w /usr/local/src
 
 # Root now owns /usr/local/src - let pi's git commands there work without "dubious ownership" errors.
 RUN sh -c 'for d in /usr/local/src/*/; do git config --system --add safe.directory "${d%/}"; done'
+
+# Drop dev artifacts INSTALL copies from a local checkout (macOS venvs, test caches, ...).
+# Must stay before the `pip install -e` steps, which regenerate the egg-info.
+RUN find /usr/local/src \( -name .venv -o -name .pytest_cache -o -name .mypy_cache -o -name .ruff_cache -o -name htmlcov -o -name .pdm-build -o -name __pycache__ -o -name '*.egg-info' -o -name .DS_Store \) -prune -exec rm -rf {} +
 
 # polkitd/pkexec aren't in the base image the way sudo is - install explicitly.
 RUN apt-get install -y polkitd pkexec
@@ -428,5 +439,6 @@ RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt
 RUN rm -rf /var/lib/apt/lists/
 RUN apt-get clean
 RUN rm -rf /var/cache/
+RUN rm -rf /root/.cache/pip
 
 SHRINK

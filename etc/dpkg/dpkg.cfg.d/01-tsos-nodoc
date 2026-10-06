@@ -1,0 +1,12 @@
+# Don't install man pages, documentation or translations - saves space on the
+# image; installed early in the Pifile so it applies to every package.
+
+path-exclude=/usr/share/man/*
+
+# Keep the copyright files: they carry the packages' license notices.
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+
+# English only; glibc still reads locale.alias.
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/locale/locale.alias
