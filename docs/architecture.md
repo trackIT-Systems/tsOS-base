@@ -39,7 +39,7 @@ The system uses GPT partition table (converted from MBR on first boot via initra
    - Stores overlay changes (persistent across reboots)
 
 5. **datafs** (Partition 5, optional)
-   - Type: Microsoft basic data (0700)
+   - Type: MBR 0x07 (exFAT/NTFS; macOS only mounts exFAT with this type)
    - Filesystem: ExFAT, label `datafs`
    - Mount: `/media/datafs` → `/data` (bind mount)
    - Size: Remaining space (if device > 16 GiB)

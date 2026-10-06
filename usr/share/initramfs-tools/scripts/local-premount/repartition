@@ -288,10 +288,11 @@ ${ROOT_DEV}5 : start=$NEW_UPPERFS_START, size=$UPPERFS_SIZE, type=83"
 	# Add datafs partition if needed
 	# For logical partition 6: data starts at NEW_DATAFS_START
 	# sfdisk will automatically place EBR before it
+	# Type 7 (exFAT/NTFS), not c (FAT32 LBA): macOS only probes for exFAT on type 7
 	if [ "$NEED_DATAFS" -eq 1 ]; then
 		log_info_msg "Adding datafs partition to layout"
 		SFDISK_INPUT="$SFDISK_INPUT
-${ROOT_DEV}6 : start=$NEW_DATAFS_START, size=$DATAFS_SIZE, type=c"
+${ROOT_DEV}6 : start=$NEW_DATAFS_START, size=$DATAFS_SIZE, type=7"
 	fi
 	
 	# Apply partition layout
