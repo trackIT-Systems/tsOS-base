@@ -1,6 +1,6 @@
 FROM https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2026-09-15/2026-09-15-raspios-trixie-arm64-lite.img.xz
 TO "tsOS-base-arm64.img"
-PUMP 1200M
+PUMP 500M
 
 # Set os-release info
 NAME="tsOS"
@@ -44,6 +44,10 @@ RUN find /usr/share/man -mindepth 1 -delete
 RUN find /usr/share/doc /usr/share/locale -mindepth 1 ! -type d ! -name copyright ! -name locale.alias -delete
 RUN find /usr/share/doc /usr/share/locale -mindepth 1 -type d -empty -delete
 
+# Remove what the base image brings but nothing uses: video tools, babel locale data,
+# remote access, PGP CLI and kernel headers (no DKMS)
+RUN apt-get purge -y --auto-remove mkvtoolnix python3-babel python-babel-localedata rpi-connect-lite sq '~nlinux-headers-'
+
 # Update OS and sources
 RUN apt-get update
 
@@ -55,6 +59,11 @@ RUN apt-get install -y \
     git \
     mosh \
     zsh
+
+# Remove compilers and Python dev headers: all pip installs are pure Python. Not earlier,
+# as python3-pip recommends build-essential and python3-dev, and recommends are only
+# disabled once etc/apt/apt.conf.d is installed.
+RUN apt-get purge -y --auto-remove build-essential gcc g++ gdb python3-dev libpython3.13-dev
 
 # Install networking tools
 RUN apt-get install -y \
@@ -80,13 +89,13 @@ RUN mv filebrowser /usr/bin/filebrowser
 RUN apt-get install -y mosquitto mosquitto-clients
 
 # Install python system packages
-RUN apt-get install -y python3-dbus libdbus-glib-1-dev
+RUN apt-get install -y python3-dbus
 
 # Install GPS / NTP software
-RUN apt-get remove -y systemd-timesyncd
+RUN apt-get purge -y systemd-timesyncd
 RUN apt-get install --no-install-recommends -y \
     gpsd \
-    gpsd-clients \
+    gpsd-tools \
     geoclue-2.0 \
     chrony
 
@@ -278,7 +287,9 @@ RUN rm /usr/lib/systemd/system/chronyd-restricted.service
 # Enabling wait for time-sync.target (depending services will not start before the clock is synced)
 RUN systemctl enable chrony-wait.service chrony-wait-stop.path
 
-# Set build-timestamp to last known time
+# Set build-timestamp to last known time: systemd (PID 1) advances the clock to this
+# file's mtime at boot. The directory went with the systemd-timesyncd purge.
+RUN mkdir -p /var/lib/systemd/timesync
 RUN touch /var/lib/systemd/timesync/clock
 
 # Configure hardware connectivity
@@ -347,7 +358,6 @@ RUN systemctl mask systemd-networkd-wait-online.service
 ### services configuration
 
 # install and enable enable tsconfig
-RUN apt-get install -y portaudio19-dev
 # python3-httpx is imported at module level by tsconfig (auth, BLE gateway, routers). It is
 # listed here explicitly: this image sets APT::Install-Recommends "0" (etc/apt/apt.conf.d), so
 # it is not pulled in as a Recommends of python3-fastapi - it only used to arrive as a Recommends
@@ -386,7 +396,9 @@ RUN apt-get install -y python3-cbor2
 RUN python3 -m pip install --no-deps gatt
 RUN python3 -m pip install --no-deps -e /usr/local/src/pysmartsolar
 
-# Install vedirect_dump
+# Install vedirect_dump (pyserial is also used by pyenvsense's sensirion_shdlc_driver;
+# it only used to arrive as a dependency of gpsd-clients)
+RUN apt-get install -y python3-serial
 RUN python3 -m pip install --no-deps ve_utils vedirect_m8
 RUN python3 -m pip install --no-deps -e /usr/local/src/vedirect_dump
 
@@ -435,4 +447,5 @@ RUN apt-get clean
 RUN rm -rf /var/cache/
 RUN rm -rf /root/.cache/pip
 
+ZERO
 SHRINK
