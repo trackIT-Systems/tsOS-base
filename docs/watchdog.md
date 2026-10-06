@@ -56,14 +56,17 @@ To further harden the system, add the following parameters to `/boot/firmware/cm
 
 ## Systemd Configuration
 
-Once the system is booted, systemd takes over "feeding" the watchdog. Configure this in `/etc/systemd/system.conf`:
+Once the system is booted, systemd takes over "feeding" the watchdog. tsOS configures this in `/etc/systemd/system.conf.d/50-watchdog.conf`:
 
 ```ini
 [Manager]
 RuntimeWatchdogSec=10
+RebootWatchdogSec=30
 ```
 
 - **RuntimeWatchdogSec**: How often systemd pets the watchdog. Must be less than the hardware limit (15s).
+
+Drop-ins from `/etc` and `/usr/lib` are applied in filename order, so the number must sort after Raspberry Pi OS's `/usr/lib/systemd/system.conf.d/40-rpi-enable-watchdog.conf` (`RuntimeWatchdogSec=1m`), or that one wins. Check the effective values with `systemd-analyze cat-config systemd/system.conf`.
 
 ## Summary of a High-Reliability Configuration
 
