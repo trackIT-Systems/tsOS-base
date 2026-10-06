@@ -338,7 +338,7 @@ EOF
 
 ### install python daemon
 RUN apt-get install -y python3-astral python3-pytimeparse
-RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2026.10.1.tar.gz
+RUN python3 -m pip install --no-deps https://github.com/trackIT-Systems/scheduleparse/archive/refs/tags/2026.10.2.tar.gz
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsschedule
 RUN systemctl enable tsschedule.service
 
