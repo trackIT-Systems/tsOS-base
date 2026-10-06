@@ -48,8 +48,8 @@ To further harden the system, add the following parameters to `/boot/firmware/cm
 - **Effect**: Once the watchdog is started, it cannot be stopped by the application or by closing the device file. If the watchdog daemon crashes or is killed, the watchdog timer will expire and reboot the system.
 - **Benefit**: prevents accidental disabling of the watchdog.
 
-### `watchdog_core.open_timeout=30`
-- **Description**: Watchdog open grace period.
+### `watchdog.open_timeout=30`
+- **Description**: Watchdog open grace period. The watchdog core is built as `watchdog.ko`, so the prefix is `watchdog.`, not `watchdog_core.` (which the kernel silently ignores). Without it, the firmware adds `watchdog.open_timeout=15` itself.
 - **Effect**: If the watchdog was started by the bootloader (via `kernel_watchdog_timeout`), this parameter defines how long the kernel waits for userspace (systemd) to open and take over the watchdog device.
 - **Default**: 0 (Disabled/Infinite). If 0, the kernel will keep petting the watchdog indefinitely (if the driver supports it) until userspace opens it, or it will stop the watchdog if the driver doesn't support "keep running".
 - **Benefit**: Prevents a reboot loop if userspace takes slightly longer to start than the initial hardware timeout allows.
@@ -75,7 +75,7 @@ RuntimeWatchdogSec=10
 
 2. **`cmdline.txt`**:
    ```
-   ... panic=10 bcm2835_wdt.nowayout=1 watchdog_core.open_timeout=30
+   ... panic=10 bcm2835_wdt.nowayout=1 watchdog.open_timeout=30
    ```
 
 3. **`system.conf`**:
