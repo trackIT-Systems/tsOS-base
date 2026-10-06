@@ -7,9 +7,6 @@
 [submodule "opt/oh-my-zsh"]
 	path = opt/oh-my-zsh
 	url = https://github.com/ohmyzsh/ohmyzsh
-[submodule "usr/local/src/wittypi4"]
-	path = usr/local/src/wittypi4
-	url = https://github.com/trackIT-Systems/wittypi4.git
 [submodule "usr/local/src/vedirect_dump"]
 	path = usr/local/src/vedirect_dump
 	url = https://github.com/trackIT-Systems/vedirect_dump

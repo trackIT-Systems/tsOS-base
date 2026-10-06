@@ -99,7 +99,7 @@ Core packages installed via `apt-get`:
 - gpsd, gpsd-clients
 - caddy (web server)
 - FileBrowser Quantum (web file manager)
-- overlayroot, dkms, udevil
+- overlayroot, udevil
 - uhubctl (USB hub per-port power control)
 
 ### Custom Services
@@ -108,7 +108,7 @@ Python-based services installed from git submodules under `/usr/local/src`:
 - `tsconfig` - Configuration service (FastAPI)
 - `tsconfig-ble` - Bluetooth Low Energy service
 - `pymqttutil` - System statistics via MQTT
-- `wittypi4` - RTC and power management (DKMS module + Python daemon)
+- `tsschedule` - Power scheduling (WittyPi 4, Raspberry Pi 5)
 - `pysmartsolar` - SmartSolar integration
 - `vedirect_dump` - VE.Direct protocol handler
 
@@ -117,7 +117,7 @@ Python-based services installed from git submodules under `/usr/local/src`:
 Key enabled services:
 - `tsconfig.service`, `tsconfig-ble.service`
 - `mqttutil.service`
-- `wittypid.service` (power management)
+- `tsschedule.service` (power management)
 - `mosquitto.service`
 - `caddy.service`, `filebrowser.service`
 - `devmon.service` (udevil automount)
@@ -129,7 +129,7 @@ Key enabled services:
 
 ### Hardware Support
 
-- **WittyPi 4**: RTC module via DKMS (`rtc-pcf85063-wittypi4`), device tree overlay
+- **WittyPi 4**: RTC driver `rtc-pcf85063-wittypi4` and `wittypi4` overlay (RTC, shutdown, SYSUP), prebuilt from the [wittypi4](https://github.com/trackIT-Systems/wittypi4) release
 - **GPIO**: I2C enabled, UART0 on GPIO header (Pi5), OTG mode (Pi4)
 - **USB**: Huawei modem support via udev rules
 - **GPS**: gpsd with static location fallback (`/boot/firmware/geolocation`)

@@ -58,7 +58,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 - Install `uhubctl` from apt instead of building the git submodule
 - Raspberry Pi OS Lite base image updated to 2026-09-15 (Trixie, kernel 6.18)
 - Build with pimod v0.9.3 (Docker image, GitHub Action, and pidiff)
-- WittyPi RTC DKMS module and overlay installed from `wittypi4` (tsschedule no longer ships the kernel driver)
+- WittyPi RTC driver and overlay installed prebuilt from the `wittypi4` 0.2.0 release (tsschedule no longer ships the kernel driver); the overlay now also provides shutdown (GPIO4) and SYSUP (GPIO17), replacing the `gpio-shutdown` and `gpio-led` overlays. No DKMS or compiler in the image; the `wittypi4` submodule and the unused `i2cdevice` package are dropped
 - Updated `tsconfig` (saving configuration no longer deploys automatically; save and deploy are separate actions)
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 - Default `pi` password and zsh login shell are set in the image; `userconfig.service` stays enabled with a patched `userconf-service` so Trixie `userconf-pi` cannot reset the shell to bash

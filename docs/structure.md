@@ -90,7 +90,6 @@ FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/fileb
 
 Submodules in `usr/local/src/`:
 - `tsconfig` - Main configuration service
-- `wittypi4` - WittyPi hardware support
 - `pymqttutil` - MQTT system reporting
 - `pysmartsolar` - SmartSolar integration
 - `vedirect_dump` - VE.Direct protocol

@@ -35,8 +35,7 @@ tsOS-base uses [pimod](https://github.com/Nature40/pimod) to build custom Raspbe
 - **Image Expansion**: `PUMP 1000M` expands image by 1GB
 - **Versioning**: Uses `git describe --tags --always` for version
 - **Python Packages**: Installed with `--no-deps` flag (dependencies handled via apt)
-- **DKMS Modules**: WittyPi RTC module compiled for kernel version
-- **Device Tree**: Custom overlays compiled and installed
+- **WittyPi Driver**: Prebuilt module and overlay downloaded from a wittypi4 release; the build fails if the release has no module for an installed kernel
 
 ## Building Locally
 
