@@ -67,6 +67,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Added
 
+- Teltonika TRM200 (MeiG SLM770A, RNDIS and ECM mode) LTE support: ModemManager plugins installed from the [`modemmanager-meig-asr`](https://github.com/trackIT-Systems/modemmanager-meig-asr) 1.24.0-1 release
 - Avahi announces WebDAV (`_webdav._tcp` on 80, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
 
 ### Removed

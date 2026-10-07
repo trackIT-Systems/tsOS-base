@@ -71,6 +71,12 @@ RUN apt-get install -y \
     wireguard-tools \
     modemmanager
 
+# Install the ModemManager plugins for ASR-based MeiG modems (Teltonika TRM200).
+# The package depends on the exact modemmanager version, so a ModemManager bump fails here.
+RUN curl -fsSL -o /tmp/modemmanager-meig-asr.deb https://github.com/trackIT-Systems/modemmanager-meig-asr/releases/download/1.24.0-1/modemmanager-meig-asr_1.24.0-1_arm64.deb
+RUN apt-get install -y /tmp/modemmanager-meig-asr.deb
+RUN rm /tmp/modemmanager-meig-asr.deb
+
 # Install overlayroot
 RUN apt-get install -y overlayroot
 
