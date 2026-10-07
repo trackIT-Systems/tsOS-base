@@ -63,7 +63,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 - Default `pi` password and zsh login shell are set in the image; `userconfig.service` stays enabled with a patched `userconf-service` so Trixie `userconf-pi` cannot reset the shell to bash
 - ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
-- Avahi publishes over IPv4 only (`use-ipv6=no`)
+- Avahi publishes over IPv4 only (`use-ipv6=no`) and only IPv4 addresses (`publish-aaaa-on-ipv4=no`), so an mDNS reflector echoing a stale IPv6 record no longer renames the host to `<host>-2.local` at boot
 
 ### Added
 
