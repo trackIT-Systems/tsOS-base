@@ -67,7 +67,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Added
 
-- Avahi announces HTTPS (`_https._tcp`, 443), WebDAV (`_webdav._tcp` on 80, `_webdavs._tcp` on 443, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
+- Avahi announces WebDAV (`_webdav._tcp` on 80, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
 
 ### Removed
 

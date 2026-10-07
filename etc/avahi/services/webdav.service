@@ -8,10 +8,4 @@
         <txt-record>path=/data/dav/data/</txt-record>
         <txt-record>u=pi</txt-record>
     </service>
-    <service>
-        <type>_webdavs._tcp</type>
-        <port>443</port>
-        <txt-record>path=/data/dav/data/</txt-record>
-        <txt-record>u=pi</txt-record>
-    </service>
 </service-group>
