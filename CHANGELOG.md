@@ -65,6 +65,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 - ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
 - Huawei / Brovi E3372 LTE sticks (E3372-325, E3372h-320, E3372h-153) run in modem mode instead of HiLink mode: switched by the [`modemmanager-e3372`](https://github.com/trackIT-Systems/modemmanager-e3372) 1.24.0-2 release and connected by ModemManager through the `cellular` profile (`ppp0` on the E3372-325, `wwan0` on the E3372h). The host gets the carrier IP directly instead of `192.168.8.x` behind the stick's NAT
 - The `cellular` profile has IPv6 disabled (the E3372-325 ends PPP sessions that negotiate IPv6)
+- NetworkManager ignores the ECM interface of the Quectel EC200A (`2c7c:6005`, new `70-quectel-ec200a-nm-unmanaged.rules`): ModemManager connects it over PPP, and DHCP on the ECM interface left a dead default route via the modem's internal router
 - Avahi publishes over IPv4 only (`use-ipv6=no`) and only IPv4 addresses (`publish-aaaa-on-ipv4=no`), so an mDNS reflector echoing a stale IPv6 record no longer renames the host to `<host>-2.local` at boot
 
 ### Added

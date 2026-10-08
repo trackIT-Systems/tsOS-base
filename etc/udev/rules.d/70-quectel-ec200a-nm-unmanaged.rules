@@ -1,0 +1,5 @@
+# Quectel EC200A (2c7c:6005) in ECM mode: ModemManager's Quectel plugin connects
+# over PPP, so the ECM interface (usb0) only reaches the modem's internal NAT
+# router (192.168.43.1) and carries no data. Keep NetworkManager off it, so it
+# doesn't run DHCP there and leave a dead default route behind.
+ACTION!="remove", SUBSYSTEM=="net", ATTRS{idVendor}=="2c7c", ATTRS{idProduct}=="6005", ENV{NM_UNMANAGED}="1"
