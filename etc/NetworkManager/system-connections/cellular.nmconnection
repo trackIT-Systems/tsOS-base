@@ -10,7 +10,7 @@ apn=iot.melita.io
 method=auto
 
 [ipv6]
-method=auto
+method=disabled
 ip6-privacy=0
 
 [proxy]

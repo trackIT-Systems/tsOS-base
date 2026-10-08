@@ -63,6 +63,8 @@ their previous model and are not patched; every device is reinstalled from scrat
 - Replaced File Browser with FileBrowser Quantum v1.5.6-stable (same `/data/files` URLs, no-auth)
 - Default `pi` password and zsh login shell are set in the image; `userconfig.service` stays enabled with a patched `userconf-service` so Trixie `userconf-pi` cannot reset the shell to bash
 - ~~Passwordless `sudo` for `pi` restored (`raspi-config nonint do_sudo_pass 1`; Trixie disables it by default)~~ - reverted, see Security above
+- Huawei / Brovi E3372 LTE sticks (E3372-325, E3372h-320, E3372h-153) run in modem mode instead of HiLink mode: switched by the [`modemmanager-e3372`](https://github.com/trackIT-Systems/modemmanager-e3372) 1.24.0-2 release and connected by ModemManager through the `cellular` profile (`ppp0` on the E3372-325, `wwan0` on the E3372h). The host gets the carrier IP directly instead of `192.168.8.x` behind the stick's NAT
+- The `cellular` profile has IPv6 disabled (the E3372-325 ends PPP sessions that negotiate IPv6)
 - Avahi publishes over IPv4 only (`use-ipv6=no`) and only IPv4 addresses (`publish-aaaa-on-ipv4=no`), so an mDNS reflector echoing a stale IPv6 record no longer renames the host to `<host>-2.local` at boot
 
 ### Added
@@ -72,6 +74,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Removed
 
+- HiLink tooling for the Huawei / Brovi sticks: `huaweicheck` (service and timer), `brovi_switch`, `brovi_startup`, the `40-huawei.rules` udev rules, the `hua0` interface and its `huawei` NetworkManager profile, and the `huawei/*` HiLink web API readouts in `boot/firmware/mqttutil.conf` (`uhubctl` stays installed)
 - Avahi no longer announces `_mqtt._tcp`: Mosquitto listens on loopback only unless a `mosquitto.d` listener is added
 
 ## [2026.9.1] - 2026-09-16

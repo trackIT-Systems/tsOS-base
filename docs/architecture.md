@@ -124,15 +124,14 @@ Key enabled services:
 - `gpsd.service`
 - `chrony-wait.service` (time sync dependency)
 - `hostname-config.service`
-- `brovi_startup.service`
 - `repartition-cleanup.service`
 
 ### Hardware Support
 
 - **WittyPi 4**: RTC driver `rtc-pcf85063-wittypi4` and `wittypi4` overlay (RTC, shutdown, SYSUP), prebuilt from the [wittypi4](https://github.com/trackIT-Systems/wittypi4) release
 - **GPIO**: I2C enabled, UART0 on GPIO header (Pi5), OTG mode (Pi4)
-- **USB**: Huawei modem support via udev rules
 - **LTE**: Teltonika TRM200 (MeiG SLM770A) via ModemManager plugins from the [modemmanager-meig-asr](https://github.com/trackIT-Systems/modemmanager-meig-asr) release
+- **LTE**: Huawei / Brovi E3372 sticks (E3372-325, E3372h-320, E3372h-153) in modem mode via the [modemmanager-e3372](https://github.com/trackIT-Systems/modemmanager-e3372) release (usb_modeswitch configuration and patched ModemManager Huawei plugin)
 - **GPS**: gpsd with static location fallback (`/boot/firmware/geolocation`)
 
 ## Configuration Points

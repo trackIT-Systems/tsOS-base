@@ -37,6 +37,7 @@ tsOS-base uses [pimod](https://github.com/Nature40/pimod) to build custom Raspbe
 - **Python Packages**: Installed with `--no-deps` flag (dependencies handled via apt)
 - **WittyPi Driver**: Prebuilt module and overlay downloaded from a wittypi4 release; the build fails if the release has no module for an installed kernel
 - **TRM200 ModemManager plugins**: `modemmanager-meig-asr` .deb downloaded from its release; the build fails if apt's `modemmanager` is not the exact version the package was built against
+- **E3372 modem mode**: `modemmanager-e3372` .deb downloaded from its release (diverts Debian's ModemManager Huawei plugin); same exact `modemmanager` version requirement
 
 ## Building Locally
 

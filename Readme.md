@@ -14,7 +14,7 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 - **pyenvsense** — SHT3x / SHT4x environmental sensors
 - **Chrony** + **gpsd** time sync
 - **WittyPi 4** RTC / power management via **tsschedule**
-- **WireGuard**, LTE helpers (`huaweicheck`, Brovi), Teltonika TRM200 support
+- **WireGuard**, LTE via ModemManager (Huawei / Brovi E3372, Teltonika TRM200)
 - Victron readout (**pysmartsolar**, **vedirect_dump**)
 
 ## Download and flash
@@ -62,7 +62,7 @@ Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.
 - UART0 on the GPIO header (Pi 5); USB OTG (Pi 4)
 - I2C bus 1 at 400 kHz; second bus via `dtparam=i2c_vc=on`
 - GPS via gpsd; static fallback `/boot/firmware/geolocation`
-- Huawei / Brovi LTE via NetworkManager and `huaweicheck`
+- Huawei / Brovi E3372 LTE sticks (E3372-325, E3372h-320, E3372h-153) in modem mode via NetworkManager and ModemManager ([modemmanager-e3372](https://github.com/trackIT-Systems/modemmanager-e3372))
 - Teltonika TRM200 LTE via NetworkManager and ModemManager ([modemmanager-meig-asr](https://github.com/trackIT-Systems/modemmanager-meig-asr))
 - Hardware watchdog: [docs/watchdog.md](docs/watchdog.md)
 
