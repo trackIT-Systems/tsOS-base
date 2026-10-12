@@ -121,10 +121,13 @@ is `app.privileged.ops`'s. Notes:
 ### `pi`
 
 - **Password:** from `userconf.txt` on the boot partition, default `natur` (seeded at build time).
-  `userconfig.service` applies and deletes it on boot; a config bundle can ship a new one
+  `userconfig.service` applies and deletes it on **every** boot; a config bundle can ship a new one
   (`pi:<sha512-crypt>` only, no renaming — [userconf.py](../usr/local/src/tsconfig/app/configs/userconf.py)).
-  `usr/lib/userconf-pi/userconf-service` is patched to reassert `zsh` afterwards, because upstream
-  resets the shell to bash unconditionally (`RPi-Distro/userconf-pi` commit `e58fd5ca`).
+  `usr/lib/userconf-pi/userconf-service` is replaced by a short script that runs `chpasswd -e` itself.
+  Upstream's helper `/usr/lib/userconf-pi/userconf` is not called: it ends in `cancel-rename`, which
+  disables `userconfig.service` (so later files would be ignored), and it resets the shell to bash
+  (`RPi-Distro/userconf-pi` commit `e58fd5ca`). Without a file the service does nothing; there is no
+  interactive dialog.
 - **Groups:** removed from `sudo` and `adm`; member of `netdev` and `systemd-journal`.
 - **SSH keys:** `copy-authorized-keys.service` runs as `pi` and copies `/boot/firmware/authorized_keys`
   to `pi` only ([copy-authorized-keys.service](../etc/systemd/system/copy-authorized-keys.service)).

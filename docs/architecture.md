@@ -155,7 +155,7 @@ Runtime configuration via `/boot/firmware/`:
 - SSH keys managed via `copy-authorized-keys.service` (runs as `pi`; `root`'s keys are a
   separate manufacturer-controlled file, not sourced from the boot partition)
 - `pi`'s default password is seeded as a `userconf` file, applied by `userconfig.service` on
-  first boot (patched for an upstream shell-reset bug) - the same mechanism an operator's own
+  every boot (replaced script, no `cancel-rename`) - the same mechanism an operator's own
   boot-partition `userconf`/`userconf.txt` goes through
 - `pi` has no general sudo (only an explicit restart allowlist); `root`'s password is a
   build-time choice (`TSOS_ROOT_PASSWORD`, unset by default → locked, same as before) - see

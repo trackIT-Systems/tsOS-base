@@ -237,8 +237,10 @@ RUN usermod -s /bin/zsh pi
 RUN usermod -s /bin/zsh root
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
 
-# userconf-service is patched to fix Trixie's shell-reset bug - see docs/security.md.
-RUN systemctl enable userconfig.service
+# userconf-service is replaced so it applies userconf.txt on every boot and never calls
+# cancel-rename (which would disable the unit) - see docs/security.md. What cancel-rename
+# did on first boot is done here: getty on tty1 (rename_user.conf is removed above).
+RUN systemctl enable userconfig.service getty@tty1.service
 
 # pi has no sudo access at all - every privileged action is gated by polkit
 # or group membership instead (see docs/security.md). Stays in `netdev` for
