@@ -183,6 +183,10 @@ RUN apt-get install -y polkitd pkexec
 RUN chown root:root /usr/local/sbin/tsconfig-privileged
 RUN chmod 755 /usr/local/sbin/tsconfig-privileged
 
+# Per-install Bluetooth address, applied at every boot - see CHANGELOG.md.
+RUN chown root:root /usr/local/sbin/tsos-bluetooth-address
+RUN chmod 755 /usr/local/sbin/tsos-bluetooth-address
+
 #################################################
 ### basic configuration
 
@@ -378,7 +382,12 @@ RUN systemctl mask systemd-networkd-wait-online.service
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
 INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
-RUN systemctl enable tsconfig tsconfig-ble
+# The BLE gateway runs as its own user, in `shadow` for its hash login (BlueZ's D-Bus policy
+# lets any user talk to it, no `bluetooth` group needed). pi stays out of `shadow` - see
+# docs/security.md, "BLE".
+RUN adduser --system --group --no-create-home tsconfig-ble
+RUN usermod -aG shadow tsconfig-ble
+RUN systemctl enable tsconfig tsconfig-ble tsos-bluetooth-address
 
 # install default config
 RUN tsconfig zip -f -b forbid /home/pi/tsos-default-name_config.zip

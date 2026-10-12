@@ -16,8 +16,9 @@ Two accounts, two trust levels:
 
 The boundary is **OS-level permissions** (file ownership/mode, polkit rules, group membership),
 not sudo and not application checks. `tsconfig.service` runs as `pi`, so `tsconfig` (web, API,
-web shell, BLE) is a convenience layer with exactly `pi`'s rights: a bug or injection in it is
-capped at what `pi` could do anyway. The one way from `pi` to `root` is `su`, and only if the image
+web shell) is a convenience layer with exactly `pi`'s rights: a bug or injection in it is
+capped at what `pi` could do anyway. The BLE gateway runs as its own user `tsconfig-ble`, which can
+additionally read `/etc/shadow` (see "BLE") and otherwise acts through tsconfig's API. The one way from `pi` to `root` is `su`, and only if the image
 was built with a root password (see "Root password (build-time, optional)").
 
 `pi` cannot read root-only files, with three deliberate exceptions: the boot partition, the **full
@@ -212,7 +213,7 @@ Plain HTTP on `:80` stays and is never redirected ([Caddyfile](../etc/caddy/Cadd
 `root` + root's password works on the web form, WebDAV and BLE. It grants **nothing extra**: the
 session, API, web shell and Filebrowser stay `pi`-level. Log lines record which account was used.
 
-- **Check.** `unix_chkpwd` only verifies the caller's own account, and joining `shadow` would
+- **Check.** `unix_chkpwd` only verifies the caller's own account, and putting `pi` in `shadow` would
   expose every hash, so tsconfig runs the setuid `su -s /bin/sh -c true root` under a pty, writes
   the password after the `Password:` prompt, and treats exit status 0 as success. None of our code
   runs as root, and `pi` gains nothing it couldn't do by running `su` itself.
@@ -252,7 +253,12 @@ the crypt hash in `userconf.txt`. `/data` is reached over HTTP, WebDAV or SSH/SF
 
 ### BLE
 
-`tsconfig-ble` runs as `pi`:
+`tsconfig-ble` runs as the system user `tsconfig-ble`, in the group `shadow` (for the hash login
+below; BlueZ's D-Bus policy needs no group). It reaches everything else through tsconfig's API
+on loopback, which is trusted by peer address, not by user. `pi` is **not** in `shadow`: neither
+tsconfig nor the web shell can read hashes. The cost: whoever compromises the gateway process (the
+code that parses BLE input) can read every hash, root's included, and use pi's for the hash login
+or crack both offline.
 
 - **Encrypted link.** Gated characteristics (and the login one) use BlueZ's `encrypt-*` flags, so
   BlueZ forces LE pairing. The device has no display or keypad, so pairing is Just Works
@@ -265,6 +271,17 @@ the crypt hash in `userconf.txt`. `/data` is reached over HTTP, WebDAV or SSH/SF
   upload) and the systemd service list. Open: the status characteristics (system status, server
   mode, timedatectl, available services), so devices can be identified before pairing.
   `--no-auth` (alias `--no-pairing`) disables both layers.
+- **Hash login (`pi` only).** Instead of the password, `{"hash": "$6$..."}` logs in as `pi` if it
+  equals pi's field in `/etc/shadow` exactly (constant-time comparison; locked or empty entries
+  never match). It is a convenience for the usual case where the client holds the bundle that was
+  applied, whose `userconf.txt` holds that hash, and the password has not changed since. Failures
+  count toward the same backoff as password failures. Consequence: **pi's hash is a BLE
+  credential.** Anyone holding a bundle with `userconf.txt` (or the default image's seed) can log in
+  as `pi` over BLE on every device with that hash, and the hash crosses the air in the same Just
+  Works link as the password does, so a fake device or a pairing man-in-the-middle can capture it.
+  Treat such bundles as secrets; to revoke, re-hash the password with a new salt (a new
+  `openssl passwd -6`), which also changes the hash on every device it is applied to. `root` has no
+  hash login.
 
 ### Hotspot password via the config bundle
 

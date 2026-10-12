@@ -1,0 +1,38 @@
+#!/bin/sh
+# Give the Bluetooth controller a public address that belongs to this install.
+#
+# A phone keeps its bond with a device by the device's Bluetooth address. After a
+# reflash the Pi has lost its keys but still has the controller's factory address, so
+# the phone's bond is stale and the connection is refused until the user forgets the
+# device in the phone's settings. With an address that changes whenever the keys are
+# lost, the device looks new instead: vendor prefix of the controller + 3 random bytes
+# stored next to BlueZ's keys. Run after bluetooth.service; a no-op when already set.
+set -eu
+
+STATE=/var/lib/bluetooth/tsos-address
+
+# btmgmt quits when stdin is at EOF (as under systemd), before its reply arrives
+mgmt() { sleep 1 | btmgmt -i 0 "$@"; }
+
+# bluetoothd powers the controller on once it is set up; changing the address earlier
+# is undone by the kernel
+wait_powered() {
+    for _ in $(seq 60); do
+        mgmt info | grep -q 'current settings:.*powered' && return 0
+    done
+    return 1
+}
+
+wait_powered || { echo "Bluetooth controller is not powered, address left alone"; exit 0; }
+
+[ -s "$STATE" ] || (umask 077; od -An -N3 -tx1 /dev/urandom | awk '{printf "%s:%s:%s\n", toupper($1), toupper($2), toupper($3)}' >"$STATE")
+
+current="$(mgmt info | sed -n 's/^[[:space:]]*addr \([0-9A-F:]*\) .*/\1/p')"
+wanted="$(echo "$current" | cut -d: -f1-3):$(cat "$STATE")"
+[ "$current" != "$wanted" ] || { echo "Bluetooth address is $current"; exit 0; }
+
+# The address can only be changed while the controller is off; bluetoothd turns it on again
+mgmt power off >/dev/null
+mgmt public-addr "$wanted" >/dev/null
+wait_powered
+echo "Bluetooth address $current -> $wanted"

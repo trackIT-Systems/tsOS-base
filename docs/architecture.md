@@ -115,7 +115,7 @@ Python-based services installed from git submodules under `/usr/local/src`:
 ### Systemd Services
 
 Key enabled services:
-- `tsconfig.service`, `tsconfig-ble.service`
+- `tsconfig.service`, `tsconfig-ble.service`, `tsos-bluetooth-address.service` (gives the Bluetooth controller an address of its own install before the gateway starts)
 - `mqttutil.service`
 - `tsschedule.service` (power management)
 - `mosquitto.service`

@@ -21,7 +21,7 @@ const TSOS_MANAGED_UNITS = [
     "tsupdate.service", "mqttutil.service", "mosquitto.service",
     "envsense.service", "filebrowser.service", "gpsd.service",
     "devmon.service", "wg-quick@wireguard.service",
-    "radiotracking.service", "soundscapepipe.service",
+    "radiotracking.service", "soundscapepipe.service", "chrony.service",
 ];
 
 polkit.addRule(function(action, subject) {

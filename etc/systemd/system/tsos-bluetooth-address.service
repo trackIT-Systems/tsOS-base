@@ -1,0 +1,17 @@
+[Unit]
+Description=Give the Bluetooth controller an address that belongs to this install
+Documentation=file:///usr/local/sbin/tsos-bluetooth-address
+# Same condition as bluetooth.service: nothing to do without a Bluetooth controller
+ConditionPathIsDirectory=/sys/class/bluetooth
+Wants=bluetooth.service
+After=bluetooth.service
+# The gateway registers with BlueZ once the address is final
+Before=tsconfig-ble.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/tsos-bluetooth-address 0
+
+[Install]
+WantedBy=multi-user.target

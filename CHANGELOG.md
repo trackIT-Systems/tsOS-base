@@ -21,6 +21,8 @@ their previous model and are not patched; every device is reinstalled from scrat
   (`10-tsos-netdev.rules`), the full journal via `systemd-journal`, and `pkexec` into the
   root-owned `tsconfig-privileged` wrapper (config write/delete/stat, overlay wipe, GSM field
   removal; `30-tsos-privileged.rules`). `polkitd` and `pkexec` are installed explicitly.
+- The BLE gateway (`tsconfig-ble.service`) runs as its own system user `tsconfig-ble` in `shadow` instead of `pi`, for tsconfig's new BLE hash login (`{"hash": "$6$..."}` logs in as `pi` with pi's hash from the applied bundle's `userconf.txt`). `pi` stays out of `shadow`. pi's hash is now a BLE credential: treat bundles with `userconf.txt` as secrets. See docs/security.md, "BLE"
+- `chrony.service` is on the polkit unit allowlist (`20-tsos-systemctl.rules`), so the restart `tsconfig` offers for it works for `pi` instead of failing
 - `root` is reachable via SSH with a manufacturer key (`root/.ssh/authorized_keys`, baked in,
   independent of the boot partition); `copy-authorized-keys` runs as `pi` and copies `pi`'s keys
   only. `root` gets a password only if the image is built with `TSOS_ROOT_PASSWORD` (otherwise
@@ -53,6 +55,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Changed
 
+- `tsconfig-ble.service` no longer `Requires=` tsconfig (`Wants=` instead): restarting tsconfig used to stop and restart the BLE gateway too, dropping every open BLE connection. It is now `Type=notify` with `WatchdogSec=60`, so systemd restarts a gateway that hangs
 - Dropped armhf builds; images are arm64 only
 - Source trees for application git submodules live under `/usr/local/src` instead of `/home/pi`
 - Install `uhubctl` from apt instead of building the git submodule
@@ -70,6 +73,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Added
 
+- Per-install Bluetooth address (`tsos-bluetooth-address.service`, `/usr/local/sbin/tsos-bluetooth-address`): at every boot, after `bluetoothd` and before `tsconfig-ble`, the controller gets its own vendor prefix plus three random bytes that are stored in `/var/lib/bluetooth/tsos-address`, next to BlueZ's keys. After a reflash (keys gone) the device therefore shows up under a new address and phones pair afresh instead of failing on a stale bond (macOS/iOS: "Peer removed pairing information", fixed only by forgetting the device in the phone's settings). The serial in the advertisement stays the stable identity. The old bond stays on the phone as harmless clutter. The suffix belongs to the SD card and the prefix to the board; a card that is cloned after its first boot gives all clones of one board type the same address
 - Teltonika TRM200 (MeiG SLM770A, RNDIS and ECM mode) LTE support: ModemManager plugins installed from the [`modemmanager-meig-asr`](https://github.com/trackIT-Systems/modemmanager-meig-asr) 1.24.0-1 release
 - Avahi announces WebDAV (`_webdav._tcp` on 80, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
 
