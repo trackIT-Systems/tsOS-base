@@ -232,7 +232,7 @@ RUN systemctl enable copy-authorized-keys.path
 
 # Seed pi's default password as a userconf file - userconfig.service (below)
 # applies and deletes it on first boot, same as an operator-supplied one.
-RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -stdin)" > /boot/firmware/userconf.txt'
+RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -salt tsOSusersalt0000 -stdin)" > /boot/firmware/userconf.txt'
 RUN usermod -s /bin/zsh pi
 RUN usermod -s /bin/zsh root
 RUN rm /etc/ssh/sshd_config.d/rename_user.conf
@@ -254,8 +254,9 @@ RUN usermod -aG systemd-journal pi
 # root's password is a build-time secret via TSOS_ROOT_PASSWORD, never
 # committed here - see docs/security.md, "Root password (build-time, optional)".
 # Setting one also enables password SSH for root, which is key-only otherwise.
+# The salt is fixed (16 chars, [A-Za-z0-9./]) so the same password gives the same hash.
 RUN sh -c 'if [ -n "$TSOS_ROOT_PASSWORD" ]; then \
-        echo "root:$(echo "$TSOS_ROOT_PASSWORD" | openssl passwd -6 -stdin)" | chpasswd -e; \
+        echo "root:$(echo "$TSOS_ROOT_PASSWORD" | openssl passwd -6 -salt tsOSrootsalt0000 -stdin)" | chpasswd -e; \
         sed -i "s/^PermitRootLogin .*/PermitRootLogin yes/" /etc/ssh/sshd_config.d/10-tsos.conf; \
     else \
         passwd -l root; \

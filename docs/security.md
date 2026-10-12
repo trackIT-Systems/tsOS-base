@@ -148,7 +148,7 @@ The image build reads `TSOS_ROOT_PASSWORD` (passed through `docker-compose.yml`,
 - **Unset** (default): `passwd -l root`. No `su`, no console or password login, no staff login,
   no path from `pi` to `root`. If SSH is unavailable, recovery needs physical access, which is root
   anyway.
-- **Set:** root gets that password (`openssl passwd -6`, `chpasswd -e`). It then opens:
+- **Set:** root gets that password (`openssl passwd -6` with a fixed salt, so the hash is reproducible; `chpasswd -e`). It then opens:
   - `su` from **any** `pi` session — SSH, or `tsconfig`'s web shell, which anyone with `pi`'s
     password can reach over the network;
   - **password SSH** as root: [10-tsos.conf](../etc/ssh/sshd_config.d/10-tsos.conf) ships

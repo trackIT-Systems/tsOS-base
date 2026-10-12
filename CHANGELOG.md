@@ -34,6 +34,7 @@ their previous model and are not patched; every device is reinstalled from scrat
   `tsconfig-privileged`, which re-validates it (WireGuard hook directives are rejected). The
   service allowlist is no longer read from the operator-writable `tsconfig.yml`.
 - `pi`'s password comes from `userconf.txt` (default `natur`), applied by `userconfig.service` on every boot, so a config bundle can change it at any time (upstream disabled the unit after the first file via `cancel-rename`). `userconf-service` is replaced by a short script that applies `pi:<hash>` itself: no rename, no dialog, shell stays zsh.
+- The password hashes written at build time (`pi`'s default `natur`, `root` from `TSOS_ROOT_PASSWORD`) use fixed salts (`tsOSusersalt0000`, `tsOSrootsalt0000`), so the same password gives the same hash on every build.
 - Optional HTTPS: Caddy also serves the site on `:443` with certificates from its own per-device local CA (`tls internal`) for the hostname, `<hostname>.local`, `localhost` and `169.254.0.1`; clients connecting by IP get the `.local` certificate. Plain HTTP on `:80` stays and is not redirected. Logins over HTTPS get a `Secure` session cookie. See [docs/security.md](docs/security.md), "HTTPS (optional)"
 - Samba is removed entirely (package, `smb.conf`, `smbd` service). It previously shared `/data` to
   any guest on the network (and, in earlier releases, all of `/media`, which included the boot
