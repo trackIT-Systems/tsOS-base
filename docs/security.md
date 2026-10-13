@@ -47,7 +47,8 @@ Mounted `uid=0,gid=0,dmask=0022,fmask=0133` ([etc/fstab](../etc/fstab)): readabl
 writable by root only. Root consumes much of it, so `pi` write access would be root access:
 `cmdline.txt`/`config.txt`/kernel/initramfs (`init=/bin/sh` plus a reboot is a root shell),
 `wireguard.conf` (`wg-quick` runs `PostUp` and friends as root), `tsupdate.yml` (selects the
-update source), and `schedule.yml`, `envsense.yml`, `tsconfig.yml` (read by root services).
+update source), and `schedule.yml`, `envsense.yml`, `tsconfig.yml` (read by root services). `solarlife.yml` is root-owned
+too, so `pi` cannot redirect where `solarlifed` writes or what it publishes.
 
 It stays readable on purpose: `copy-authorized-keys` runs as `pi` and must read `authorized_keys`,
 and `pi` reading the WireGuard key is acceptable. Consequently **nothing on the boot partition is
@@ -285,6 +286,29 @@ or crack both offline.
   Treat such bundles as secrets; to revoke, re-hash the password with a new salt (a new
   `openssl passwd -6`), which also changes the hash on every device it is applied to. `root` has no
   hash login.
+
+### SolarLife daemon
+
+`solarlife.service` (`solarlifed`) holds a BLE connection to a SolarLife MPPT charge controller. It
+runs as **`pi`**, like `mqttutil`, not as a separate user like `envsense` or `tsconfig-ble`: a
+dedicated user would have needed its own group for the `solarlife` CLI to be usable from the web
+shell and `pi`'s SSH sessions (`pi` has no sudo). The consequence is that **a compromised
+`solarlifed` has `pi`'s rights**; what holds it back is the unit's sandbox (`ProtectSystem=strict`,
+`ProtectHome`, `PrivateTmp`, `PrivateDevices`, `NoNewPrivileges`, writes only to `/data`, only
+`AF_UNIX`, `AF_INET` and `AF_INET6`, no kernel tunables/modules/logs, no cgroup writes, no
+namespaces, no realtime scheduling). `systemd-analyze security` rates it 5.3 (MEDIUM), against 8.1
+for `envsense` and 9.2 for `mqttutil` on the same image. The code that parses BLE input is this
+daemon's, so it is as exposed as the BLE gateway, minus `shadow` access.
+
+- **Control socket** `/run/solarlife/solarlife.sock` (directory from `RuntimeDirectory=`, socket
+  mode 0660, owner `pi`): `pi` and `root` can use the `solarlife` CLI. There is no authentication
+  beyond the file permissions, and the CLI can **write registers on the charge controller**
+  (battery type, voltages, load switch, restore/clear). The daemon validates writes and requires
+  `--force` for restore/clear/slave id/baud rate/password, but anyone who can reach the socket can
+  change the charging behaviour.
+- **BlueZ:** its D-Bus policy lets every user call `org.bluez`, so the daemon needs no group. It
+  scans and connects as a normal D-Bus client and registers no agent and no GATT service.
+- **Configuration** is `/boot/firmware/solarlife.yml` (root-owned, see "Boot partition").
 
 ### Hotspot password via the config bundle
 

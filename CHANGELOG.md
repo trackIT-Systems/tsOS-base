@@ -55,6 +55,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Changed
 
+- The SolarLife BLE readout no longer runs from `mqttutil`: it used to scan, connect and disconnect once a minute, which mostly failed while the 2.4 GHz hotspot shared the radio. `solarlifed` keeps one connection open instead. **Breaking for consumers:** the MQTT topic `{host}/mqttutil/solarlife` and the file `/data/<host>/mqttutil/solarlife.jsonl` are replaced by the topics and CSV above (values are published per block, with keys `Friendly name (unit)` as before). The `pysolarlife` Python API (`read_device()`, `MpptClient`) is gone
 - `tsconfig-ble.service` no longer `Requires=` tsconfig (`Wants=` instead): restarting tsconfig used to stop and restart the BLE gateway too, dropping every open BLE connection. It is now `Type=notify` with `WatchdogSec=60`, so systemd restarts a gateway that hangs
 - Dropped armhf builds; images are arm64 only
 - Source trees for application git submodules live under `/usr/local/src` instead of `/home/pi`
@@ -73,12 +74,14 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Added
 
+- SolarLife MPPT readout as its own service: `solarlife.service` runs `solarlifed` (from the rewritten `pysolarlife`), which holds one BLE connection to the strongest SolarLife controller, polls it and reports to CSV (`/data/<host>/solarlife/<host>_<timestamp>-solarlife.csv`) and MQTT (`{host}/solarlife/{mac}/json` and `/cbor`, plus retained `state` and `events` topics). Configured by `/boot/firmware/solarlife.yml`; the `solarlife` CLI talks to the daemon over `/run/solarlife/solarlife.sock` (cached and live values, writes, reconnect, rescan). It runs as `pi` with a sandbox, starts after `tsos-bluetooth-address.service`, and is on the polkit unit allowlist. See [docs/security.md](docs/security.md), "SolarLife daemon"
 - Per-install Bluetooth address (`tsos-bluetooth-address.service`, `/usr/local/sbin/tsos-bluetooth-address`): at every boot, after `bluetoothd` and before `tsconfig-ble`, the controller gets its own vendor prefix plus three random bytes that are stored in `/var/lib/bluetooth/tsos-address`, next to BlueZ's keys. After a reflash (keys gone) the device therefore shows up under a new address and phones pair afresh instead of failing on a stale bond (macOS/iOS: "Peer removed pairing information", fixed only by forgetting the device in the phone's settings). The serial in the advertisement stays the stable identity. The old bond stays on the phone as harmless clutter. The suffix belongs to the SD card and the prefix to the board; a card that is cloned after its first boot gives all clones of one board type the same address
 - Teltonika TRM200 (MeiG SLM770A, RNDIS and ECM mode) LTE support: ModemManager plugins installed from the [`modemmanager-meig-asr`](https://github.com/trackIT-Systems/modemmanager-meig-asr) 1.24.0-1 release
 - Avahi announces WebDAV (`_webdav._tcp` on 80, TXT `path=/data/dav/data/`, `u=pi`) and SSH/SFTP (`_ssh._tcp`, `_sftp-ssh._tcp`); `_http._tcp` gets TXT `path=/`
 
 ### Removed
 
+- The `[solarlife]` task from `boot/firmware/mqttutil.conf` (`mqttutil` no longer uses BLE). `pysmartsolar` was not part of the mqttutil configuration and stays installed unchanged
 - HiLink tooling for the Huawei / Brovi sticks: `huaweicheck` (service and timer), `brovi_switch`, `brovi_startup`, the `40-huawei.rules` udev rules, the `hua0` interface and its `huawei` NetworkManager profile, and the `huawei/*` HiLink web API readouts in `boot/firmware/mqttutil.conf` (`uhubctl` stays installed)
 - Avahi no longer announces `_mqtt._tcp`: Mosquitto listens on loopback only unless a `mosquitto.d` listener is added
 

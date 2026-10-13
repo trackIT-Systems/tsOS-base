@@ -8,6 +8,7 @@ tsOS-base/
 │   ├── cmdline.txt         # Kernel command line
 │   ├── firmware/           # Firmware partition files
 │   │   ├── mqttutil.conf  # MQTT reporting config
+│   │   ├── solarlife.yml  # SolarLife BLE readout config
 │   │   └── mosquitto.d/   # MQTT broker configs
 │   └── ...
 ├── etc/                     # System configuration
@@ -93,7 +94,8 @@ Submodules in `usr/local/src/`:
 - `pymqttutil` - MQTT system reporting
 - `pysmartsolar` - SmartSolar integration
 - `vedirect_dump` - VE.Direct protocol
-- `tsupdate`, `tsschedule`, `tsflash`, `pysolarlife`, `vcgencmd`, `pyenvsense`
+- `pysolarlife` - SolarLife MPPT BLE daemon (`solarlifed`) and CLI (`solarlife`)
+- `tsupdate`, `tsschedule`, `tsflash`, `vcgencmd`, `pyenvsense`
 
 Submodule in `opt/`:
 - `oh-my-zsh` - Zsh framework, shared by `pi` and `root`

@@ -427,9 +427,10 @@ RUN apt-get install -y python3-serial
 RUN python3 -m pip install --no-deps ve_utils vedirect_m8
 RUN python3 -m pip install --no-deps -e /usr/local/src/vedirect_dump
 
-# Install solarlife
-RUN apt-get install -y python3-bleak
+# Install and enable solarlife (solarlifed + solarlife CLI; runs as pi, see docs/security.md)
+RUN apt-get install -y python3-bleak python3-cbor2 python3-paho-mqtt python3-yaml
 RUN python3 -m pip install --no-deps -e /usr/local/src/pysolarlife
+RUN systemctl enable solarlife.service
 
 # Install vcgencmd
 RUN python3 -m pip install --no-deps -e /usr/local/src/vcgencmd

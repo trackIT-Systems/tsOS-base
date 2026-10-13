@@ -16,6 +16,7 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 - **WittyPi 4** RTC / power management via **tsschedule**
 - **WireGuard**, LTE via ModemManager (Huawei / Brovi E3372, Teltonika TRM200)
 - Victron readout (**pysmartsolar**, **vedirect_dump**)
+- SolarLife MPPT readout over BLE (**solarlifed**, with the `solarlife` CLI): CSV and MQTT
 
 ## Download and flash
 
@@ -42,6 +43,7 @@ Runtime settings live on the VFAT boot partition (`/boot/firmware` on the Pi). E
 | [`mqttutil.conf`](boot/firmware/mqttutil.conf) | MQTT system reporting |
 | `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`) |
 | [`envsense.yml`](boot/firmware/envsense.yml) | Environmental sensors (`pyenvsense`) |
+| [`solarlife.yml`](boot/firmware/solarlife.yml) | SolarLife MPPT readout over BLE (`solarlifed`) |
 | `wireguard.conf` | WireGuard interface (symlinked to `/etc/wireguard/`) |
 | `authorized_keys` | SSH keys copied to `pi` (only - `root`'s keys are separate, see [docs/security.md](docs/security.md)) |
 | `geolocation` | Static GPS coordinates (symlinked to `/etc/geolocation`) |
