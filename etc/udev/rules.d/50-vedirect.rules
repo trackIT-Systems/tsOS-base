@@ -1,3 +1,15 @@
-# FTDI FT232 (0403:6001) – Victron VE.Direct
-# Creates /dev/ttyUSBvd0 symlink for consistent device access
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", SYMLINK+="ttyUSBvd0", MODE="0660", GROUP="dialout"
+# VE.Direct USB interfaces for smartsolard (Victron "VE.Direct to USB interface" and the cheap
+# lookalikes): an FTDI FT232R (0403:6001) or FT230X (0403:6015). These chips are generic and a
+# cable carries no Victron name: the one this was written for identifies as manufacturer "FTDI",
+# product "USB <-> Serial" and has no serial number. So the rule matches the chip, not Victron.
+#
+# * /dev/ttyUSBvd0 next to /dev/ttyUSB<n> is where smartsolard looks (serial.port), readable by the
+#   dialout group. The name is fixed, so it works whichever ttyUSB number the adapter gets; with
+#   two such adapters the last one plugged in wins (use serial.port with /dev/serial/by-path/...).
+# * ModemManager must not touch it: it probes every serial port with AT commands and keeps it
+#   open for a while, and AT commands sent to a charge controller are garbage on the VE.Direct
+#   line. ID_MM_DEVICE_IGNORE on the USB device and its ports tells ModemManager to leave it alone.
+#   (Both are set before ModemManager's own 77-mm-*.rules run. After changing this file on a
+#   running system: udevadm control --reload; udevadm trigger --subsystem-match=tty --subsystem-match=usb)
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6001|6015", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001|6015", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1", SYMLINK+="ttyUSBvd0", MODE="0660", GROUP="dialout"
