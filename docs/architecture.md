@@ -109,15 +109,15 @@ Python-based services installed from git submodules under `/usr/local/src`:
 - `tsconfig-ble` - Bluetooth Low Energy service
 - `pymqttutil` - System statistics via MQTT
 - `tsschedule` - Power scheduling (WittyPi 4, Raspberry Pi 5)
-- `pysmartsolar` - SmartSolar integration
+- `pysmartsolar` - Victron SmartSolar readout over BLE (Instant Readout advertisements, optional GATT) and the VE.Direct cable: the `smartsolard` daemon (CSV and MQTT as JSON and CBOR) and the `smartsolar` CLI (values, settings, `.vcsf` profiles)
 - `pysolarlife` - SolarLife MPPT charge controller readout over BLE: the `solarlifed` daemon (holds one connection, writes CSV and MQTT as JSON and CBOR) and the `solarlife` CLI
-- `vedirect_dump` - VE.Direct protocol handler
 
 ### Systemd Services
 
 Key enabled services:
 - `tsconfig.service`, `tsconfig-ble.service`, `tsos-bluetooth-address.service` (gives the Bluetooth controller an address of its own install before the gateway starts)
 - `mqttutil.service`
+- `smartsolar.service` (`smartsolard`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `solarlife.service` (`solarlifed`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `tsschedule.service` (power management)
 - `mosquitto.service`
@@ -141,6 +141,7 @@ Key enabled services:
 Runtime configuration via `/boot/firmware/`:
 - `cmdline.txt` - Kernel parameters (hostname via `systemd.hostname=`)
 - `mqttutil.conf` - MQTT reporting config
+- `smartsolar.yml` - SmartSolar readout config (`smartsolard`)
 - `solarlife.yml` - SolarLife BLE readout config (`solarlifed`)
 - `wireguard.conf` - VPN configuration (symlinked to `/etc/wireguard/`)
 - `mosquitto.d/` - Additional MQTT broker configs

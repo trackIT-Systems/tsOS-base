@@ -1,0 +1,45 @@
+[Unit]
+Description=smartsolard Victron SmartSolar daemon (BLE and VE.Direct, CSV + MQTT)
+# No ConditionPathIsDirectory=/sys/class/bluetooth: a system with only a VE.Direct cable is fine
+After=bluetooth.service tsos-bluetooth-address.service mosquitto.service
+Wants=bluetooth.service tsos-bluetooth-address.service mosquitto.service
+
+[Service]
+Type=simple
+# Runs as pi like mqttutil and solarlife, so pi (web shell, SSH) can use the `smartsolar` CLI on the
+# control socket in /run/smartsolar (0660) without any group. Unlike envsense and tsconfig-ble it is
+# therefore not a separate user: the sandbox below is all that holds it back. See docs/security.md,
+# "SmartSolar daemon". pi is in dialout, which owns the VE.Direct adapter (udev 50-vedirect.rules).
+User=pi
+Group=pi
+RuntimeDirectory=smartsolar
+RuntimeDirectoryMode=0750
+# The Instant Readout key fetched over GATT is stored here (mode 0600, persistent overlay)
+StateDirectory=smartsolar
+StateDirectoryMode=0700
+# BlueZ is reached over D-Bus (any user may call it), MQTT over loopback, CSV goes to /data
+ReadWritePaths=/data
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# The VE.Direct cable is /dev/ttyUSBvd0 -> ttyUSBn: PrivateDevices would hide it. Allow USB serial only.
+PrivateDevices=no
+DevicePolicy=closed
+DeviceAllow=char-ttyUSB rw
+DeviceAllow=char-ttyACM rw
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+ExecStart=/usr/bin/env smartsolard
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

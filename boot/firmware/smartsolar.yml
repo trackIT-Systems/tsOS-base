@@ -1,0 +1,69 @@
+# smartsolard: follows a Victron SmartSolar over Bluetooth (Instant Readout advertisements) and/or
+# a VE.Direct cable and reports it via CSV and MQTT (JSON + CBOR). Keys that are left out use the
+# defaults shown here. Edit on the card, then reboot. Details: docs in the pysmartsolar repository.
+#
+# The Instant Readout advertisements are the main Bluetooth data path and work with the Wi-Fi hotspot
+# up. A GATT connection (key fetch, gatt.mode hold/poll, settings over Bluetooth) mostly fails while
+# the 2.4 GHz hotspot shares the radio: put the key in `keys:` below (VictronConnect: device >
+# settings > Product info > Instant readout via Bluetooth), or switch the hotspot off while the
+# daemon fetches it once (it is then kept in /var/lib/smartsolar).
+ble:
+  enabled: true                  # false: no Bluetooth at all (a system that only has the VE.Direct cable)
+  # adapter: hci0
+  # address: "HQ22294ZGEU"       # pin a device by serial number (or MAC address); otherwise the strongest SmartSolar
+  select_window_s: 10
+  rescan_interval_s: 3600
+  switch_hysteresis_db: 10
+
+advert:
+  publish_interval_s: 60
+  stale_after_s: 120
+
+gatt:
+  mode: "off"                    # off | hold | poll
+  passkey: "000000"              # the pairing passkey of the device (Victron default)
+  poll_interval_s: 900
+  collect_s: 15
+  keepalive_s: 5
+  connect_timeout_s: 45
+  pair_timeout_s: 20
+  request_timeout_s: 10
+  backoff_initial_s: 5
+  backoff_max_s: 300
+  publish_interval_s: 60
+
+serial:
+  # The VE.Direct cable (the udev rule makes /dev/ttyUSBvd0 of the FTDI adapter). Replaces the
+  # former [vedirect] task of mqttutil. With hex on, `smartsolar write` and `smartsolar profile
+  # load` also work over the cable, without Bluetooth. Only one program may read the port.
+  enabled: false
+  port: /dev/ttyUSBvd0
+  baud: 19200
+  publish_interval_s: 60
+  stale_after_s: 10
+  hex: true                      # false: read only, the daemon never sends a byte
+  request_timeout_s: 2
+  reopen_initial_s: 2
+  reopen_max_s: 60
+
+keys:
+  # Instant Readout key of each device, by serial number (or MAC address). This file is world-readable
+  # on the boot partition: a key here is readable by every local user.
+  # "HQ22294ZGEU": "00112233445566778899aabbccddeeff"
+
+daemon:
+  socket: /run/smartsolar/smartsolar.sock
+  socket_mode: "0660"            # octal
+  state_dir: /var/lib/smartsolar # fetched keys
+  registers: auto                # settings go through: auto (the cable if it answers, else GATT), serial, gatt
+  log_level: INFO
+  csv:
+    enabled: true
+    path: /data
+  mqtt:
+    enabled: true
+    host: localhost
+    port: 1883
+    qos: 0
+    json: true
+    cbor: true

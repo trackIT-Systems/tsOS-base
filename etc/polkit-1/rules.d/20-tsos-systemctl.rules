@@ -19,7 +19,7 @@
 const TSOS_MANAGED_UNITS = [
     "tsconfig.service", "tsconfig-ble.service", "tsschedule.service",
     "tsupdate.service", "mqttutil.service", "mosquitto.service",
-    "envsense.service", "solarlife.service", "filebrowser.service", "gpsd.service",
+    "envsense.service", "solarlife.service", "smartsolar.service", "filebrowser.service", "gpsd.service",
     "devmon.service", "wg-quick@wireguard.service",
     "radiotracking.service", "soundscapepipe.service", "chrony.service",
 ];

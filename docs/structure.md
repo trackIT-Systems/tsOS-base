@@ -8,6 +8,7 @@ tsOS-base/
 │   ├── cmdline.txt         # Kernel command line
 │   ├── firmware/           # Firmware partition files
 │   │   ├── mqttutil.conf  # MQTT reporting config
+│   │   ├── smartsolar.yml # SmartSolar BLE / VE.Direct readout config
 │   │   ├── solarlife.yml  # SolarLife BLE readout config
 │   │   └── mosquitto.d/   # MQTT broker configs
 │   └── ...
@@ -92,8 +93,7 @@ FileBrowser Quantum is downloaded at build time and installed to `/usr/bin/fileb
 Submodules in `usr/local/src/`:
 - `tsconfig` - Main configuration service
 - `pymqttutil` - MQTT system reporting
-- `pysmartsolar` - SmartSolar integration
-- `vedirect_dump` - VE.Direct protocol
+- `pysmartsolar` - SmartSolar BLE and VE.Direct daemon (`smartsolard`) and CLI (`smartsolar`)
 - `pysolarlife` - SolarLife MPPT BLE daemon (`solarlifed`) and CLI (`solarlife`)
 - `tsupdate`, `tsschedule`, `tsflash`, `vcgencmd`, `pyenvsense`
 

@@ -153,8 +153,6 @@ RUN rm /usr/local/src/tsupdate/.git
 INSTALL .git/modules/usr/local/src/tsupdate /usr/local/src/tsupdate/.git
 RUN rm /usr/local/src/tsflash/.git
 INSTALL .git/modules/usr/local/src/tsflash /usr/local/src/tsflash/.git
-RUN rm /usr/local/src/vedirect_dump/.git
-INSTALL .git/modules/usr/local/src/vedirect_dump /usr/local/src/vedirect_dump/.git
 RUN rm /usr/local/src/tsschedule/.git
 INSTALL .git/modules/usr/local/src/tsschedule /usr/local/src/tsschedule/.git
 RUN rm /usr/local/src/vcgencmd/.git
@@ -416,16 +414,12 @@ RUN systemctl enable filebrowser
 # enable mosquitto
 RUN systemctl enable mosquitto.service
 
-# Install pysmartsolar
-RUN apt-get install -y python3-cbor2
-RUN python3 -m pip install --no-deps gatt
+# Install and enable smartsolar (smartsolard + smartsolar CLI; runs as pi, see docs/security.md).
+# Reads the Victron SmartSolar over BLE advertisements and/or the VE.Direct cable (pyserial; it is
+# also used by pyenvsense's sensirion_shdlc_driver and arrived as a dependency of gpsd-clients)
+RUN apt-get install -y python3-bleak python3-dbus-fast python3-cbor2 python3-cryptography python3-paho-mqtt python3-yaml python3-serial
 RUN python3 -m pip install --no-deps -e /usr/local/src/pysmartsolar
-
-# Install vedirect_dump (pyserial is also used by pyenvsense's sensirion_shdlc_driver;
-# it only used to arrive as a dependency of gpsd-clients)
-RUN apt-get install -y python3-serial
-RUN python3 -m pip install --no-deps ve_utils vedirect_m8
-RUN python3 -m pip install --no-deps -e /usr/local/src/vedirect_dump
+RUN systemctl enable smartsolar.service
 
 # Install and enable solarlife (solarlifed + solarlife CLI; runs as pi, see docs/security.md)
 RUN apt-get install -y python3-bleak python3-cbor2 python3-paho-mqtt python3-yaml
