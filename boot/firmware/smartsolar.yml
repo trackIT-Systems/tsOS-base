@@ -33,12 +33,12 @@ gatt:
   publish_interval_s: 60
 
 serial:
-  # The VE.Direct cable (the udev rule makes /dev/ttyUSBvd0 of an FTDI USB adapter). Replaces the
+  # The VE.Direct cable (the udev rule makes /dev/ttyUSBvd<n> of an FTDI USB adapter). Replaces the
   # former [vedirect] task of mqttutil. On by default: without a cable the port is retried quietly,
   # with one the daemon uses it next to Bluetooth, and `smartsolar write` / `profile load` take
   # whichever way works (daemon.registers). Only one program may read the port.
   enabled: true
-  port: /dev/ttyUSBvd0
+  port: /dev/ttyUSBvd*           # the udev symlinks ttyUSBvd<n>; a pattern: the first match (lowest index) is used
   baud: 19200
   publish_interval_s: 60
   stale_after_s: 10
