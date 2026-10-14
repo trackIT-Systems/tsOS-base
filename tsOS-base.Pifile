@@ -382,7 +382,9 @@ RUN systemctl mask systemd-networkd-wait-online.service
 # of samba, which was installed before that setting took effect.
 RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
-INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /boot/firmware/tsconfig.yml
+# root-owned build-time config (services list, feature flags); not on the operator-editable boot partition
+RUN mkdir -p /etc/tsconfig
+INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /etc/tsconfig/tsconfig.yml
 # The BLE gateway runs as its own user, in `shadow` for its hash login (BlueZ's D-Bus policy
 # lets any user talk to it, no `bluetooth` group needed). pi stays out of `shadow` - see
 # docs/security.md, "BLE".

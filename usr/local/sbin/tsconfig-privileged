@@ -27,5 +27,5 @@ cd /usr/local/src/tsconfig || exit 1
 
 exec env -i \
     PATH=/usr/bin:/bin \
-    TSCONFIG_CONFIG_FILE=/boot/firmware/tsconfig.yml \
+    TSCONFIG_CONFIG_FILE=/etc/tsconfig/tsconfig.yml \
     /usr/bin/python3 -I -m app.privileged "$@"

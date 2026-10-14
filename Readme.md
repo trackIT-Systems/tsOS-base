@@ -39,7 +39,6 @@ Runtime settings live on the VFAT boot partition (`/boot/firmware` on the Pi). E
 | File | Purpose |
 | --- | --- |
 | [`cmdline.txt`](boot/firmware/cmdline.txt) | `systemd.hostname=`, `timezone=`, first-boot `repartition` |
-| `tsconfig.yml` | tsconfig service config (copied from the tsconfig submodule at build) |
 | [`mqttutil.conf`](boot/firmware/mqttutil.conf) | MQTT system reporting |
 | `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`) |
 | [`envsense.yml`](boot/firmware/envsense.yml) | Environmental sensors (`pyenvsense`) |

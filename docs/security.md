@@ -47,7 +47,7 @@ Mounted `uid=0,gid=0,dmask=0022,fmask=0133` ([etc/fstab](../etc/fstab)): readabl
 writable by root only. Root consumes much of it, so `pi` write access would be root access:
 `cmdline.txt`/`config.txt`/kernel/initramfs (`init=/bin/sh` plus a reboot is a root shell),
 `wireguard.conf` (`wg-quick` runs `PostUp` and friends as root), `tsupdate.yml` (selects the
-update source), and `schedule.yml`, `envsense.yml`, `tsconfig.yml` (read by root services). `solarlife.yml` and `smartsolar.yml` are root-owned
+update source), and `schedule.yml` and `envsense.yml` (read by root services). `solarlife.yml` and `smartsolar.yml` are root-owned
 too, so `pi` cannot redirect where `solarlifed` and `smartsolard` write or what they publish.
 
 It stays readable on purpose: `copy-authorized-keys` runs as `pi` and must read `authorized_keys`,
