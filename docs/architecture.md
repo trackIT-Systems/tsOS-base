@@ -143,9 +143,9 @@ Runtime configuration via `/boot/firmware/`:
 - `mqttutil.conf` - MQTT reporting config
 - `wireguard.conf` - VPN configuration (symlinked to `/etc/wireguard/`)
 - `mosquitto.d/` - Additional MQTT broker configs
+- `geolocation` - Static GPS coordinates
 
 The readout daemons are configured in `/etc` (root-owned, not on the boot partition): `/etc/smartsolar/smartsolar.yml` (`smartsolard`) and `/etc/solarlife/solarlife.yml` (`solarlifed`).
-- `geolocation` - Static GPS coordinates
 
 ## Network Stack
 
