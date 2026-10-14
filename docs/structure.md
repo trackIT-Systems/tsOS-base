@@ -8,11 +8,11 @@ tsOS-base/
 │   ├── cmdline.txt         # Kernel command line
 │   ├── firmware/           # Firmware partition files
 │   │   ├── mqttutil.conf  # MQTT reporting config
-│   │   ├── smartsolar.yml # SmartSolar BLE / VE.Direct readout config
-│   │   ├── solarlife.yml  # SolarLife BLE readout config
 │   │   └── mosquitto.d/   # MQTT broker configs
 │   └── ...
 ├── etc/                     # System configuration
+│   ├── smartsolar/smartsolar.yml  # SmartSolar BLE / VE.Direct readout config
+│   ├── solarlife/solarlife.yml    # SolarLife BLE readout config
 │   ├── systemd/system/     # Systemd service files
 │   ├── netplan/            # Network configuration
 │   ├── mosquitto/          # Mosquitto config

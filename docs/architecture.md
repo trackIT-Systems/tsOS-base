@@ -141,10 +141,10 @@ Key enabled services:
 Runtime configuration via `/boot/firmware/`:
 - `cmdline.txt` - Kernel parameters (hostname via `systemd.hostname=`)
 - `mqttutil.conf` - MQTT reporting config
-- `smartsolar.yml` - SmartSolar readout config (`smartsolard`)
-- `solarlife.yml` - SolarLife BLE readout config (`solarlifed`)
 - `wireguard.conf` - VPN configuration (symlinked to `/etc/wireguard/`)
 - `mosquitto.d/` - Additional MQTT broker configs
+
+The readout daemons are configured in `/etc` (root-owned, not on the boot partition): `/etc/smartsolar/smartsolar.yml` (`smartsolard`) and `/etc/solarlife/solarlife.yml` (`solarlifed`).
 - `geolocation` - Static GPS coordinates
 
 ## Network Stack

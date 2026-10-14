@@ -55,6 +55,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Changed
 
+- `smartsolar.yml` and `solarlife.yml` moved from the boot partition to `/etc/smartsolar/` and `/etc/solarlife/` (the daemons' new default config paths); they are root-owned build-time config, not something to edit on the SD card.
 - tsconfig's own `tsconfig.yml` (services list, feature flags) is installed to `/etc/tsconfig/tsconfig.yml` instead of the boot partition: it is build-time data that nothing edits at runtime, and it is no longer changeable by mounting the SD card.
 - gitui is downloaded with `curl` like every other build-time download, not `wget`, so the image carries no `wget` leftovers (`~/.wget-hsts`, `wget-log`).
 - `50-vedirect.rules` also matches the FTDI FT230X (`0403:6015`) next to the FT232R, and names every such adapter `/dev/ttyUSBvd<n>` after its `ttyUSB<n>` (`smartsolard` follows the first match, `serial.port: /dev/ttyUSBvd*`), and tells **ModemManager to ignore** these adapters (`ID_MM_DEVICE_IGNORE`, `ID_MM_PORT_IGNORE`): it used to probe the port with AT commands, which are garbage on a VE.Direct line. The chip is generic (the cable it was written for shows up as manufacturer "FTDI", product "USB <-> Serial", no serial number), so the rule matches the chip, not Victron

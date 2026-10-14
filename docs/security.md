@@ -47,8 +47,7 @@ Mounted `uid=0,gid=0,dmask=0022,fmask=0133` ([etc/fstab](../etc/fstab)): readabl
 writable by root only. Root consumes much of it, so `pi` write access would be root access:
 `cmdline.txt`/`config.txt`/kernel/initramfs (`init=/bin/sh` plus a reboot is a root shell),
 `wireguard.conf` (`wg-quick` runs `PostUp` and friends as root), `tsupdate.yml` (selects the
-update source), and `schedule.yml` and `envsense.yml` (read by root services). `solarlife.yml` and `smartsolar.yml` are root-owned
-too, so `pi` cannot redirect where `solarlifed` and `smartsolard` write or what they publish.
+update source), and `schedule.yml` and `envsense.yml` (read by root services).
 
 It stays readable on purpose: `copy-authorized-keys` runs as `pi` and must read `authorized_keys`,
 and `pi` reading the WireGuard key is acceptable. Consequently **nothing on the boot partition is
@@ -308,7 +307,7 @@ daemon's, so it is as exposed as the BLE gateway, minus `shadow` access.
   change the charging behaviour.
 - **BlueZ:** its D-Bus policy lets every user call `org.bluez`, so the daemon needs no group. It
   scans and connects as a normal D-Bus client and registers no agent and no GATT service.
-- **Configuration** is `/boot/firmware/solarlife.yml` (root-owned, see "Boot partition").
+- **Configuration** is `/etc/solarlife/solarlife.yml` (root-owned).
 
 ### SmartSolar daemon
 
@@ -330,13 +329,13 @@ and `char-ttyACM rw` limits it to USB serial devices. `systemd-analyze security`
   turn into error 119 (which only a factory reset clears) and never writes the VE.Direct port
   functions over the cable, but anyone who can reach the socket can change the charging behaviour.
 - **State:** the Instant Readout key, if fetched over GATT, is stored in `/var/lib/smartsolar`
-  (`StateDirectory=`, mode 0700, persistent overlay). A key written into `/boot/firmware/smartsolar.yml`
-  is readable by every local user (the partition is world-readable).
+  (`StateDirectory=`, mode 0700, persistent overlay). A key written into `/etc/smartsolar/smartsolar.yml`
+  is readable by every local user (the file is 0644).
 - **BlueZ:** reached over D-Bus as a normal client; the pairing agent (passkey `000000`) is registered
   for the duration of a pairing only.
 - **VE.Direct port:** udev (`50-vedirect.rules`) names an FTDI adapter `/dev/ttyUSBvd<n>` after its `ttyUSB<n>` (group `dialout`, 0660) and marks it `ID_MM_DEVICE_IGNORE`, so ModemManager does not probe it with AT commands. It is opened exclusively, so no other program (the former `vedirect_dump` of
   `mqttutil`, for example) can read it at the same time.
-- **Configuration** is `/boot/firmware/smartsolar.yml` (root-owned, see "Boot partition").
+- **Configuration** is `/etc/smartsolar/smartsolar.yml` (root-owned).
 
 ### Hotspot password via the config bundle
 
