@@ -24,8 +24,11 @@ their previous model and are not patched; every device is reinstalled from scrat
 - The BLE gateway (`tsconfig-ble.service`) runs as its own system user `tsconfig-ble` in `shadow` instead of `pi`, for tsconfig's new BLE hash login (`{"hash": "$6$..."}` logs in as `pi` with pi's hash from the applied bundle's `userconf.txt`). `pi` stays out of `shadow`. pi's hash is now a BLE credential: treat bundles with `userconf.txt` as secrets. See docs/security.md, "BLE"
 - `chrony.service` is on the polkit unit allowlist (`20-tsos-systemctl.rules`), so the restart `tsconfig` offers for it works for `pi` instead of failing
 - `root` is reachable via SSH with a manufacturer key (`root/.ssh/authorized_keys`, baked in,
-  independent of the boot partition); `copy-authorized-keys` runs as `pi` and copies `pi`'s keys
-  only. `root` gets a password only if the image is built with `TSOS_ROOT_PASSWORD` (otherwise
+  independent of the boot partition). The boot partition's `authorized_keys` applies to `pi`
+  only, and sshd reads it in place (`Match User pi` in `20-tsos-authorized-keys.conf`) instead of
+  `copy-authorized-keys` copying it to `~/.ssh/authorized_keys2`: a key removed from the boot
+  partition stops working at the next login, and `.ssh/authorized_keys2` is no longer read for
+  any user. `root` gets a password only if the image is built with `TSOS_ROOT_PASSWORD` (otherwise
   `passwd -l`); it then also works for `su`, the staff login and SSH (root password SSH is
   enabled only in that case, `PermitRootLogin prohibit-password` otherwise).
 - `/boot/firmware` is now root-owned (`0755`) instead of world-writable, and no longer

@@ -224,10 +224,6 @@ RUN chown root:root /root/.zshrc
 # Fix permissions for network manager system connections
 RUN sh -c 'chmod 600 /etc/NetworkManager/system-connections/*'
 
-# Enable copy-authorized-keys
-RUN systemctl enable copy-authorized-keys.service
-RUN systemctl enable copy-authorized-keys.path
-
 # Seed pi's default password as a userconf file - userconfig.service (below)
 # applies and deletes it on first boot, same as an operator-supplied one.
 RUN sh -c 'echo "pi:$(echo "natur" | openssl passwd -6 -salt tsOSusersalt0000 -stdin)" > /boot/firmware/userconf.txt'

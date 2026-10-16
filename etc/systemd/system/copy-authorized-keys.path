@@ -1,5 +1,0 @@
-[Path]
-PathChanged=/boot/firmware/authorized_keys
-
-[Install]
-RequiredBy=network.target

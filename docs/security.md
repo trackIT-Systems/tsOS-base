@@ -49,8 +49,8 @@ writable by root only. Root consumes much of it, so `pi` write access would be r
 `wireguard.conf` (`wg-quick` runs `PostUp` and friends as root), `tsupdate.yml` (selects the
 update source), and `schedule.yml` and `envsense.yml` (read by root services).
 
-It stays readable on purpose: `copy-authorized-keys` runs as `pi` and must read `authorized_keys`,
-and `pi` reading the WireGuard key is acceptable. Consequently **nothing on the boot partition is
+It stays readable on purpose: sshd reads `authorized_keys` as `pi` when `pi` logs in, and `pi`
+reading the WireGuard key is acceptable. Consequently **nothing on the boot partition is
 secret from `pi`**; root-only secrets don't belong there.
 
 ### Configuration changes
@@ -129,10 +129,14 @@ is `app.privileged.ops`'s. Notes:
   (`RPi-Distro/userconf-pi` commit `e58fd5ca`). Without a file the service does nothing; there is no
   interactive dialog.
 - **Groups:** removed from `sudo` and `adm`; member of `netdev` and `systemd-journal`.
-- **SSH keys:** `copy-authorized-keys.service` runs as `pi` and copies `/boot/firmware/authorized_keys`
-  to `pi` only ([copy-authorized-keys.service](../etc/systemd/system/copy-authorized-keys.service)).
-  Running as `pi` also means a symlink planted in `~/.ssh` can only redirect the write to
-  somewhere `pi` could write anyway.
+- **SSH keys:** `pi` accepts its own `~/.ssh/authorized_keys` (operator keys, also edited in
+  tsconfig) and `/boot/firmware/authorized_keys` (config bundles, the SD card), which sshd reads
+  in place - `Match User pi` in
+  [20-tsos-authorized-keys.conf](../etc/ssh/sshd_config.d/20-tsos-authorized-keys.conf). There is
+  no copy to keep in sync: a key removed from the boot partition stops working at the next login.
+  `StrictModes` accepts the file because the fstab masks make it `root:root 0644` in root-owned
+  `0755` directories. Every other account, `root` included, only uses its own
+  `~/.ssh/authorized_keys`; Debian's default `.ssh/authorized_keys2` is not read for anyone.
 
 ### `root`
 

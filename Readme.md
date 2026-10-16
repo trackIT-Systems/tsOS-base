@@ -26,7 +26,7 @@ Flash with Raspberry Pi Imager or `dd`. Default hostname is `tsos-default-name` 
 
 ## First access
 
-**SSH:** user `pi`, password `natur`. Drop a public-key file at `/boot/firmware/authorized_keys` on the card; [copy-authorized-keys.service](etc/systemd/system/copy-authorized-keys.service) installs it for `pi` on boot. `root` is reachable via SSH with a manufacturer key ([root/.ssh/authorized_keys](root/.ssh/authorized_keys)), independent of the boot partition, and with a password only if the image was built with `TSOS_ROOT_PASSWORD` — see [docs/security.md](docs/security.md).
+**SSH:** user `pi`, password `natur`. Drop a public-key file at `/boot/firmware/authorized_keys` on the card; sshd reads it in place for `pi` ([20-tsos-authorized-keys.conf](etc/ssh/sshd_config.d/20-tsos-authorized-keys.conf)), so added or removed keys apply at the next login. `root` is reachable via SSH with a manufacturer key ([root/.ssh/authorized_keys](root/.ssh/authorized_keys)), independent of the boot partition, and with a password only if the image was built with `TSOS_ROOT_PASSWORD` — see [docs/security.md](docs/security.md).
 
 **Wi-Fi hotspot:** SSID follows the hostname (default `tsos-default-name`), PSK `BirdsAndBats` (a config bundle can replace the profile with its own `hotspot.nmconnection`; the SSID always follows the hostname). The station is `169.254.0.1` ([hotspot.nmconnection](etc/NetworkManager/system-connections/hotspot.nmconnection)). An optional client network is defined in [station.nmconnection](etc/NetworkManager/system-connections/station.nmconnection).
 
@@ -43,7 +43,7 @@ Runtime settings live on the VFAT boot partition (`/boot/firmware` on the Pi). E
 | `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`) |
 | [`envsense.yml`](boot/firmware/envsense.yml) | Environmental sensors (`pyenvsense`) |
 | `wireguard.conf` | WireGuard interface (symlinked to `/etc/wireguard/`) |
-| `authorized_keys` | SSH keys copied to `pi` (only - `root`'s keys are separate, see [docs/security.md](docs/security.md)) |
+| `authorized_keys` | SSH keys for `pi`, read in place by sshd (only - `root`'s keys are separate, see [docs/security.md](docs/security.md)) |
 | `geolocation` | Static GPS coordinates (symlinked to `/etc/geolocation`) |
 
 Deeper filesystem and overlay details: [docs/architecture.md](docs/architecture.md).

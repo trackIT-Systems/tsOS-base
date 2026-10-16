@@ -156,8 +156,9 @@ The readout daemons are configured in `/etc` (root-owned, not on the boot partit
 ## Security
 
 - Read-only root filesystem
-- SSH keys managed via `copy-authorized-keys.service` (runs as `pi`; `root`'s keys are a
-  separate manufacturer-controlled file, not sourced from the boot partition)
+- SSH keys for `pi` are read by sshd from `/boot/firmware/authorized_keys` in place, next to
+  `pi`'s own `~/.ssh/authorized_keys` (`root`'s keys are a separate manufacturer-controlled
+  file, not sourced from the boot partition)
 - `pi`'s default password is seeded as a `userconf` file, applied by `userconfig.service` on
   every boot (replaced script, no `cancel-rename`) - the same mechanism an operator's own
   boot-partition `userconf`/`userconf.txt` goes through
