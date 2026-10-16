@@ -376,7 +376,13 @@ RUN systemctl mask systemd-networkd-wait-online.service
 # listed here explicitly: this image sets APT::Install-Recommends "0" (etc/apt/apt.conf.d), so
 # it is not pulled in as a Recommends of python3-fastapi - it only used to arrive as a Recommends
 # of samba, which was installed before that setting took effect.
-RUN apt-get install -y python3-fastapi python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx
+#
+# Every third-party module tsconfig imports is listed, mirroring its pyproject.toml (pip runs with
+# --no-deps below, so pyproject.toml installs nothing here): pydantic, starlette and anyio are
+# imported directly, python3-cbor2, python3-dbus and python3-gi are what the BLE gateway
+# (tsconfig-ble) needs. python3-gi used to arrive only as a dependency of apt-listchanges.
+# authlib and itsdangerous (the `server` extra) are for server mode and not installed.
+RUN apt-get install -y python3-fastapi python3-starlette python3-pydantic python3-anyio python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx python3-cbor2 python3-dbus python3-gi
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
 # root-owned build-time config (services list, feature flags); not on the operator-editable boot partition
 RUN mkdir -p /etc/tsconfig
