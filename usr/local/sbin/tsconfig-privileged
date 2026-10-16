@@ -19,9 +19,8 @@
 #    process at all - not even indirectly - except the fixed variable set
 #    explicitly below.
 #
-# sudoers grants `tsconfig-privileged *` (wildcard) - safe because every
-# argument is re-validated by app.privileged itself, not by sudoers pattern
-# matching.
+# The polkit rule allows any arguments - safe because every argument is
+# re-validated by app.privileged itself, not by the rule.
 
 cd /usr/local/src/tsconfig || exit 1
 
