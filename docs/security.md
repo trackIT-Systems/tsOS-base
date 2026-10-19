@@ -309,6 +309,9 @@ daemon's, so it is as exposed as the BLE gateway, minus `shadow` access.
   (battery type, voltages, load switch, restore/clear). The daemon validates writes and requires
   `--force` for restore/clear/slave id/baud rate/password, but anyone who can reach the socket can
   change the charging behaviour.
+- **tsconfig** (also `pi`) relays `status`, `cached` and `read` from logged-in web users to this
+  socket (`POST /api/power/solarlife`, for the status page). None of them changes the controller; every
+  other command, `write` among them, is refused before it reaches the socket.
 - **BlueZ:** its D-Bus policy lets every user call `org.bluez`, so the daemon needs no group. It
   scans and connects as a normal D-Bus client and registers no agent and no GATT service.
 - **Configuration** is `/etc/solarlife/solarlife.yml` (root-owned).
@@ -332,6 +335,8 @@ and `char-ttyACM rw` limits it to USB serial devices. `systemd-analyze security`
   `.vcsf` profiles) over Bluetooth and over the cable. The daemon refuses values the device would
   turn into error 119 (which only a factory reset clears) and never writes the VE.Direct port
   functions over the cable, but anyone who can reach the socket can change the charging behaviour.
+- **tsconfig** relays `status`, `cached` and `read` to this socket in the same way
+  (`POST /api/power/smartsolar`); other commands, including `write`, `settings` and `fetch_key`, are refused.
 - **State:** the Instant Readout key, if fetched over GATT, is stored in `/var/lib/smartsolar`
   (`StateDirectory=`, mode 0700, persistent overlay). A key written into `/etc/smartsolar/smartsolar.yml`
   is readable by every local user (the file is 0644).
