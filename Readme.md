@@ -40,7 +40,7 @@ Runtime settings live on the VFAT boot partition (`/boot/firmware` on the Pi). E
 | --- | --- |
 | [`cmdline.txt`](boot/firmware/cmdline.txt) | `systemd.hostname=`, `timezone=`, first-boot `repartition` |
 | [`mqttutil.conf`](boot/firmware/mqttutil.conf) | MQTT system reporting |
-| `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`) |
+| `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`). A listener added here refuses anonymous clients unless the file allows them |
 | [`envsense.yml`](boot/firmware/envsense.yml) | Environmental sensors (`pyenvsense`) |
 | `wireguard.conf` | WireGuard interface (symlinked to `/etc/wireguard/`) |
 | `authorized_keys` | SSH keys for `pi`, read in place by sshd (only - `root`'s keys are separate, see [docs/security.md](docs/security.md)) |

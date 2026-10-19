@@ -15,6 +15,31 @@
     encode gzip
     reverse_proxy http://localhost:8000
 
+    # MQTT over WebSockets for tsconfig's live dashboard. Mosquitto has no
+    # authentication of its own and listens on loopback only, so this block is
+    # the only way in from the network. The login is checked once, when the
+    # socket opens; an open socket stays connected after logout.
+    handle /mqtt {
+        route {
+            # Browsers always send Origin on a WebSocket handshake. Refuse other
+            # sites' pages, whatever the session cookie's SameSite does.
+            @foreign_origin expression `{http.request.header.Origin} != "" && {http.request.header.Origin} != "http://" + {http.request.hostport} && {http.request.header.Origin} != "https://" + {http.request.hostport}`
+            respond @foreign_origin 403
+
+            # forward_auth passes the request's headers on, and uvicorn would take
+            # the handshake for a WebSocket request to /auth/check and reject it.
+            forward_auth localhost:8000 {
+                uri /auth/check
+                header_up -Upgrade
+                header_up -Connection
+            }
+
+            reverse_proxy http://127.0.0.1:9001 {
+                flush_interval -1
+            }
+        }
+    }
+
     handle /data* {
         # Filebrowser trusts X-Forwarded-User to say who is calling, so this block
         # is the only place that header may come from. `route` keeps the written

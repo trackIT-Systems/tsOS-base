@@ -120,7 +120,7 @@ Key enabled services:
 - `smartsolar.service` (`smartsolard`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `solarlife.service` (`solarlifed`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `tsschedule.service` (power management)
-- `mosquitto.service`
+- `mosquitto.service` (listens on loopback only: `1883` for local services and `9001` for MQTT over WebSockets, which Caddy serves at `/mqtt` behind the login)
 - `caddy.service`, `filebrowser.service`
 - `devmon.service` (udevil automount)
 - `gpsd.service`

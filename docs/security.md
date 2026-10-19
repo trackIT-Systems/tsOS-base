@@ -258,6 +258,37 @@ uploaded files belong to the operator. A Filebrowser compromise is a `pi` compro
 There is no SMB share: Samba is removed, because SMB needs an NT hash that can't be derived from
 the crypt hash in `userconf.txt`. `/data` is reached over HTTP, WebDAV or SSH/SFTP as `pi`.
 
+### MQTT over WebSocket
+
+tsconfig's live dashboard subscribes to the local broker from the browser, so Mosquitto serves
+MQTT over WebSockets and Caddy exposes it at **`/mqtt`** ([mosquitto.conf](../etc/mosquitto/mosquitto.conf),
+[Caddyfile](../etc/caddy/Caddyfile)):
+
+- **Listeners.** `1883` on `127.0.0.1` and `::1` (local services; both, because `localhost` resolves
+  to either) and `9001` on `127.0.0.1` with `protocol websockets`. All three allow anonymous
+  clients, and none is reachable from the network. Mosquitto drops its implicit listener as soon
+  as one is declared, which is why they are spelled out.
+- **`per_listener_settings true`.** `allow_anonymous` is set per listener, so it covers only the
+  loopback listeners. A listener an operator adds in `mosquitto.d` keeps Mosquitto's default
+  (anonymous clients refused) unless that file allows them itself. Put the `listener` line and its
+  options in the same file: options attach to the listener declared before them.
+- **Caddy.** For `/mqtt`, Caddy:
+  1. refuses anything with an `Origin` other than `http(s)://<the host the request was sent to>`
+     (403). Browsers send `Origin` on every WebSocket handshake, so another site's page can't use
+     a logged-in operator's cookie to reach the broker, whatever `SameSite` does. Clients without
+     `Origin` (scripts, `mosquitto_sub` over WebSocket) pass this step;
+  2. asks tsconfig `GET /auth/check` (`forward_auth`), which accepts the session cookie (HTTP Basic
+     is accepted for `/data/dav/*` only) and answers a missing login with a redirect or 401. The
+     `Upgrade` and `Connection` headers are dropped from that sub-request: with them, uvicorn takes
+     the check for a WebSocket handshake and rejects it;
+  3. proxies to `127.0.0.1:9001`.
+- **What a login gets.** Read and write access to every topic: the broker has no users or ACLs.
+  Accepted, because a login already gives the web shell and systemd control.
+- **Known limitation.** The login is only checked when the socket opens, so a connection stays
+  open after logout (or session expiry) until the client closes it.
+- **Local processes** reach the broker on `1883` and `9001` directly, as before; see "Trusted local
+  requests".
+
 ### BLE
 
 `tsconfig-ble` runs as the system user `tsconfig-ble`, in the group `shadow` (for the hash login
@@ -403,7 +434,9 @@ close that gap.
   limited only by backoff (sshd: its defaults). If reused across the fleet, it compromises every
   device at once. Use a strong per-device value, or leave it unset.
 - **Mosquitto.** The broker has no authentication or TLS; it binds loopback unless an
-  operator-supplied `mosquitto.d` adds a listener.
+  operator-supplied `mosquitto.d` adds a listener, which refuses anonymous clients by default.
+  Through `/mqtt` a logged-in user can read and write every topic, and an open WebSocket outlives
+  the login (see "MQTT over WebSocket").
 - **Physical access is root** (no secure boot).
 
 ## Migration
