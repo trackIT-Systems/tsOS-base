@@ -331,7 +331,7 @@ write that file (on the card, through a config bundle, or in tsconfig's Reportin
 `/etc/tsconfig/tstelemetry.yml`, are root-owned build-time data that only switch collectors on and
 off and set intervals. Neither the boot partition, config bundles nor tsconfig can change them.
 
-It runs as **`pi`**: `vcgencmd` needs `video` (`/dev/vcio`), the WittyPi board `i2c`, and both are
+It runs as **`pi`**: `vcgencmd` needs `video` (`/dev/vcio_gencmd`), the WittyPi board `i2c`, and both are
 `pi`'s groups. A compromised `tstelemetry` therefore has `pi`'s rights, held back by the unit's
 sandbox (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`, writes only to
 `/data`, only `AF_UNIX`, `AF_INET` and `AF_INET6`, no kernel tunables/modules/logs, no cgroup writes,
