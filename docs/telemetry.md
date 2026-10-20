@@ -31,6 +31,13 @@ topic +/tsconfig/+/cbor out 1
 topic +/tsconfig/state out 1
 ```
 
+### Other publishers on the station
+
+The charge controller daemons publish in the same style: CSV, JSON and CBOR with fixed columns, `time` and `synced` first, rate-limited for cellular, daily CSV files with the same clock handling. Their topics and columns are documented in their own repositories:
+
+- `smartsolard`: [pysmartsolar docs/outputs.md](https://github.com/trackIT-Systems/pysmartsolar/blob/main/docs/outputs.md), bridge line `topic +/smartsolar/+/cbor out 1`
+- `solarlifed`: [pysolarlife docs/outputs.md](https://github.com/trackIT-Systems/pysolarlife/blob/main/docs/outputs.md), bridge lines `topic +/solarlife/+/+/cbor out 1` and `topic +/solarlife/+/cbor out 1` (state and events)
+
 ## Collectors
 
 | Collector | Default interval | Columns after `time;synced` |

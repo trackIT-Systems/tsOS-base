@@ -109,8 +109,8 @@ Python-based services installed from git submodules under `/usr/local/src`:
 - `tsconfig-ble` - Bluetooth Low Energy service
 - `tstelemetry` (part of `tsconfig`) - Device health over MQTT (CSV, JSON, CBOR) and into daily CSV files, see [telemetry.md](telemetry.md)
 - `tsschedule` - Power scheduling (WittyPi 4, Raspberry Pi 5)
-- `pysmartsolar` - Victron SmartSolar readout over BLE (Instant Readout advertisements, optional GATT) and the VE.Direct cable: the `smartsolard` daemon (CSV and MQTT as JSON and CBOR) and the `smartsolar` CLI (values, settings, `.vcsf` profiles)
-- `pysolarlife` - SolarLife MPPT charge controller readout over BLE: the `solarlifed` daemon (holds one connection, writes CSV and MQTT as JSON and CBOR) and the `solarlife` CLI
+- `pysmartsolar` - Victron SmartSolar readout over BLE (Instant Readout advertisements, optional GATT) and the VE.Direct cable: the `smartsolard` daemon (MQTT as CSV, JSON and CBOR, rate-limited, and daily CSV files; [topics and formats](https://github.com/trackIT-Systems/pysmartsolar/blob/main/docs/outputs.md)) and the `smartsolar` CLI (values, settings, `.vcsf` profiles)
+- `pysolarlife` - SolarLife MPPT charge controller readout over BLE: the `solarlifed` daemon (holds one connection; MQTT as CSV, JSON and CBOR, rate-limited, and daily CSV files; [topics and formats](https://github.com/trackIT-Systems/pysolarlife/blob/main/docs/outputs.md)) and the `solarlife` CLI
 
 ### Systemd Services
 

@@ -15,8 +15,8 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 - **Chrony** + **gpsd** time sync
 - **WittyPi 4** RTC / power management via **tsschedule**
 - **WireGuard**, LTE via ModemManager (Huawei / Brovi E3372, Teltonika TRM200)
-- Victron SmartSolar readout over BLE advertisements and/or the VE.Direct cable (**smartsolard**, with the `smartsolar` CLI): CSV and MQTT
-- SolarLife MPPT readout over BLE (**solarlifed**, with the `solarlife` CLI): CSV and MQTT
+- Victron SmartSolar readout over BLE advertisements and/or the VE.Direct cable (**smartsolard**, with the `smartsolar` CLI): MQTT as CSV, JSON and CBOR, rate-limited, and daily CSV files ([published topics and formats](https://github.com/trackIT-Systems/pysmartsolar/blob/main/docs/outputs.md))
+- SolarLife MPPT readout over BLE (**solarlifed**, with the `solarlife` CLI): MQTT as CSV, JSON and CBOR, rate-limited, and daily CSV files ([published topics and formats](https://github.com/trackIT-Systems/pysolarlife/blob/main/docs/outputs.md))
 
 ## Download and flash
 
