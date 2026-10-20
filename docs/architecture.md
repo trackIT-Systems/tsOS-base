@@ -107,7 +107,7 @@ Core packages installed via `apt-get`:
 Python-based services installed from git submodules under `/usr/local/src`:
 - `tsconfig` - Configuration service (FastAPI)
 - `tsconfig-ble` - Bluetooth Low Energy service
-- `pymqttutil` - System statistics via MQTT
+- `tstelemetry` (part of `tsconfig`) - Device health over MQTT (CSV, JSON, CBOR) and into daily CSV files, see [telemetry.md](telemetry.md)
 - `tsschedule` - Power scheduling (WittyPi 4, Raspberry Pi 5)
 - `pysmartsolar` - Victron SmartSolar readout over BLE (Instant Readout advertisements, optional GATT) and the VE.Direct cable: the `smartsolard` daemon (CSV and MQTT as JSON and CBOR) and the `smartsolar` CLI (values, settings, `.vcsf` profiles)
 - `pysolarlife` - SolarLife MPPT charge controller readout over BLE: the `solarlifed` daemon (holds one connection, writes CSV and MQTT as JSON and CBOR) and the `solarlife` CLI
@@ -116,7 +116,7 @@ Python-based services installed from git submodules under `/usr/local/src`:
 
 Key enabled services:
 - `tsconfig.service`, `tsconfig-ble.service`, `tsos-bluetooth-address.service` (gives the Bluetooth controller an address of its own install before the gateway starts)
-- `mqttutil.service`
+- `tstelemetry.service` (runs as `pi`, does not wait for the clock sync)
 - `smartsolar.service` (`smartsolard`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `solarlife.service` (`solarlifed`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `tsschedule.service` (power management)
@@ -140,12 +140,11 @@ Key enabled services:
 
 Runtime configuration via `/boot/firmware/`:
 - `cmdline.txt` - Kernel parameters (hostname via `systemd.hostname=`)
-- `mqttutil.conf` - MQTT reporting config
 - `wireguard.conf` - VPN configuration (symlinked to `/etc/wireguard/`)
 - `mosquitto.d/` - Additional MQTT broker configs
 - `geolocation` - Static GPS coordinates
 
-The readout daemons are configured in `/etc` (root-owned, not on the boot partition): `/etc/smartsolar/smartsolar.yml` (`smartsolard`) and `/etc/solarlife/solarlife.yml` (`solarlifed`).
+The readout daemons are configured in `/etc` (root-owned, not on the boot partition): `/etc/smartsolar/smartsolar.yml` (`smartsolard`), `/etc/solarlife/solarlife.yml` (`solarlifed`) and `/etc/tsconfig/tstelemetry.yml` (`tstelemetry`).
 
 ## Network Stack
 

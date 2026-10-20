@@ -1,0 +1,48 @@
+[Unit]
+Description=tstelemetry: device health over MQTT (CSV, JSON, CBOR) and into daily CSV files
+# Starts without waiting for time-sync.target: readings taken before the clock is synced are held
+# back from the files and re-timed once it is (see docs/telemetry.md)
+After=mosquitto.service ModemManager.service
+Wants=mosquitto.service
+
+[Service]
+# Runs as pi like smartsolar and solarlife: pi is in `video` (vcgencmd, /dev/vcio) and `i2c`
+# (WittyPi 4), and may query ModemManager over D-Bus. The sandbox below is what holds it back; see
+# docs/security.md, "Telemetry daemon". Its settings file holds data only, no code.
+User=pi
+Group=pi
+Type=notify
+NotifyAccess=main
+WatchdogSec=120
+Nice=10
+Environment="TSCONFIG_CONFIG_FILE=/etc/tsconfig/tsconfig.yml"
+# Marker that the clock was synced during this boot; kept across restarts, gone after a reboot
+RuntimeDirectory=tstelemetry
+RuntimeDirectoryPreserve=yes
+# MQTT over loopback, ModemManager over D-Bus, daily CSV files and the unsynced spool in /data
+ReadWritePaths=-/data
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# vcgencmd talks to the firmware through /dev/vcio, the WittyPi sits on /dev/i2c-1: PrivateDevices
+# would hide both, so allow exactly these
+PrivateDevices=no
+DevicePolicy=closed
+DeviceAllow=/dev/vcio rw
+DeviceAllow=char-i2c rw
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+ExecStart=/usr/bin/env tstelemetry
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,3 @@
-[submodule "usr/local/src/pymqttutil"]
-	path = usr/local/src/pymqttutil
-	url = https://github.com/trackIT-Systems/pymqttutil
 [submodule "usr/local/src/pysmartsolar"]
 	path = usr/local/src/pysmartsolar
 	url = https://github.com/trackIT-Systems/pysmartsolar

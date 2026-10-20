@@ -8,7 +8,7 @@ Wants=bluetooth.service tsos-bluetooth-address.service mosquitto.service
 
 [Service]
 Type=simple
-# Runs as pi like mqttutil, so pi (web shell, SSH) can use the `solarlife` CLI on the control socket
+# Runs as pi like tstelemetry, so pi (web shell, SSH) can use the `solarlife` CLI on the control socket
 # in /run/solarlife (0660) without any group. Unlike envsense and tsconfig-ble it is therefore not a
 # separate user: the sandbox below is all that holds it back. See docs/security.md, "SolarLife daemon".
 User=pi

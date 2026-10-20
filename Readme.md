@@ -10,7 +10,7 @@ The root filesystem is read-only with a persistent overlay. Partition layout, ov
 
 - **tsconfig** — web and BLE configuration
 - **Caddy** reverse proxy with **Filebrowser** at `/data/`
-- **Mosquitto** MQTT broker and **mqttutil** system reporting
+- **Mosquitto** MQTT broker and **tstelemetry** device health reporting (MQTT as CSV, JSON and CBOR, daily CSV files; [docs/telemetry.md](docs/telemetry.md))
 - **pyenvsense** — SHT3x / SHT4x environmental sensors
 - **Chrony** + **gpsd** time sync
 - **WittyPi 4** RTC / power management via **tsschedule**
@@ -39,7 +39,6 @@ Runtime settings live on the VFAT boot partition (`/boot/firmware` on the Pi). E
 | File | Purpose |
 | --- | --- |
 | [`cmdline.txt`](boot/firmware/cmdline.txt) | `systemd.hostname=`, `timezone=`, first-boot `repartition` |
-| [`mqttutil.conf`](boot/firmware/mqttutil.conf) | MQTT system reporting |
 | `mosquitto.d/` | Extra Mosquitto broker configs (`include_dir`). A listener added here refuses anonymous clients unless the file allows them |
 | [`envsense.yml`](boot/firmware/envsense.yml) | Environmental sensors (`pyenvsense`) |
 | `wireguard.conf` | WireGuard interface (symlinked to `/etc/wireguard/`) |

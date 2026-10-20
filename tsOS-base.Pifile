@@ -141,8 +141,6 @@ INSTALL usr /usr
 # Copy git repositories
 RUN rm /opt/oh-my-zsh/.git
 INSTALL .git/modules/opt/oh-my-zsh /opt/oh-my-zsh/.git
-RUN rm /usr/local/src/pymqttutil/.git
-INSTALL .git/modules/usr/local/src/pymqttutil /usr/local/src/pymqttutil/.git
 RUN rm /usr/local/src/pysmartsolar/.git
 INSTALL .git/modules/usr/local/src/pysmartsolar /usr/local/src/pysmartsolar/.git
 RUN rm /usr/local/src/pysolarlife/.git
@@ -377,22 +375,26 @@ RUN systemctl mask systemd-networkd-wait-online.service
 # it is not pulled in as a Recommends of python3-fastapi - it only used to arrive as a Recommends
 # of samba, which was installed before that setting took effect.
 #
-# Every third-party module tsconfig imports is listed, mirroring its pyproject.toml (pip runs with
-# --no-deps below, so pyproject.toml installs nothing here): pydantic, starlette and anyio are
-# imported directly, python3-cbor2, python3-dbus and python3-gi are what the BLE gateway
-# (tsconfig-ble) needs. python3-gi used to arrive only as a dependency of apt-listchanges.
-# authlib and itsdangerous (the `server` extra) are for server mode and not installed.
-RUN apt-get install -y python3-fastapi python3-starlette python3-pydantic python3-anyio python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-dateutil python3-psutil python3-httpx python3-cbor2 python3-dbus python3-gi
+# Every third-party module tsconfig imports on a station is listed, mirroring its pyproject.toml
+# (pip runs with --no-deps below, so pyproject.toml installs nothing here): the core dependencies
+# (pydantic, starlette and anyio are imported directly), the `tracker` extra (python3-psutil,
+# python3-websockets for the web shell, python3-cbor2 and python3-paho-mqtt for the telemetry daemon
+# tstelemetry) and the `ble` extra (python3-cbor2, python3-dbus, python3-gi for tsconfig-ble).
+# python3-gi used to arrive only as a dependency of apt-listchanges. The `server` extra (authlib,
+# itsdangerous) is for server mode and not installed.
+RUN apt-get install -y python3-fastapi python3-starlette python3-pydantic python3-anyio python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-psutil python3-httpx python3-cbor2 python3-paho-mqtt python3-dbus python3-gi
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
 # root-owned build-time config (services list, feature flags); not on the operator-editable boot partition
 RUN mkdir -p /etc/tsconfig
 INSTALL usr/local/src/tsconfig/configs/tsconfig.yml /etc/tsconfig/tsconfig.yml
+# the same for the telemetry daemon (tstelemetry): which collectors run, how often
+INSTALL usr/local/src/tsconfig/configs/tstelemetry.yml /etc/tsconfig/tstelemetry.yml
 # The BLE gateway runs as its own user, in `shadow` for its hash login (BlueZ's D-Bus policy
 # lets any user talk to it, no `bluetooth` group needed). pi stays out of `shadow` - see
 # docs/security.md, "BLE".
 RUN adduser --system --group --no-create-home tsconfig-ble
 RUN usermod -aG shadow tsconfig-ble
-RUN systemctl enable tsconfig tsconfig-ble tsos-bluetooth-address
+RUN systemctl enable tsconfig tsconfig-ble tsos-bluetooth-address tstelemetry
 
 # install default config
 RUN tsconfig zip -f -b forbid /home/pi/tsos-default-name_config.zip
@@ -432,11 +434,6 @@ RUN systemctl enable solarlife.service
 
 # Install vcgencmd
 RUN python3 -m pip install --no-deps -e /usr/local/src/vcgencmd
-
-# Install and enable pymqttutil
-RUN apt-get install -y python3-schedule python3-paho-mqtt python3-pytimeparse python3-dotenv
-RUN python3 -m pip install --no-deps -e /usr/local/src/pymqttutil
-RUN systemctl enable mqttutil.service
 
 # Install pyenvsense and modules
 RUN python3 -m pip install --no-deps -e /usr/local/src/pyenvsense

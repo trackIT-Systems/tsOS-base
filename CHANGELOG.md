@@ -13,7 +13,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Security
 
-- Operator authentication: tsconfig (web UI, API, web shell) and `/data` over HTTP now require a login with `pi`'s password (PAM, new `etc/pam.d/tsconfig`; Caddy `forward_auth` guards Filebrowser), and the BLE gateway requires an encrypted link plus the same login. Staff can log in to tsconfig, WebDAV and BLE as `root` with root's password if the image was built with `TSOS_ROOT_PASSWORD` (checked through `su`; no extra rights; stricter throttling). Filebrowser now runs as `pi`, no longer authenticates itself (`noauth` off, proxy-header login from Caddy after tsconfig's PAM check) and serves WebDAV at `/data/dav/data/` with HTTP Basic `pi` + the `pi` password (verified by tsconfig, `/auth/check` accepts Basic only for `/data/dav/`). The hotspot password can be set from a config bundle via `hotspot.nmconnection`. Defaults are unchanged and public (`pi`/`natur`, hotspot `BirdsAndBats`) until a bundle sets real values. `boot/firmware/mqttutil.conf` now reads tsconfig's API on `127.0.0.1:8000` directly (bundles that ship their own `mqttutil.conf` must do the same). See [docs/security.md](docs/security.md)
+- Operator authentication: tsconfig (web UI, API, web shell) and `/data` over HTTP now require a login with `pi`'s password (PAM, new `etc/pam.d/tsconfig`; Caddy `forward_auth` guards Filebrowser), and the BLE gateway requires an encrypted link plus the same login. Staff can log in to tsconfig, WebDAV and BLE as `root` with root's password if the image was built with `TSOS_ROOT_PASSWORD` (checked through `su`; no extra rights; stricter throttling). Filebrowser now runs as `pi`, no longer authenticates itself (`noauth` off, proxy-header login from Caddy after tsconfig's PAM check) and serves WebDAV at `/data/dav/data/` with HTTP Basic `pi` + the `pi` password (verified by tsconfig, `/auth/check` accepts Basic only for `/data/dav/`). The hotspot password can be set from a config bundle via `hotspot.nmconnection`. Defaults are unchanged and public (`pi`/`natur`, hotspot `BirdsAndBats`) until a bundle sets real values. See [docs/security.md](docs/security.md)
 - `pi` has no sudo at all (removed from `sudo` and `adm`; no sudoers drop-in). Its privileged
   actions use polkit and group membership instead: non-persistent `systemctl` verbs on a fixed
   unit allowlist (`20-tsos-systemctl.rules`; `enable`/`disable`/`mask` stay denied), reboot via
@@ -51,6 +51,8 @@ their previous model and are not patched; every device is reinstalled from scrat
 - The web shell execs the operator's own login shell directly instead of `su`-ing to a
   separately configurable user.
 
+- `mqttutil` is replaced by `tstelemetry` (see Changed). mqttutil evaluated the Python expressions in `/boot/firmware/mqttutil.conf` and imported the modules it listed, so whoever could write that file (on the card, through a bundle, or in tsconfig's Reporting tab) ran code as `pi`. Its successor's settings, `/etc/tsconfig/tstelemetry.yml`, hold data only and are root-owned build-time data
+
 ### Fixed
 
 - Explicitly install `modemmanager` (no longer pulled in by default on Trixie) ([#33](https://github.com/trackIT-Systems/tsOS-base/issues/33))
@@ -58,6 +60,8 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Changed
 
+- **Breaking for consumers:** system telemetry comes from `tstelemetry.service` (part of tsconfig) instead of `mqttutil.service`. The topics `{host}/mqttutil/<task>` are replaced by `{host}/tsconfig/<collector>/{csv,json,cbor}` plus a retained `{host}/tsconfig/state`, and the payloads changed: every format carries the same columns, `time` (with UTC offset; in CBOR a tag-0 datetime) and `synced` first; CBOR is a list in column order. Bridges must forward the new topics (e.g. `topic +/tsconfig/+/cbor out 1`). Files go to `/data/<host>/tsconfig/<collector>/<host>_<YYYY-MM-DD>_<collector>.csv`, one per day, instead of `/data/<task>.jsonl` (existing JSONL files are left alone). Every mqttutil task has a collector; `rp1` now finds its sensor by name (it read `hwmon2`, which is a different sensor on some boards), and WittyPi readings are skipped on stations without the board instead of logging a traceback every minute. Telemetry starts before the clock is synced: readings are re-timed for the files once chrony has synced. Topic and column reference and the old-to-new mapping: [docs/telemetry.md](docs/telemetry.md)
+- `/boot/firmware/mqttutil.conf` is gone. Telemetry is not operator configuration any more: `/etc/tsconfig/tstelemetry.yml` (collectors on/off and intervals) is installed from tsconfig's `configs/tstelemetry.yml`, like `tsconfig.yml`. Config bundles that still contain `mqttutil.conf` are accepted; the file is skipped
 - `smartsolar.yml` and `solarlife.yml` moved from the boot partition to `/etc/smartsolar/` and `/etc/solarlife/` (the daemons' new default config paths); they are root-owned build-time config, not something to edit on the SD card.
 - tsconfig's own `tsconfig.yml` (services list, feature flags) is installed to `/etc/tsconfig/tsconfig.yml` instead of the boot partition: it is build-time data that nothing edits at runtime, and it is no longer changeable by mounting the SD card.
 - gitui is downloaded with `curl` like every other build-time download, not `wget`, so the image carries no `wget` leftovers (`~/.wget-hsts`, `wget-log`).
@@ -92,6 +96,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Removed
 
+- The `pymqttutil` submodule and `mqttutil.service` (replaced by `tstelemetry.service`); `python3-schedule`, `python3-pytimeparse` and `python3-dotenv` are no longer installed for it
 - The `[vedirect]` task from `boot/firmware/mqttutil.conf` and the `vedirect_dump` submodule with its `vedirect_m8` / `ve_utils` / `gatt` installs (the udev rule `50-vedirect.rules` stays: it creates `/dev/ttyUSBvd0` for `smartsolard`)
 - The `[solarlife]` task from `boot/firmware/mqttutil.conf` (`mqttutil` no longer uses BLE). `pysmartsolar` was not part of the mqttutil configuration and stays installed unchanged
 - HiLink tooling for the Huawei / Brovi sticks: `huaweicheck` (service and timer), `brovi_switch`, `brovi_startup`, the `40-huawei.rules` udev rules, the `hua0` interface and its `huawei` NetworkManager profile, and the `huawei/*` HiLink web API readouts in `boot/firmware/mqttutil.conf` (`uhubctl` stays installed)

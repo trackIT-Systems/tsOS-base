@@ -210,8 +210,8 @@ Plain HTTP on `:80` stays and is never redirected ([Caddyfile](../etc/caddy/Cadd
   login form, static assets, `/auth/status`, `/api/server-mode`.
 - **Trusted local requests.** A request whose TCP peer is loopback **and** that carries none of the
   forwarding headers Caddy always sets is exempt. Remote traffic always passes through Caddy, so it
-  can never qualify. This is how `mqttutil` (`127.0.0.1:8000`,
-  [boot/firmware/mqttutil.conf](../boot/firmware/mqttutil.conf)) and `tsconfig-ble` call the API.
+  can never qualify. This is how `tsconfig-ble` calls the API (`127.0.0.1:8000`). `tstelemetry`
+  does not use the API; it reads the same data with tsconfig's code in its own process.
   The cost: **any local process gets the whole API, including the shell websocket** — a `pi`
   shell — so a compromised sandboxed service (Mosquitto, `envsense`) is no longer contained.
 
@@ -321,17 +321,36 @@ or crack both offline.
   `openssl passwd -6`), which also changes the hash on every device it is applied to. `root` has no
   hash login.
 
+### Telemetry daemon
+
+`tstelemetry.service` publishes the device's health over MQTT and into daily CSV files (see
+[telemetry.md](telemetry.md)). It replaces `mqttutil`, which evaluated Python expressions from
+`/boot/firmware/mqttutil.conf` and imported whatever modules the file listed, so anyone who could
+write that file (on the card, through a config bundle, or in tsconfig's Reporting tab) ran code as
+`pi`. Its successor reads a fixed set of collectors from tsconfig's code; its settings,
+`/etc/tsconfig/tstelemetry.yml`, are root-owned build-time data that only switch collectors on and
+off and set intervals. Neither the boot partition, config bundles nor tsconfig can change them.
+
+It runs as **`pi`**: `vcgencmd` needs `video` (`/dev/vcio`), the WittyPi board `i2c`, and both are
+`pi`'s groups. A compromised `tstelemetry` therefore has `pi`'s rights, held back by the unit's
+sandbox (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`, writes only to
+`/data`, only `AF_UNIX`, `AF_INET` and `AF_INET6`, no kernel tunables/modules/logs, no cgroup writes,
+no namespaces, no realtime scheduling). `PrivateDevices` is off so `/dev/vcio` and the I²C bus are
+visible; `DevicePolicy=closed` allows only those two. It parses no input from the network: it
+only publishes, reads local files, `/proc` and `/sys`, and asks ModemManager (`mmcli`) over D-Bus.
+It also reads the kernel's clock state with `adjtimex` in read-only mode, which needs no privileges.
+
 ### SolarLife daemon
 
 `solarlife.service` (`solarlifed`) holds a BLE connection to a SolarLife MPPT charge controller. It
-runs as **`pi`**, like `mqttutil`, not as a separate user like `envsense` or `tsconfig-ble`: a
+runs as **`pi`**, like `tstelemetry`, not as a separate user like `envsense` or `tsconfig-ble`: a
 dedicated user would have needed its own group for the `solarlife` CLI to be usable from the web
 shell and `pi`'s SSH sessions (`pi` has no sudo). The consequence is that **a compromised
 `solarlifed` has `pi`'s rights**; what holds it back is the unit's sandbox (`ProtectSystem=strict`,
 `ProtectHome`, `PrivateTmp`, `PrivateDevices`, `NoNewPrivileges`, writes only to `/data`, only
 `AF_UNIX`, `AF_INET` and `AF_INET6`, no kernel tunables/modules/logs, no cgroup writes, no
 namespaces, no realtime scheduling). `systemd-analyze security` rates it 5.3 (MEDIUM), against 8.1
-for `envsense` and 9.2 for `mqttutil` on the same image. The code that parses BLE input is this
+for `envsense` on the same image. The code that parses BLE input is this
 daemon's, so it is as exposed as the BLE gateway, minus `shadow` access.
 
 - **Control socket** `/run/solarlife/solarlife.sock` (directory from `RuntimeDirectory=`, socket
