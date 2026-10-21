@@ -19,7 +19,10 @@ Environment="TSCONFIG_CONFIG_FILE=/etc/tsconfig/tsconfig.yml"
 # Marker that the clock was synced during this boot; kept across restarts, gone after a reboot
 RuntimeDirectory=tstelemetry
 RuntimeDirectoryPreserve=yes
-# MQTT over loopback, ModemManager over D-Bus, daily CSV files and the unsynced spool in /data
+# Cursor of the last journal entry published, so a restart continues where it stopped
+StateDirectory=tstelemetry
+# MQTT over loopback, ModemManager over D-Bus, daily CSV files and the unsynced spool in /data. pi is in
+# systemd-journal, so journalctl reads the system journal for the journal topics
 ReadWritePaths=-/data
 ProtectSystem=strict
 ProtectHome=yes

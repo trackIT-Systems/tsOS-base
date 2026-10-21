@@ -83,9 +83,7 @@ Each entry is a set of [journal fields](https://www.freedesktop.org/software/sys
 
 ## Forwarding over MQTT
 
-> Planned, see [issue #31](https://github.com/trackIT-Systems/tsOS-base/issues/31). This section is the intended design. It changes as it is implemented.
-
-`tstelemetry` publishes journal entries to the local broker, alongside its [telemetry](telemetry.md). There is no third-party log shipper.
+`tstelemetry` publishes journal entries to the local broker, alongside its [telemetry](telemetry.md). There is no third-party log shipper. It follows the journal with `journalctl --follow --output=json` (as `pi`, which is in `systemd-journal`) and keeps the cursor of the last entry in `/var/lib/tstelemetry/journal.cursor`. A restart therefore continues where the last run stopped, including entries logged while it was down. Journal entries only go over MQTT: there are no CSV files for them, since the journal itself keeps them.
 
 Selection happens in two places:
 - **The station** publishes every unit from `info` up. `debug` is never published; it stays in the journal. The station's rate limits keep this bounded. They are set in `/etc/tsconfig/tstelemetry.yml`, which is build-time data like the rest of that file.
@@ -100,9 +98,10 @@ Selection happens in two places:
 | `<host>/tsconfig/journal/<unit>/<level>/cbor` | array, values in column order | no |
 | `<host>/tsconfig/journalstats/<format>` | counts per unit and level, see [Counts](#counts) | no |
 
-- `<unit>` is the unit's name without `.service` (`tsschedule`, `wg-quick@wireguard`), and keeps any other suffix (`foo.timer`, `data.mount`). Kernel messages have no unit and use `kernel`. Other entries without a unit use their `SYSLOG_IDENTIFIER`.
+- `<unit>` is the unit's name without `.service` (`tsschedule`, `wg-quick@wireguard`), and keeps any other suffix (`foo.timer`, `data.mount`). Kernel messages have no unit and use `kernel`. Other entries without a unit use their `SYSLOG_IDENTIFIER`. systemd's own messages about a unit, such as `tsschedule.service: Failed with result 'exit-code'`, belong to that unit, not to `init.scope`.
 - `<level>` is the syslog name of the priority: `emerg`, `alert`, `crit`, `err`, `warning`, `notice`, `info`. These are the names `journalctl -p` takes, also used by the kernel and third-party services.
 - QoS is 0, and messages are dropped while the broker is unreachable, as for telemetry.
+- `time` is when the entry was logged. `synced` is true when the entry is from the current boot and the clock is synced; an entry from an earlier boot is always `false`.
 
 The columns follow the [telemetry conventions](telemetry.md#mqtt): `time` and `synced`, then `identifier`, `message` and `repeated`. `time` is when the entry was logged, not when it was published. The unit and level are only in the topic.
 
@@ -134,9 +133,24 @@ The limits apply on the station, before the bridge, and are **counted per level*
 | Merge repeats | the same unit, level and message within 10 minutes is sent once; when the window ends, one entry with `repeated` set to the count follows |
 | Rate per unit and level | a burst of 10 entries, then 1 per minute |
 | Budget per station and level | 100 entries per hour |
-| Message length | 256 characters; tracebacks are cut to their last line |
+| Message length | 256 characters; a message of several lines (a traceback) keeps its first and last line, joined by ` … ` |
 
 Every limit is configurable in `tstelemetry.yml`: a default for all levels, and an override per level. The defaults are starting values, to be checked against what real stations log.
+
+```yaml
+journal:
+  enabled: true
+  level: info          # the lowest level published
+  limits:              # for every level
+    repeat_window: 600 # seconds
+    burst: 10
+    rate: 60           # seconds per entry after the burst
+    budget: 100        # entries per hour
+    max_length: 256    # characters
+  levels:              # what differs for single levels, for example:
+    info:
+      budget: 50
+```
 
 ### Counts
 

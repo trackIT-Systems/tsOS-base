@@ -12,6 +12,7 @@ Each kind of data comes from one **collector**, a Python module in [app/telemetr
 | `<host>/tsconfig/<collector>/json` | object, keys in column order | no |
 | `<host>/tsconfig/<collector>/cbor` | array, values in column order | no |
 | `<host>/tsconfig/state` | `{"state": "online"}`, or `{"state": "offline"}` (last will) | yes |
+| `<host>/tsconfig/journal/<unit>/<level>/<format>` | journal entries, see [Logging](logging.md#forwarding-over-mqtt) | no |
 
 - `<host>` is the hostname.
 - QoS is 0, and messages are dropped while the broker is unreachable.
@@ -30,6 +31,8 @@ For the cellular bridge, forwarding CBOR and the state is enough:
 topic +/tsconfig/+/cbor out 1
 topic +/tsconfig/state out 1
 ```
+
+`+/tsconfig/+/cbor` includes `journalstats`, but not the journal entries, which are one level deeper. Which of them leave the station is chosen per unit and level, see [Logging](logging.md#topics).
 
 ### Other publishers on the station
 
@@ -54,6 +57,7 @@ The charge controller daemons publish in the same style: CSV, JSON and CBOR with
 | `modem` | 3600 s | `manufacturer`, `model`, `hardware_revision`, `imei`, `signal_strength_dbm`, `signal_strength_percent`, `access_technology`, `state`, `operator_name`, `ip_addresses`, `sim_iccid`, `sim_operator`, `sim_imsi`. Nothing is sent when there is no modem |
 | `configs` | 3600 s | `file`, `present`, `mtime`, `size`. One message per configuration file tsconfig knows |
 | `release` | 3600 s | `name`, `variant`, `version`, `codename`, `commit` (from `/etc/os-release`), `kernel`, `tsconfig` |
+| `journalstats` | 600 s | `unit`, `level`, `entries`, `dropped`. One message per unit and level that logged in the interval; `dropped` counts what the journal limits held back (see [Logging](logging.md#counts)). Skipped when `journal.enabled` is off |
 
 At startup, a collector whose hardware or tool is missing is skipped with one log line, e.g. no WittyPi board, no `vcgencmd`, or no `mmcli`. A collector that fails while running logs a warning once, and again when the error changes. It logs once more when it works again.
 
