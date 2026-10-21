@@ -10,6 +10,8 @@ Technical documentation for developers working on tsOS-base.
 - **[Updatability](updatability.md)** - Dual-boot update mechanism and tryboot
 - **[Hardware Watchdog](watchdog.md)** - Raspberry Pi hardware watchdog timer configuration
 - **[Security Design](security.md)** - `root`/`pi` privilege separation model
+- **[Telemetry](telemetry.md)** - `tstelemetry`: device health over MQTT and into daily CSV files
+- **[Logging](logging.md)** - Identifiers, severities and message format of service logs, and forwarding over MQTT
 
 ## Quick Reference
 
