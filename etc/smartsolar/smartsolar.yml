@@ -57,7 +57,7 @@ daemon:
   socket_mode: "0660"            # octal
   state_dir: /var/lib/smartsolar # fetched keys
   registers: auto                # settings go through: auto (the cable if it answers, else GATT), serial, gatt
-  log_level: INFO
+  log_level: WARNING
   csv:
     enabled: true
     path: /data

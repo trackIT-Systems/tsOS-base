@@ -28,7 +28,7 @@ polling:
 daemon:
   socket: /run/solarlife/solarlife.sock
   socket_mode: "0660"   # octal
-  log_level: INFO
+  log_level: WARNING
   csv:
     enabled: true
     path: /data
