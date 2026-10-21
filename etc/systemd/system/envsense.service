@@ -16,6 +16,7 @@ ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
 ExecStart=/usr/bin/env envsensed
+SyslogIdentifier=envsensed
 Restart=on-failure
 RestartSec=5
 

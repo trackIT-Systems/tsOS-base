@@ -32,6 +32,7 @@ RestrictRealtime=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 ExecStart=/usr/bin/env solarlifed
+SyslogIdentifier=solarlifed
 Restart=on-failure
 RestartSec=5
 

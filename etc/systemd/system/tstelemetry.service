@@ -41,6 +41,7 @@ RestrictRealtime=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 ExecStart=/usr/bin/env tstelemetry
+SyslogIdentifier=tstelemetry
 Restart=always
 RestartSec=10
 

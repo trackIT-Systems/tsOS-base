@@ -18,6 +18,7 @@ Environment="LOG_LEVEL=INFO"
 Environment="TSCONFIG_CONFIG_FILE=/etc/tsconfig/tsconfig.yml"
 WorkingDirectory=/usr/local/src/tsconfig
 ExecStart=python3 -m uvicorn app.main:app
+SyslogIdentifier=tsconfig
 
 Restart=always
 RestartSec=5

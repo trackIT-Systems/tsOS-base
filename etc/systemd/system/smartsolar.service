@@ -38,6 +38,7 @@ RestrictRealtime=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 ExecStart=/usr/bin/env smartsolard
+SyslogIdentifier=smartsolard
 Restart=on-failure
 RestartSec=5
 
