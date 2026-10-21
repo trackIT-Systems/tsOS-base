@@ -85,40 +85,59 @@ Each entry is a set of [journal fields](https://www.freedesktop.org/software/sys
 
 > Planned, see [issue #31](https://github.com/trackIT-Systems/tsOS-base/issues/31). This section is the intended design. It changes as it is implemented.
 
-`tstelemetry` forwards selected journal entries to the local broker, alongside its [telemetry](telemetry.md). There is no third-party log shipper. The cellular bridge decides which topics leave the station, as it does for telemetry.
+`tstelemetry` publishes journal entries to the local broker, alongside its [telemetry](telemetry.md). There is no third-party log shipper.
 
-### Selection
+Selection happens in two places:
+- **The station** publishes every unit from `info` up. `debug` is never published; it stays in the journal. The station's rate limits keep this bounded. They are set in `/etc/tsconfig/tstelemetry.yml`, which is build-time data like the rest of that file.
+- **The bridge** decides which units and levels leave the station, through its topic lines. Each station's bridge is configured in `/boot/firmware/mosquitto.d`, which is the operator's to change. Changing the bridge needs no code and no image change.
 
-All units are forwarded at `warning` and worse. This includes the kernel, which has no unit and is named `kernel`. Units are not listed one by one: an unexpected failure is most often in a unit nobody thought of, such as a full file system, the OOM killer or a failing SD card.
+### Topics
 
-The selection is set in `/etc/tsconfig/tstelemetry.yml`, not in `tsconfig.yml`. `tsconfig.yml`'s `services` list says what the web UI shows, which is a different question, and `tstelemetry` does not depend on tsconfig's settings. The settings are:
+| Topic | Payload | Retained |
+| --- | --- | --- |
+| `<host>/tsconfig/journal/<unit>/<level>/csv` | one `;`-separated line, no header | no |
+| `<host>/tsconfig/journal/<unit>/<level>/json` | object, keys in column order | no |
+| `<host>/tsconfig/journal/<unit>/<level>/cbor` | array, values in column order | no |
+| `<host>/tsconfig/journalstats/<format>` | counts per unit and level, see [Counts](#counts) | no |
 
-- a default priority threshold (`warning`)
-- per-unit overrides: a higher threshold for a noisy unit, a lower one for a unit under investigation, or off
+- `<unit>` is the unit's name without `.service` (`tsschedule`, `wg-quick@wireguard`), and keeps any other suffix (`foo.timer`, `data.mount`). Kernel messages have no unit and use `kernel`. Other entries without a unit use their `SYSLOG_IDENTIFIER`.
+- `<level>` is the syslog name of the priority: `emerg`, `alert`, `crit`, `err`, `warning`, `notice`, `info`. These are the names `journalctl -p` takes, also used by the kernel and third-party services.
+- QoS is 0, and messages are dropped while the broker is unreachable, as for telemetry.
+
+The columns follow the [telemetry conventions](telemetry.md#mqtt): `time` and `synced`, then `identifier`, `message` and `repeated`. `time` is when the entry was logged, not when it was published. The unit and level are only in the topic.
+
+MQTT wildcards cannot express "`warning` and worse", so the bridge lists the levels it forwards:
+
+```
+# every unit, warning and worse
+topic +/tsconfig/journal/+/emerg/cbor out 1
+topic +/tsconfig/journal/+/alert/cbor out 1
+topic +/tsconfig/journal/+/crit/cbor out 1
+topic +/tsconfig/journal/+/err/cbor out 1
+topic +/tsconfig/journal/+/warning/cbor out 1
+# while investigating tsschedule, also its info
+topic +/tsconfig/journal/tsschedule/info/cbor out 1
+# counts
+topic +/tsconfig/journalstats/cbor out 1
+```
+
+All units are published, not a list. An unexpected failure is most often in a unit nobody thought of, such as a full file system, the OOM killer or a failing SD card. The `services` list in `tsconfig.yml` is not used: it says what the web UI shows, and `tstelemetry` does not depend on tsconfig's settings.
 
 ### Limits
 
 Volume is bounded by rate limits, not by compression. Payloads are not compressed, so every MQTT client can read them.
 
-- **Merge repeats:** the same unit and message within 10 minutes is sent once. When the window ends, one entry with the number of repeats follows.
-- **Rate per unit:** at most a burst of 10 entries, then 1 per minute. Excess entries are dropped and counted.
-- **Budget per station:** at most 100 entries per hour across all units.
-- **Count drops:** dropped entries are published as counts per unit, so a gap is visible.
-- **Truncate:** messages are cut to 256 characters. Tracebacks are not forwarded, only their last line.
+The limits apply on the station, before the bridge, and are **counted per level**. `info` entries, which the bridge mostly does not forward, therefore never use up the budget of `warning` or `err`.
 
-The numbers are starting values, to be checked against what real stations log.
+| Limit | Default for every level |
+| --- | --- |
+| Merge repeats | the same unit, level and message within 10 minutes is sent once; when the window ends, one entry with `repeated` set to the count follows |
+| Rate per unit and level | a burst of 10 entries, then 1 per minute |
+| Budget per station and level | 100 entries per hour |
+| Message length | 256 characters; tracebacks are cut to their last line |
 
-A `journal` collector also publishes the number of entries per unit and priority every 10 minutes. It costs a few bytes, shows which station has trouble and where, and is sent even when the limits drop entries.
+Every limit is configurable in `tstelemetry.yml`: a default for all levels, and an override per level. The defaults are starting values, to be checked against what real stations log.
 
-### Topics
+### Counts
 
-Open: whether the unit is part of the topic.
-
-| | `<host>/tsconfig/journal/<format>` | `<host>/tsconfig/journal/<unit>/<format>` |
-| --- | --- | --- |
-| Unit | a column | in the topic, and a column |
-| Selecting units | on the station only (`tstelemetry.yml`) | also in the bridge (`topic +/tsconfig/journal/tsschedule/cbor out 1`) and by the subscriber |
-| Fits the telemetry scheme | yes: `journal` is one more collector | adds a level below the collector |
-| Overhead | — | the unit name in every message's topic, some 10–20 bytes |
-
-Either way, formats and columns follow the [telemetry conventions](telemetry.md#mqtt): CSV, JSON and CBOR, with `time` and `synced` first, then `unit`, `identifier`, `priority`, `message` and `repeated`.
+`journalstats` is a collector in the usual sense: every 10 minutes it publishes one row per unit and level that had entries in that interval. It has the columns `unit`, `level`, `entries`, `dropped`, the last being the entries the limits held back. It costs a few bytes, shows which station has trouble and where, and shows when the limits dropped entries.
