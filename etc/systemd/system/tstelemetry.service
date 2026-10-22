@@ -6,7 +6,7 @@ After=mosquitto.service ModemManager.service
 Wants=mosquitto.service
 
 [Service]
-# Runs as pi like smartsolar and solarlife: pi is in `video` (vcgencmd, /dev/vcio) and `i2c`
+# Runs as pi like smartsolar and solarlife: pi is in `video` (vcgencmd, /dev/vcio_gencmd) and `i2c`
 # (WittyPi 4), and may query ModemManager over D-Bus. The sandbox below is what holds it back; see
 # docs/security.md, "Telemetry daemon". Its settings file holds data only, no code.
 User=pi
@@ -28,12 +28,13 @@ ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
 NoNewPrivileges=yes
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-# vcgencmd talks to the firmware through /dev/vcio, the WittyPi sits on /dev/i2c-1: PrivateDevices
-# would hide both, so allow exactly these
+# AF_NETLINK: the network collector lists the interfaces and their addresses (getifaddrs)
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+# vcgencmd talks to the firmware through /dev/vcio_gencmd (group video; /dev/vcio is root's), the
+# WittyPi sits on /dev/i2c-1: PrivateDevices would hide both, so allow exactly these
 PrivateDevices=no
 DevicePolicy=closed
-DeviceAllow=/dev/vcio rw
+DeviceAllow=/dev/vcio_gencmd rw
 DeviceAllow=char-i2c rw
 ProtectKernelTunables=yes
 ProtectKernelModules=yes

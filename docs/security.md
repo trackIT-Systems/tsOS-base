@@ -334,8 +334,8 @@ off and set intervals. Neither the boot partition, config bundles nor tsconfig c
 It runs as **`pi`**: `vcgencmd` needs `video` (`/dev/vcio_gencmd`), the WittyPi board `i2c`, and both are
 `pi`'s groups. A compromised `tstelemetry` therefore has `pi`'s rights, held back by the unit's
 sandbox (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`, writes only to
-`/data`, only `AF_UNIX`, `AF_INET` and `AF_INET6`, no kernel tunables/modules/logs, no cgroup writes,
-no namespaces, no realtime scheduling). `PrivateDevices` is off so `/dev/vcio` and the I²C bus are
+`/data`, only `AF_UNIX`, `AF_INET`, `AF_INET6` and `AF_NETLINK` (to list the network interfaces), no kernel tunables/modules/logs, no cgroup writes,
+no namespaces, no realtime scheduling). `PrivateDevices` is off so `/dev/vcio_gencmd` and the I²C bus are
 visible; `DevicePolicy=closed` allows only those two. It parses no input from the network: it
 only publishes, reads local files, `/proc` and `/sys`, and asks ModemManager (`mmcli`) over D-Bus.
 It also reads the kernel's clock state with `adjtimex` in read-only mode, which needs no privileges.
