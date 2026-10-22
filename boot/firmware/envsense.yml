@@ -1,9 +1,11 @@
 hardware:
   interval_s: 60
-  sensors:
-    # Raspberry Pi CPU temperature
-    - id: soc
-      type: rpi_cpu
+  # SoC, RP1 and PMIC temperatures are recorded by tstelemetry. Without sensors
+  # envsensed exits cleanly; add external ones here and restart envsense.service:
+  #   - id: inside
+  #     type: sht3x
+  #     address: 0x44    # ADDR to GND
+  sensors: []
 
 daemon:
   csv:

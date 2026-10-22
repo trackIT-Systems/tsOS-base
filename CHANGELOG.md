@@ -55,6 +55,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Fixed
 
+- `envsense.service` no longer restarts forever on boards without the configured onboard source (e.g. `rpi_rp1` off a Raspberry Pi 5). The default `boot/firmware/envsense.yml` configures no sensors, since `tstelemetry` already records SoC, RP1 and PMIC temperatures, and `envsensed` (pyenvsense) now exits with status 0 when no sensors are configured. Add external SHT3x / SHT4x sensors to the file to use it
 - `tstelemetry` collects `thermal`, `pmic`, `throttled`, `clocks`, `voltages` and `network` again: its sandbox allows `/dev/vcio_gencmd` (vcgencmd reads the firmware there since 0.4; `/dev/vcio` is root's) and `AF_NETLINK` (to list the network interfaces)
 - Failed logins (web, WebDAV, BLE) no longer log the user name unless it is `pi` or `root`, so a password typed into the user name field does not reach the journal or MQTT; the OIDC logout no longer logs the session ID
 - Explicitly install `modemmanager` (no longer pulled in by default on Trixie) ([#33](https://github.com/trackIT-Systems/tsOS-base/issues/33))
