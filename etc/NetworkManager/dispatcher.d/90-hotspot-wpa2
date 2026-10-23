@@ -7,8 +7,8 @@
 # support (e.g. BCM43430 on the Raspberry Pi 3 B) then fails to advertise a
 # usable RSN element, so clients cannot associate with a WPA2-only hotspot.
 # The profile has no setting for this, so on activation, if PMF is off, drop
-# PSK-SHA256 in the running wpa_supplicant and restart the access point
-# (a sub-second restart, NetworkManager keeps the connection activated).
+# PSK-SHA256 in the running wpa_supplicant and restart the access point twice
+# (a few seconds, NetworkManager keeps the connection activated).
 #
 # See https://github.com/trackIT-Systems/tsOS-base/issues/17 and #19.
 
@@ -32,6 +32,12 @@ for id in $(wpa list_networks 2>/dev/null | awk 'NR > 1 { print $1 }'); do
     logger -t hotspot-wpa2 "$IFACE: key_mgmt '$key_mgmt' without PMF, restarting access point with WPA-PSK"
     wpa disable_network "$id" >/dev/null
     wpa set_network "$id" key_mgmt WPA-PSK >/dev/null
+    wpa enable_network "$id" >/dev/null
+    # brcmfmac (BCM4345/6, Raspberry Pi 4) advertises the security settings
+    # of the previous start, so restart once more for WPA-PSK to take effect.
+    sleep 1
+    wpa disable_network "$id" >/dev/null
+    sleep 1
     wpa enable_network "$id" >/dev/null
     exit 0
 done
