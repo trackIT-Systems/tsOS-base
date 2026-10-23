@@ -11,6 +11,7 @@ Technical documentation for developers working on tsOS-base.
 - **[Hardware Watchdog](watchdog.md)** - Raspberry Pi hardware watchdog timer configuration
 - **[Security Design](security.md)** - `root`/`pi` privilege separation model
 - **[Telemetry](telemetry.md)** - `tstelemetry`: device health over MQTT and into daily CSV files
+- **[Location](location.md)** - `tslocation` (concept): reference, measured and effective position, modes, GNSS through ModemManager and gpsd
 - **[Logging](logging.md)** - Identifiers, severities and message format of service logs, and forwarding over MQTT
 
 ## Quick Reference
