@@ -1,0 +1,22 @@
+#!/bin/sh
+# Move an unreadable Mosquitto database aside and start Mosquitto again.
+#
+# A truncated or corrupt /var/lib/mosquitto/mosquitto.db stops Mosquitto from starting
+# ("Error: Couldn't open database."), and every daemon on the station loses its local
+# broker. Run by tsos-mosquitto-db-recover.service when mosquitto.service has failed
+# (OnFailure=). Only acts when the failed run could not open the database: other
+# failures, such as a broken mosquitto.d from the config bundle, are left alone. The
+# database is moved aside, not deleted; only the latest unreadable one is kept.
+set -eu
+
+DB=/var/lib/mosquitto/mosquitto.db
+
+[ -e "$DB" ] || exit 0
+journalctl -q -o cat _SYSTEMD_INVOCATION_ID="${MONITOR_INVOCATION_ID:?not run through OnFailure=}" \
+    | grep -q "Couldn't open database" || exit 0
+
+rm -f "$DB".unreadable-*
+mv "$DB" "$DB.unreadable-$(date +%Y%m%dT%H%M%S)"
+echo "<4>Cannot open $DB, moved it aside (the queued messages are lost) and starting Mosquitto again"
+systemctl reset-failed mosquitto.service
+systemctl start --no-block mosquitto.service

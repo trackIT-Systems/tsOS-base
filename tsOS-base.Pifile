@@ -183,6 +183,10 @@ RUN chmod 755 /usr/local/sbin/tsconfig-privileged
 RUN chown root:root /usr/local/sbin/tsos-bluetooth-address
 RUN chmod 755 /usr/local/sbin/tsos-bluetooth-address
 
+# Moves an unreadable Mosquitto database aside (OnFailure= of mosquitto.service) - see docs/mqtt.md.
+RUN chown root:root /usr/local/sbin/tsos-mosquitto-db-recover
+RUN chmod 755 /usr/local/sbin/tsos-mosquitto-db-recover
+
 #################################################
 ### basic configuration
 

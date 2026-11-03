@@ -15,7 +15,7 @@ Each kind of data comes from one **collector**, a Python module in [app/telemetr
 | `<host>/tsconfig/journal/<unit>/<level>/<format>` | journal entries, see [Logging](logging.md#forwarding-over-mqtt) | no |
 
 - `<host>` is the hostname.
-- QoS is 0, and messages are dropped while the broker is unreachable.
+- QoS is 0, and messages are dropped while the broker is unreachable. The bridge does not queue them while the uplink is down either, see [MQTT](mqtt.md#qos-decides-what-is-queued).
 - A collector that reports several things (disks, interfaces, config files) sends one message per thing, all with the same `time`.
 
 All three formats carry the same columns in the same order:

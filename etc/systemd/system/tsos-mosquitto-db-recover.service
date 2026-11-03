@@ -1,0 +1,8 @@
+[Unit]
+Description=Move an unreadable Mosquitto database aside and start Mosquitto again
+Documentation=file:///usr/local/sbin/tsos-mosquitto-db-recover
+# Started by mosquitto.service's OnFailure= (mosquitto.service.d/tsos-db-recover.conf)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tsos-mosquitto-db-recover
