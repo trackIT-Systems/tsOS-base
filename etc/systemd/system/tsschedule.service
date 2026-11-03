@@ -2,6 +2,9 @@
 Description=Sensor station schedule daemon (wake/sleep)
 Documentation=https://github.com/trackit-systems/tsschedule
 After=time-set.target
+# /etc/geolocation points to tslocationd's effective position, read at startup: after the daemon
+# has written it (Type=notify). Ordering only, tsschedule also starts without it.
+After=tslocation.service
 Before=time-sync.target
 Requires=time-set.target
 

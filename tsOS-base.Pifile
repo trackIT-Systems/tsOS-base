@@ -104,12 +104,12 @@ RUN apt-get install -y mosquitto mosquitto-clients
 # Install python system packages
 RUN apt-get install -y python3-dbus
 
-# Install GPS / NTP software
+# Install GPS / NTP software. geoclue is not used: tslocationd reads positions from gpsd
+# (docs/location.md, "geoclue").
 RUN apt-get purge -y systemd-timesyncd
 RUN apt-get install --no-install-recommends -y \
     gpsd \
     gpsd-tools \
-    geoclue-2.0 \
     chrony
 
 # Install udevil / devmon automount packages
@@ -379,10 +379,11 @@ RUN systemctl mask systemd-networkd-wait-online.service
 # (pip runs with --no-deps below, so pyproject.toml installs nothing here): the core dependencies
 # (pydantic, starlette and anyio are imported directly), the `tracker` extra (python3-psutil,
 # python3-websockets for the web shell, python3-cbor2 and python3-paho-mqtt for the telemetry daemon
-# tstelemetry) and the `ble` extra (python3-cbor2, python3-dbus, python3-gi for tsconfig-ble).
+# tstelemetry and the location daemon tslocationd, python3-pytimeparse for tslocationd's settings)
+# and the `ble` extra (python3-cbor2, python3-dbus, python3-gi for tsconfig-ble).
 # python3-gi used to arrive only as a dependency of apt-listchanges. The `server` extra (authlib,
 # itsdangerous) is for server mode and not installed.
-RUN apt-get install -y python3-fastapi python3-starlette python3-pydantic python3-anyio python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-psutil python3-httpx python3-cbor2 python3-paho-mqtt python3-dbus python3-gi
+RUN apt-get install -y python3-fastapi python3-starlette python3-pydantic python3-anyio python3-uvicorn python3-websockets python3-jinja2 python3-python-multipart python3-yaml python3-psutil python3-httpx python3-cbor2 python3-paho-mqtt python3-pytimeparse python3-dbus python3-gi
 RUN python3 -m pip install --no-deps -e /usr/local/src/tsconfig
 # root-owned build-time config (services list, feature flags); not on the operator-editable boot partition
 RUN mkdir -p /etc/tsconfig
@@ -394,7 +395,7 @@ INSTALL usr/local/src/tsconfig/configs/tstelemetry.yml /etc/tsconfig/tstelemetry
 # docs/security.md, "BLE".
 RUN adduser --system --group --no-create-home tsconfig-ble
 RUN usermod -aG shadow tsconfig-ble
-RUN systemctl enable tsconfig tsconfig-ble tsos-bluetooth-address tstelemetry
+RUN systemctl enable tsconfig tsconfig-ble tsos-bluetooth-address tstelemetry tslocation
 
 # install default config
 RUN tsconfig zip -f -b forbid /home/pi/tsos-default-name_config.zip
@@ -454,8 +455,9 @@ RUN systemctl enable repartition-cleanup.service
 # Enable gpsd
 RUN systemctl enable gpsd
 
-# Link static location file
-RUN ln -s /boot/firmware/geolocation /etc/geolocation
+# /etc/geolocation is the effective position, written by tslocationd (tslocation.service) from the
+# reference /boot/firmware/geolocation and its GNSS fixes - see docs/location.md
+RUN ln -s /run/tslocation/geolocation /etc/geolocation
 
 # Enable i2s
 RUN sed -i 's/#dtparam=i2s=on/dtparam=i2s=on/' /boot/firmware/config.txt

@@ -1,0 +1,16 @@
+# Location daemon tslocationd (docs/location.md). Set on the server or in tsconfig's System
+# Settings > Location. A key that is not set takes the daemon's default (shown below), so a
+# later change of a default reaches the station. Durations are seconds or e.g. 60s, 1h, 7d;
+# distances are metres. Read at start: tsconfig restarts tslocation when it writes this file.
+mode: stationary          # off, stationary or mobile
+# receiver: modem         # GNSS of the LTE modem, through ModemManager and gpsd
+# fix_duration: 60s       # how long a fine fix averages positions
+# fix_timeout: 300s       # how long GNSS may run without a fix
+# fix_max_age: 7d         # fine fix at boot when the last one is older
+# check_interval: 1h      # coarse check (serving cell) while running
+# threshold: 50           # metres from the reference that count as deviating
+# recheck_interval: 6h    # fine fix interval while deviating
+# settle_count: 3         # agreeing fixes for a proposed reference
+# track_interval: 1s      # mobile: record a fix at least this often (GNSS time)
+# track_distance: 10      # mobile: record a fix after this many metres
+# time_max_age: 24h       # fine fix for the clock when chrony has had no source for longer

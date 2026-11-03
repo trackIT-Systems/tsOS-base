@@ -1,0 +1,18 @@
+// Lets `pi` switch the modem's location sources through ModemManager, for tslocationd
+// (tslocation.service runs as pi) - see docs/location.md, "Receivers", and docs/security.md,
+// "Location daemon".
+//
+// ModemManager's own policy allows these actions only to the active local session, and
+// tslocationd is a system service without one. Enabling a location source (Location.Setup:
+// gps-unmanaged, 3gpp) and injecting assistance data are authorized as
+// org.freedesktop.ModemManager1.Device.Control; reading the location as
+// org.freedesktop.ModemManager1.Location. Device.Control also covers enabling, disabling and
+// resetting the modem and unlocking the SIM, so pi (and anyone with a pi shell) can do that too.
+// NetworkManager, which normally does it, runs as root and does not depend on this rule.
+polkit.addRule(function(action, subject) {
+    if ((action.id == "org.freedesktop.ModemManager1.Location" ||
+         action.id == "org.freedesktop.ModemManager1.Device.Control") &&
+        subject.user == "pi") {
+        return polkit.Result.YES;
+    }
+});

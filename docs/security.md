@@ -73,6 +73,7 @@ and the gate is the same whether the caller is `tsconfig.service` or an interact
 | Reboot | polkit `org.freedesktop.login1.reboot` | [21-tsos-reboot.rules](../etc/polkit-1/rules.d/21-tsos-reboot.rules) |
 | Logs (full journal) | membership in `systemd-journal` (journald gates reads by file permission) | [tsOS-base.Pifile](../tsOS-base.Pifile) |
 | Network management | polkit: every `org.freedesktop.NetworkManager.*` action for group `netdev` | [10-tsos-netdev.rules](../etc/polkit-1/rules.d/10-tsos-netdev.rules) |
+| Modem location sources (GNSS on/off, serving cell) | polkit `org.freedesktop.ModemManager1.Location` and `.Device.Control`, `subject.user == "pi"` | [40-tsos-modemmanager-location.rules](../etc/polkit-1/rules.d/40-tsos-modemmanager-location.rules) |
 | Config write/delete/stat, overlay wipe, GSM field removal | `pkexec` + custom polkit action for one executable | [30-tsos-privileged.rules](../etc/polkit-1/rules.d/30-tsos-privileged.rules), [tsconfig-privileged](../usr/local/sbin/tsconfig-privileged) |
 
 ### Units
@@ -339,6 +340,31 @@ no namespaces, no realtime scheduling). `PrivateDevices` is off so `/dev/vcio_ge
 visible; `DevicePolicy=closed` allows only those two. It parses no input from the network: it
 only publishes, reads local files, `/proc` and `/sys`, and asks ModemManager (`mmcli`) over D-Bus.
 It also reads the kernel's clock state with `adjtimex` in read-only mode, which needs no privileges.
+
+### Location daemon
+
+`tslocation.service` (`tslocationd`) decides when the GNSS receiver runs and publishes measured
+positions (see [location.md](location.md)). It runs as **`pi`**, like `tstelemetry`, with the same
+sandbox (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `PrivateDevices`, `NoNewPrivileges`,
+writes only to `/data`, `/run/tslocation` and `/var/lib/tslocation`, only `AF_UNIX`, `AF_INET` and
+`AF_INET6`, no kernel tunables/modules/logs, no cgroup writes, no namespaces, no realtime
+scheduling); `systemd-analyze security` rates it 5.3 (MEDIUM). It reads no device itself: gpsd reads the
+receiver, and the daemon is gpsd's client on loopback.
+
+To switch the modem's GNSS it needs ModemManager, which allows that only to the active local session.
+[40-tsos-modemmanager-location.rules](../etc/polkit-1/rules.d/40-tsos-modemmanager-location.rules)
+grants `pi` `org.freedesktop.ModemManager1.Location` (read the location) and
+`org.freedesktop.ModemManager1.Device.Control` (enable location sources). The consequence: **anyone
+with `pi`'s rights (SSH, the web shell, tsconfig) can also enable, disable or reset the modem, unlock
+its SIM and switch its GNSS through `mmcli`**, and so interfere with the daemon's power policy. Before,
+only NetworkManager (root) did that. Positions are not secret from `pi`: the reference is on the boot
+partition, and gpsd answers every local user.
+
+Its control socket, `/run/tslocation/tslocation.sock` (mode 0660, owner `pi`), has no authentication beyond the file
+permissions: `pi` and `root` can read its state and ask for a fine fix (`tslocation fix`), which costs power but
+changes nothing. Its settings, `/boot/firmware/tslocation.yml`, are data only (mode, intervals, distances), validated
+by the daemon and by tsconfig with the same model. They reach the station like the other boot
+partition files, through the privileged write path or a config bundle.
 
 ### SolarLife daemon
 

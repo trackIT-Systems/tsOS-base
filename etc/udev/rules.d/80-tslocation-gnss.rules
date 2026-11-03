@@ -1,0 +1,12 @@
+# The NMEA port of an LTE modem's GNSS, for tslocationd (docs/location.md, "Receivers").
+#
+# ModemManager's own rules (77-mm-*-port-types.rules) mark a modem's NMEA port with
+# ID_MM_PORT_TYPE_GPS, so this rule runs after them. It gives the port a name next to the
+# kernel's (ttyUSB1 -> ttyUSBgnss1; not gnss%n, which is the kernel's GNSS subsystem) and
+# adds it to gpsd. Debian's gpsdctl@.service would only do that with USBAUTO="true", which
+# /etc/default/gpsd keeps off so gpsd does not open every USB serial port.
+#
+# tslocationd switches the GNSS on and off through ModemManager's gps-unmanaged source; while
+# it is off, gpsd sees a silent device. gpsd drops the device by itself when it is unplugged.
+# After changing this file on a running system: udevadm control --reload; udevadm trigger --subsystem-match=tty
+ACTION=="add", SUBSYSTEM=="tty", ENV{ID_MM_PORT_TYPE_GPS}=="1", SYMLINK+="ttyUSBgnss%n", ENV{GPSD_SOCKET}="/run/gpsd.sock", RUN+="/usr/sbin/gpsdctl add /dev/%k"
