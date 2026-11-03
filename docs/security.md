@@ -201,9 +201,12 @@ Plain HTTP on `:80` stays and is never redirected ([Caddyfile](../etc/caddy/Cadd
   [etc/pam.d/tsconfig](../etc/pam.d/tsconfig): `pam_unix`, no `nullok`). `pam_unix` verifies the
   caller's own password via `unix_chkpwd` without root. Only `pi` and `root` can log in. Server
   mode (OIDC) is unchanged.
-- **Session.** Signed HttpOnly cookie, 8-hour sliding expiry, signing key in memory only
-  ([app/auth/session.py](../usr/local/src/tsconfig/app/auth/session.py)): a restart or reboot (which
-  is also when a new `pi` password takes effect) logs everyone out.
+- **Session.** Signed HttpOnly cookie, 8-hour sliding expiry
+  ([app/auth/session.py](../usr/local/src/tsconfig/app/auth/session.py)). The signing key lives on
+  tmpfs in `/run/tsconfig/session.key` (directory 0700, file 0600, owner `pi`), never on disk: a
+  restart of tsconfig keeps everyone logged in, a reboot (which is also when a new `pi` password
+  takes effect) logs everyone out. Anyone who can read the key, i.e. `pi` or root, can forge a
+  session, but they already have more than a session gives.
 - **Guessing.** Exponential backoff per client (`X-Forwarded-For` from Caddy) and, more loosely,
   device-wide: three free attempts, then 1 s, 2 s, ... up to 30 s. No hard lockout, because that
   would let anyone lock an unattended device's operator out.

@@ -55,6 +55,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Fixed
 
+- tsconfig no longer answers some requests through Caddy with 502 (`connection reset by peer`): uvicorn closed idle keep-alive connections after 5 s while Caddy reused them for up to 2 minutes. `tsconfig.service` runs uvicorn with `--timeout-keep-alive 300`, so Caddy always closes them first
 - `envsense.service` no longer restarts forever on boards without the configured onboard source (e.g. `rpi_rp1` off a Raspberry Pi 5). The default `boot/firmware/envsense.yml` configures no sensors, since `tstelemetry` already records SoC, RP1 and PMIC temperatures, and `envsensed` (pyenvsense) now exits with status 0 when no sensors are configured. Add external SHT3x / SHT4x sensors to the file to use it
 - `tstelemetry` collects `thermal`, `pmic`, `throttled`, `clocks`, `voltages` and `network` again: its sandbox allows `/dev/vcio_gencmd` (vcgencmd reads the firmware there since 0.4; `/dev/vcio` is root's) and `AF_NETLINK` (to list the network interfaces)
 - Failed logins (web, WebDAV, BLE) no longer log the user name unless it is `pi` or `root`, so a password typed into the user name field does not reach the journal or MQTT; the OIDC logout no longer logs the session ID
@@ -63,6 +64,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 
 ### Changed
 
+- tsconfig logins survive a restart of tsconfig: `tsconfig.service` keeps the session signing key in its runtime directory `/run/tsconfig` (tmpfs, 0700), so only a reboot logs everyone out
 - `/etc/geolocation` points to `/run/tslocation/geolocation`, the effective position written by `tslocationd`, instead of `/boot/firmware/geolocation`. It is the configured position unless a `mobile` station has a current fix, or there is no configured one. `tsschedule.service` starts after `tslocation.service`, so it finds the file
 - Services log to the journal per the logging convention: tsconfig, tsconfig-ble, tstelemetry, smartsolard, solarlifed, envsensed, tsscheduled and tsupdated write their priority and source location to the journal (`journalctl -p warning` works; before, every line was stored as info). Units started through `/usr/bin/env` or `python3` set `SyslogIdentifier=` (they logged as `env`/`python3`). All run at WARNING by default: `-v` is dropped from `tsschedule.service` and `tsconfig-ble.service`, `LOG_LEVEL=INFO` from `tsconfig.service`, and smartsolar and solarlife ship `log_level: WARNING`
 - `tsupdate` reports failures as transient (offline, timeouts, GitHub 5xx and rate limit: WARNING once), configuration (repository, access, URLs, maintenance window: ERROR) or other errors, logged once per stage until they work again; an offline station no longer logs an ERROR on every check. The `tsupdate` CLI exits 75 for transient and 78 for configuration errors

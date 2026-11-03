@@ -16,7 +16,14 @@ Nice=10
 Environment="TERM=xterm-256color"
 Environment="TSCONFIG_CONFIG_FILE=/etc/tsconfig/tsconfig.yml"
 WorkingDirectory=/usr/local/src/tsconfig
-ExecStart=python3 -m uvicorn app.main:app
+# Holds the session signing key (tmpfs): logins survive a restart of tsconfig, not a reboot
+RuntimeDirectory=tsconfig
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+# Caddy keeps idle connections to tsconfig for up to 2 minutes; uvicorn closes them after 5 s by
+# default, and a request Caddy sends on one just as it closes fails with 502. Keep them open longer
+# than Caddy does, so Caddy is always the side that closes them.
+ExecStart=python3 -m uvicorn app.main:app --timeout-keep-alive 300
 SyslogIdentifier=tsconfig
 
 Restart=always
