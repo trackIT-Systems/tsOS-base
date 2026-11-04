@@ -80,7 +80,9 @@ and the gate is the same whether the caller is `tsconfig.service` or an interact
 
 `manage-unit-files` (`enable`/`disable`/`mask`/`link`/...) is a separate polkit action
 that is never granted, so persistent changes stay denied. The allowlist lives in the polkit rule,
-not in anything operator-editable; the check against `tsconfig.yml`'s services list in
+not in anything operator-editable. 20-tsos-systemctl.rules lists only tsOS-base's units; each variant
+adds its own (e.g. `radiotracking.service`) with the same rule in a drop-in in its repository,
+`etc/polkit-1/rules.d/25-tsos-<variant>-systemctl.rules`. The check against `tsconfig.yml`'s services list in the check against `tsconfig.yml`'s services list in
 `app/routers/systemd.py`, and the API's narrower verb set (`ALLOWED_SYSTEMCTL_VERBS` =
 start/stop/restart/reload, [app/utils/privileged.py](../usr/local/src/tsconfig/app/utils/privileged.py)),
 are UI conveniences, not the boundary. The same goes for the configured-services check on log

@@ -23,6 +23,7 @@ their previous model and are not patched; every device is reinstalled from scrat
   removal; `30-tsos-privileged.rules`). `polkitd` and `pkexec` are installed explicitly.
 - The BLE gateway (`tsconfig-ble.service`) runs as its own system user `tsconfig-ble` in `shadow` instead of `pi`, for tsconfig's new BLE hash login (`{"hash": "$6$..."}` logs in as `pi` with pi's hash from the applied bundle's `userconf.txt`). `pi` stays out of `shadow`. pi's hash is now a BLE credential: treat bundles with `userconf.txt` as secrets. See docs/security.md, "BLE"
 - `chrony.service` is on the polkit unit allowlist (`20-tsos-systemctl.rules`), so the restart `tsconfig` offers for it works for `pi` instead of failing
+- The polkit unit allowlist (`20-tsos-systemctl.rules`) lists only tsOS-base's units: `radiotracking.service` and `soundscapepipe.service` are gone from it. Each variant allows its own units in a drop-in in its repository (`25-tsos-<variant>-systemctl.rules`, in tsOS-vhf, tsOS-audio and tsOS-fsk); a variant image built on this release without its drop-in cannot restart its service as `pi`
 - `root` is reachable via SSH with a manufacturer key (`root/.ssh/authorized_keys`, baked in,
   independent of the boot partition). The boot partition's `authorized_keys` applies to `pi`
   only, and sshd reads it in place (`Match User pi` in `20-tsos-authorized-keys.conf`) instead of
