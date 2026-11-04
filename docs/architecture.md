@@ -152,6 +152,10 @@ The readout daemons are configured in `/etc` (root-owned, not on the boot partit
 - **wpa_supplicant**: WiFi backend
 - **WireGuard**: VPN support
 
+### First boot and presets
+
+On the first boot (`/etc/machine-id` is `uninitialized`), systemd applies the unit presets to every unit, and Debian's policy enables whatever no preset names. [10-tsos.preset](../etc/systemd/system-preset/10-tsos.preset) keeps the units disabled that would otherwise come up next to the image's own: `caddy-api.service` (Debian's alternative to `caddy.service`, both bind 80 and 443), `systemd-networkd` (NetworkManager manages the network), `rpi-usb-gadget-ics.service` (it switches `usb0`, the ECM interface of some LTE modems), `nftables.service` and the rsync daemon. A unit the image needs is enabled in the Pifile and is not listed there.
+
 ## Security
 
 - Read-only root filesystem

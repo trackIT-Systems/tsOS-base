@@ -1,0 +1,23 @@
+# Units tsOS keeps disabled. On the first boot (/etc/machine-id "uninitialized"), systemd applies
+# the presets to every unit, and Debian's policy enables whatever no preset names. That enabled
+# these next to the units the image is built with. Only first matches count, so this file wins
+# over 90-systemd.preset. Units the build enables are not listed: "disable *" would turn them off.
+
+# Debian's alternative to caddy.service, for a server configured only through the admin API
+# (--resume). Both bind 80 and 443; whichever starts first wins.
+disable caddy-api.service
+
+# NetworkManager manages the network; systemd-networkd would leave every link unmanaged.
+disable systemd-networkd.service
+disable systemd-networkd.socket
+disable systemd-network-generator.service
+
+# Raspberry Pi OS's USB gadget sharing switches usb0, which is the ECM interface of some LTE
+# modems here (70-quectel-ec200a-nm-unmanaged.rules).
+disable rpi-usb-gadget-ics.service
+
+# Debian's firewall loader: an empty accept-all ruleset after `flush ruleset`. Not configured.
+disable nftables.service
+
+# The rsync daemon; not used.
+disable rsync.service
