@@ -101,8 +101,9 @@ RUN mv filebrowser /usr/bin/filebrowser
 # Install mosquitto
 RUN apt-get install -y mosquitto mosquitto-clients
 
-# Install python system packages
-RUN apt-get install -y python3-dbus
+# Install python system packages. python3-systemd: the JournalHandler every tsOS daemon logs
+# through (docs/logging.md, "How a program sets the fields")
+RUN apt-get install -y python3-dbus python3-systemd
 
 # Install GPS / NTP software. geoclue is not used: tslocationd reads positions from gpsd
 # (docs/location.md, "geoclue").
