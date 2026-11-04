@@ -1,0 +1,21 @@
+# Adds the LTE modem's NMEA port to gpsd, for tslocationd (docs/location.md, "Receivers").
+# Started by 80-tslocation-gnss.rules. A RUN+= in the rule cannot do this: at boot it runs
+# before gpsd.socket, so gpsdctl starts a gpsd of its own, which takes port 2947 from the socket
+# (and udev kills it once the rule is done). Ordered after gpsd.socket, gpsdctl hands the device
+# to the socket-activated gpsd. Debian's gpsdctl@.service would wait too, but only acts with
+# USBAUTO="true", which /etc/default/gpsd keeps off.
+[Unit]
+Description=Add %I to gpsd
+Documentation=https://github.com/trackIT-Systems/tsOS-base/blob/main/docs/location.md
+Requires=gpsd.socket
+After=gpsd.socket
+BindsTo=dev-%i.device
+After=dev-%i.device
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=GPSD_SOCKET=/run/gpsd.sock
+ExecStart=/usr/sbin/gpsdctl add /dev/%I
+# gpsd drops an unplugged device by itself
+ExecStop=-/usr/sbin/gpsdctl remove /dev/%I
