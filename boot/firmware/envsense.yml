@@ -15,4 +15,5 @@ daemon:
     enabled: true
     host: localhost
     port: 1883
-    qos: 0
+    # observation data: QoS 1, so the bridge queues it during an outage (docs/mqtt.md)
+    qos: 1

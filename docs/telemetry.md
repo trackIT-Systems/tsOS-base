@@ -11,40 +11,37 @@ Each kind of data comes from one **collector**, a Python module in [app/telemetr
 | `<host>/tsconfig/<collector>/csv` | one `;`-separated line, no header | no |
 | `<host>/tsconfig/<collector>/json` | object, keys in column order | no |
 | `<host>/tsconfig/<collector>/cbor` | array, values in column order | no |
-| `<host>/tsconfig/state` | `{"state": "online"}`, or `{"state": "offline"}` (last will) | yes |
 | `<host>/tsconfig/journal/<unit>/<level>/<format>` | journal entries, see [Logging](logging.md#forwarding-over-mqtt) | no |
 
 - `<host>` is the hostname.
 - QoS is 0, and messages are dropped while the broker is unreachable. The bridge does not queue them while the uplink is down either, see [MQTT](mqtt.md#qos-decides-what-is-queued).
-- A collector that reports several things (disks, interfaces, config files) sends one message per thing, all with the same `time`.
+- Nothing is retained, and there is no online/offline topic or last will. A station or collector that stops shows as missing readings.
+- A collector that reports several things (disks, interfaces, config files) sends one message per thing.
 
-All three formats carry the same columns in the same order:
-1. `time`: when the reading was taken, with the station's UTC offset. JSON and CSV use ISO 8601 (`2026-10-19T14:00:00+02:00`). CBOR uses tag 0, the same string, which decoders return as a timezone-aware datetime.
-2. `synced`: whether the clock was synced when the reading was taken. Readings with `false` have an unreliable `time` (see [Clock](#clock)).
-3. The collector's columns, listed below. A value the device cannot provide is `null` (empty in CSV).
+A reading is a snapshot of now and carries **no time**: it arrives within seconds, or not at all, so the receiver stamps it on arrival (InfluxDB through Telegraf does by default). The station's own clock is a reading of its own, the `timesync` collector. See [Time](time.md#station-services).
 
-CBOR has no key names, which keeps cellular traffic small. Its field order is the column order listed here, which is also the CSV file header.
+All three formats carry the collector's columns, listed below, in the same order. A value the device cannot provide is `null` (empty in CSV). CBOR has no key names, which keeps cellular traffic small. Its field order is the column order listed here, which is also the CSV file header after `time`.
 
-For the cellular bridge, forwarding CBOR and the state is enough:
+For the cellular bridge, forwarding CBOR is enough:
 
 ```
 topic +/tsconfig/+/cbor out 1
-topic +/tsconfig/state out 1
 ```
 
 `+/tsconfig/+/cbor` includes `journalstats`, but not the journal entries, which are one level deeper. Which of them leave the station is chosen per unit and level, see [Logging](logging.md#topics).
 
 ### Other publishers on the station
 
-The charge controller daemons publish in the same style: CSV, JSON and CBOR with fixed columns, `time` and `synced` first, rate-limited for cellular, daily CSV files with the same clock handling. Their topics and columns are documented in their own repositories:
+The charge controller daemons publish in the same style: CSV, JSON and CBOR with fixed columns and no time, nothing retained, rate-limited for cellular, and daily CSV files only once the clock is trusted. Their topics and columns are documented in their own repositories:
 
-- `smartsolard`: [pysmartsolar docs/outputs.md](https://github.com/trackIT-Systems/pysmartsolar/blob/main/docs/outputs.md), bridge line `topic +/smartsolar/+/cbor out 1`
-- `solarlifed`: [pysolarlife docs/outputs.md](https://github.com/trackIT-Systems/pysolarlife/blob/main/docs/outputs.md), bridge lines `topic +/solarlife/+/+/cbor out 1` and `topic +/solarlife/+/cbor out 1` (state and events)
+- `smartsolard`: [pysmartsolar docs/outputs.md](https://github.com/trackIT-Systems/pysmartsolar/blob/main/docs/outputs.md), bridge line `topic +/smartsolar/+/cbor out 1` (readings and events)
+- `solarlifed`: [pysolarlife docs/outputs.md](https://github.com/trackIT-Systems/pysolarlife/blob/main/docs/outputs.md), bridge lines `topic +/solarlife/+/+/cbor out 1` (readings) and `topic +/solarlife/events/cbor out 1` (events)
 
 ## Collectors
 
-| Collector | Default interval | Columns after `time;synced` |
+| Collector | Default interval | Columns |
 | --- | --- | --- |
+| `timesync` | 60 s | `source` (`none`, `rtc`, `ntp` or `gnss`: what chrony follows), `stratum`, `error_s` (chrony's bound on the clock's error: half the root delay plus the root dispersion), `station_time` (the station's clock, ISO 8601 with UTC offset; compared with the arrival time, it shows how far the station is off). `stratum` and `error_s` are null without a source. Skipped without `chronyc` |
 | `system` | 60 s | `uptime` (s, since boot), `load_1`, `load_5`, `load_15`, `mem_total`, `mem_available`, `mem_used`, `mem_percent`, `mem_free`, `mem_active`, `mem_inactive`, `mem_buffers`, `mem_cached`, `mem_shared`, `mem_slab` (bytes, %), `cpu_freq`, `cpu_freq_min`, `cpu_freq_max` (MHz) |
 | `thermal` | 60 s | `soc`, `rp1`, `pmic` (°C) |
 | `disk` | 60 s | `mount`, `total`, `used`, `free` (bytes), `percent`. One message per mounted mount point (default `/`, `/data`) |
@@ -66,18 +63,17 @@ At startup, a collector whose hardware or tool is missing is skipped with one lo
 `/data/<host>/tsconfig/<collector>/<host>_<YYYY-MM-DD>_<collector>.csv`:
 - `;` separated
 - a header row at the top
+- `time` first (when the reading was taken, ISO 8601 with the station's UTC offset), then the collector's columns
 - one file per collector and local calendar day
 
 Files are only appended to, never rotated or deleted.
 
 ## Clock
 
-A station without RTC, or without network, can run for a long time with a wrong clock. `tstelemetry` is a station service and does not wait for `time-sync.target` ([time.md](time.md)). Instead:
+`tstelemetry` is a station service and does not wait for `time-sync.target` ([Time](time.md)): its readings are needed to see why a station has no trusted clock. It reads the kernel's clock state with `adjtimex`. chrony clears `STA_UNSYNC` once it has a source (NTP, GNSS or the RTC checked by tsscheduled). Once seen synced, the clock counts as synced for the rest of the boot; a marker in `/run/tstelemetry` keeps this across restarts of the daemon.
 
-- It reads the kernel's clock state with `adjtimex`. chrony clears `STA_UNSYNC` once it has synced. Once seen synced, the clock counts as synced for the rest of the boot; a marker in `/run/tstelemetry` keeps this across restarts of the daemon.
-- **Before the sync**, MQTT messages are sent live with `synced` false. Readings for the files go to a spool, `/data/<host>/tsconfig/.spool/<boot_id>.jsonl`, together with the time since boot (`CLOCK_BOOTTIME`).
-- **At the sync**, every spooled reading gets the time *now − (boottime now − boottime of the reading)*. It is then appended to the file of its day, still with `synced` false, and the spool is removed.
-- **A spool from an earlier boot** that never synced cannot be corrected, because its boot clock is lost. At the next start it is written to `<host>_unsynced_<boot_id>_<collector>.csv` with the times as recorded, and removed.
+- **Before that**, readings only go over MQTT. The files get nothing: there is no spool and no re-timing. Dropping rows is logged once when it starts and once when it ends.
+- **From then on**, every reading also goes to its day's file.
 
 ## Settings
 

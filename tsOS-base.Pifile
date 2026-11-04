@@ -300,8 +300,8 @@ RUN systemctl enable hostname-config.service
 # Switch to chrony unrestricted service
 RUN rm /usr/lib/systemd/system/chronyd-restricted.service
 
-# Enabling wait for time-sync.target (depending services will not start before the clock is synced)
-RUN systemctl enable chrony-wait.service chrony-wait-stop.path
+# Enabling wait for time-sync.target (observation services start only once chrony has a source, docs/time.md)
+RUN systemctl enable chrony-wait.service
 
 # Set build-timestamp to last known time: systemd (PID 1) advances the clock to this
 # file's mtime at boot. The directory went with the systemd-timesyncd purge.

@@ -103,7 +103,7 @@ Selection happens in two places:
 - QoS is 0, and messages are dropped while the broker is unreachable, as for telemetry.
 - `time` is when the entry was logged. `synced` is true when the entry is from the current boot and the clock is synced; an entry from an earlier boot is always `false`.
 
-The columns follow the [telemetry conventions](telemetry.md#mqtt): `time` and `synced`, then `identifier`, `message` and `repeated`. `time` is when the entry was logged, not when it was published. The unit and level are only in the topic.
+The columns are `time` and `synced`, then `identifier`, `message` and `repeated`, encoded as in [Telemetry](telemetry.md#mqtt). Unlike station readings, journal entries keep their time: they are events, and can come from an earlier boot. `time` is when the entry was logged, not when it was published. The unit and level are only in the topic.
 
 MQTT wildcards cannot express "`warning` and worse", so the bridge lists the levels it forwards:
 

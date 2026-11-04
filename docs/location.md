@@ -154,14 +154,14 @@ Services that need positions continuously in `mobile` mode connect to gpsd (`loc
 
 ### MQTT
 
-Same conventions as [Telemetry](telemetry.md#mqtt): CSV, JSON and CBOR with fixed columns, `time` and `synced` first, QoS 0.
+Same conventions as [Telemetry](telemetry.md#mqtt): CSV, JSON and CBOR with fixed columns, QoS 0, nothing retained. `state` and `cell` are a snapshot of now and carry no time, like every station reading. `fix` and `track` lead with `time`, the fix's GNSS time, which is always trusted.
 
-| Topic | Columns after `time;synced` | Retained | Sent |
-| --- | --- | --- | --- |
-| `<host>/tslocation/fix/<format>` | `source`, `lat`, `lon`, `alt`, `accuracy`, `sats`, `hdop`, `deviation_m` | no | every fine fix |
-| `<host>/tslocation/track/<format>` | as `fix` | no | `mobile` mode: every track point |
-| `<host>/tslocation/state/<format>` | `mode`, `state`, `effective_lat`, `effective_lon`, `deviation_m`, `proposed_lat`, `proposed_lon`, `proposed_alt`, `proposed_accuracy` | yes | on every change; in `mobile` mode when the mode or state changes |
-| `<host>/tslocation/cell/<format>` | `mcc`, `mnc`, `tac`, `cell_id`, `known` | no | when the serving cell changes |
+| Topic | Columns | Sent |
+| --- | --- | --- |
+| `<host>/tslocation/fix/<format>` | `time`, `source`, `lat`, `lon`, `alt`, `accuracy`, `sats`, `hdop`, `deviation_m` | every fine fix |
+| `<host>/tslocation/track/<format>` | as `fix` | `mobile` mode: every track point |
+| `<host>/tslocation/state/<format>` | `mode`, `state`, `effective_lat`, `effective_lon`, `deviation_m`, `proposed_lat`, `proposed_lon`, `proposed_alt`, `proposed_accuracy` | on every change; in `mobile` mode when the mode or state changes |
+| `<host>/tslocation/cell/<format>` | `mcc`, `mnc`, `tac`, `cell_id`, `known` | when the serving cell changes |
 
 - `source` is the receiver the fix came from (`modem`).
 - The `time` of a fix is its GNSS time. `alt` is above mean sea level, null for a 2D fix. `accuracy` is gpsd's estimated horizontal error (`eph`) in metres.
@@ -175,7 +175,7 @@ topic +/tslocation/+/cbor out 1
 
 ### Files in `/data`
 
-`/data/<host>/tslocation/<kind>/<host>_<YYYY-MM-DD>_<kind>.csv`, with `<kind>` `fix`, `track` (`mobile` mode) and `cell`. The columns are those of the MQTT topic. The clock handling for readings taken before the clock is synced is the same as in [Telemetry](telemetry.md#clock). Fixes are an exception: their time comes from GNSS, so `synced` is true, and they go to their day's file at once.
+`/data/<host>/tslocation/<kind>/<host>_<YYYY-MM-DD>_<kind>.csv`, with `<kind>` `fix`, `track` (`mobile` mode) and `cell`. The columns are `time`, then those of the MQTT topic. As in [Telemetry](telemetry.md#clock), `cell` rows are only written once the clock is trusted. Fixes and track points are an exception: their time comes from GNSS, so they go to their day's file at once, also before the clock is trusted.
 
 ### tsconfig
 

@@ -342,7 +342,9 @@ sandbox (`ProtectSystem=strict`, `ProtectHome`, `PrivateTmp`, `NoNewPrivileges`,
 no namespaces, no realtime scheduling). `PrivateDevices` is off so `/dev/vcio_gencmd` and the I²C bus are
 visible; `DevicePolicy=closed` allows only those two. It parses no input from the network: it
 only publishes, reads local files, `/proc` and `/sys`, and asks ModemManager (`mmcli`) over D-Bus.
-It also reads the kernel's clock state with `adjtimex` in read-only mode, which needs no privileges.
+It also reads the kernel's clock state with `adjtimex` in read-only mode, which needs no privileges,
+and chrony's tracking state with `chronyc -c tracking` over loopback UDP (the `timesync` collector),
+which chrony answers without authentication and which only reads.
 
 ### Location daemon
 

@@ -119,12 +119,12 @@ Key enabled services:
 - `tstelemetry.service` (runs as `pi`, does not wait for the clock sync; see [time.md](time.md))
 - `smartsolar.service` (`smartsolard`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `solarlife.service` (`solarlifed`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
-- `tsschedule.service` (power management)
+- `tsschedule.service` (power management; feeds the checked RTC to chrony, see [time.md](time.md))
 - `mosquitto.service` (listens on loopback only: `1883` for local services and `9001` for MQTT over WebSockets, which Caddy serves at `/mqtt` behind the login)
 - `caddy.service`, `filebrowser.service`
 - `devmon.service` (udevil automount)
 - `gpsd.service`
-- `chrony-wait.service` (holds `time-sync.target` until the clock is trusted, without a timeout; see [time.md](time.md))
+- `chrony-wait.service` (holds `time-sync.target` until chrony has a source: NTP, GNSS or the RTC, without a timeout; see [time.md](time.md))
 - `hostname-config.service`
 - `repartition-cleanup.service`
 

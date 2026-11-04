@@ -10,20 +10,20 @@ The local broker listens on loopback only, see [Security](security.md#mqtt-over-
 
 A message is delivered at the lower of the publish QoS and the subscription QoS, so `out 1` in a bridge topic line does not make a QoS 0 message QoS 1. While the uplink is down, Mosquitto queues QoS 1 messages for the bridge and **drops QoS 0 messages** (`queue_qos0_messages` is off).
 
-This is intended. Records are QoS 1. Health is QoS 0: it is only useful live, and every value is also in the station's daily CSV files under `/data`.
+This is intended. Records of observation services are QoS 1 and carry their `time`. Readings of station services are QoS 0 and carry no time: they are only useful live, the receiver stamps them on arrival, and every value is also in the station's daily CSV files under `/data` once the clock is trusted ([Time](time.md)).
 
 | Publisher | Topics | QoS | During an outage |
 | --- | --- | --- | --- |
 | radiotracking (tsOS-vhf) | `<host>/radiotracking/...` | 1 | queued |
 | lotekfskd (tsOS-fsk) | `<host>/lotekfsk/...` | 1 | queued |
 | soundscapepipe, lightbarrier | `<host>/soundscapepipe/...`, `<host>/lightbarrier/...` | 1 | queued |
+| envsense | `<host>/envsense/...` | 1 | queued |
 | tstelemetry ([Telemetry](telemetry.md)) | `<host>/tsconfig/<collector>/...` | 0 | dropped |
 | journal forwarding ([Logging](logging.md#forwarding-over-mqtt)) | `<host>/tsconfig/journal/...`, `<host>/tsconfig/journalstats/...` | 0 | dropped |
 | tslocationd ([Location](location.md)) | `<host>/tslocation/...` | 0 | dropped |
-| smartsolard, solarlifed, envsense | `<host>/smartsolar/...`, `<host>/solarlife/...`, `<host>/envsense/...` | 0 | dropped |
-| tstelemetry state | `<host>/tsconfig/state` | 1, retained | latest value kept |
+| smartsolard, solarlifed | `<host>/smartsolar/...`, `<host>/solarlife/...` | 0 | dropped |
 
-Retained messages are kept as one value per topic, independent of the queue.
+Station services retain nothing (see [Retained messages](#retained-messages)).
 
 ### Persistence
 
@@ -77,9 +77,8 @@ remote_password <password>
 bridge_cafile /boot/firmware/mosquitto.d/server.crt
 cleansession false
 
-# health, live only (QoS 0)
+# station services, live only (QoS 0)
 topic +/tsconfig/+/cbor out 1
-topic +/tsconfig/state out 1
 topic +/tsconfig/journal/+/emerg/cbor out 1
 topic +/tsconfig/journal/+/alert/cbor out 1
 topic +/tsconfig/journal/+/crit/cbor out 1
@@ -88,10 +87,10 @@ topic +/tsconfig/journal/+/warning/cbor out 1
 topic +/tslocation/+/cbor out 1
 topic +/smartsolar/+/cbor out 1
 topic +/solarlife/+/+/cbor out 1
-topic +/solarlife/+/cbor out 1
-topic +/envsense/+/json out 1
+topic +/solarlife/events/cbor out 1
 
-# records, queued (QoS 1), per variant
+# observation services, queued (QoS 1), per variant
+topic +/envsense/+/json out 1
 topic +/radiotracking/matched/cbor out 1
 topic +/radiotracking/state/cbor out 1
 topic +/lotekfsk/+/cbor out 1
@@ -105,7 +104,7 @@ The topics of each publisher are documented with it: [Telemetry](telemetry.md#mq
 
 ## After an outage
 
-On reconnect, the bridge sends the queue first, oldest first, then new messages. QoS 0 health that is published meanwhile arrives interleaved with the older records. QoS 1 means at least once, so a record can arrive twice after a reconnect. Consumers sort by the `time` each record carries, not by arrival, and must accept duplicates. Records taken before the clock was synced carry `synced` false.
+On reconnect, the bridge sends the queue first, oldest first, then new messages. QoS 0 station readings published meanwhile arrive interleaved with the older records. QoS 1 means at least once, so a record can arrive twice after a reconnect. Consumers sort records by the `time` they carry, not by arrival, and must accept duplicates. Observation services only run with a trusted clock, so that `time` is always trusted. Station readings carry no time and are stamped on arrival; they are never queued, so they are current when they arrive.
 
 ## An unreadable database
 
@@ -115,4 +114,6 @@ When `mosquitto.service` fails, its `OnFailure=` ([drop-in](../etc/systemd/syste
 
 ## Retained messages
 
-Retained messages stay in the database until they are replaced or cleared. A daemon that renames or drops a retained topic clears the old one (publishes an empty retained message), otherwise it stays on every station that ran the old version.
+Station services retain nothing. A retained message is delivered again to every new subscriber, and a consumer that stamps messages on arrival (Telegraf for InfluxDB) would store an old value as new after every reconnect. A value that changes rarely is sent when it changes (tslocation's `state`), and a station or service that stops shows as missing readings.
+
+Retained messages stay in the database until they are replaced or cleared. A daemon that renames or drops a retained topic clears the old one (publishes an empty retained message), otherwise it stays on every station that ran the old version. The 2027 line is a reflash boundary, so the retained `state` topics of tstelemetry, smartsolard, solarlifed and tslocationd that it removed are not cleared; only a server broker that bridged a pre-release station may still hold them.
