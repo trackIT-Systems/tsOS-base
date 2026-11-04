@@ -1,7 +1,10 @@
-# VE.Direct USB interfaces for smartsolard (Victron "VE.Direct to USB interface" and the cheap
-# lookalikes): an FTDI FT232R (0403:6001) or FT230X (0403:6015). These chips are generic and a
-# cable carries no Victron name: the one this was written for identifies as manufacturer "FTDI",
-# product "USB <-> Serial" and has no serial number. So the rule matches the chip, not Victron.
+# VE.Direct USB interfaces for smartsolard. They are FTDI chips (FT232R 0403:6001, FT230X
+# 0403:6015), but so are many other USB serial devices, e.g. tsOS-fsk's FSK receivers. So the rule
+# matches the cables by the strings they report, not by the chip:
+#   Victron "VE.Direct to USB interface": manufacturer "VictronEnergy BV", product "VE Direct cable"
+#   lookalike cable:                      manufacturer "FTDI", product "USB <-> Serial", no serial
+# Plain FTDI boards keep the chip's default product ("FT232R USB UART", "FT230X Basic UART") and are
+# left alone. Another cable needs a drop-in /etc/udev/rules.d/5x-*.rules that sets the same keys.
 #
 # * /dev/ttyUSBvd<n> next to /dev/ttyUSB<n>, with the same index (ttyUSB0 -> ttyUSBvd0, ttyUSB1 ->
 #   ttyUSBvd1, ...), readable by the dialout group. smartsolard looks at /dev/ttyUSBvd* (serial.port).
@@ -12,5 +15,7 @@
 #   line. ID_MM_DEVICE_IGNORE on the USB device and its ports tells ModemManager to leave it alone.
 #   (Both are set before ModemManager's own 77-mm-*.rules run. After changing this file on a
 #   running system: udevadm control --reload; udevadm trigger --subsystem-match=tty --subsystem-match=usb)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6001|6015", ENV{ID_MM_DEVICE_IGNORE}="1"
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001|6015", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1", SYMLINK+="ttyUSBvd%n", MODE="0660", GROUP="dialout"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{manufacturer}=="VictronEnergy BV", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6001|6015", ATTR{product}=="USB <-> Serial", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{manufacturer}=="VictronEnergy BV", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1", SYMLINK+="ttyUSBvd%n", MODE="0660", GROUP="dialout"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001|6015", ATTRS{product}=="USB <-> Serial", ENV{ID_MM_DEVICE_IGNORE}="1", ENV{ID_MM_PORT_IGNORE}="1", SYMLINK+="ttyUSBvd%n", MODE="0660", GROUP="dialout"

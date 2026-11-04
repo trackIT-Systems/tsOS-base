@@ -96,6 +96,7 @@ their previous model and are not patched; every device is reinstalled from scrat
 - The `cellular` profile has IPv6 disabled (the E3372-325 ends PPP sessions that negotiate IPv6)
 - NetworkManager ignores the ECM interface of the Quectel EC200A (`2c7c:6005`, new `70-quectel-ec200a-nm-unmanaged.rules`): ModemManager connects it over PPP, and DHCP on the ECM interface left a dead default route via the modem's internal router
 - Avahi publishes over IPv4 only (`use-ipv6=no`) and only IPv4 addresses (`publish-aaaa-on-ipv4=no`), so an mDNS reflector echoing a stale IPv6 record no longer renames the host to `<host>-2.local` at boot
+- `50-vedirect.rules` matches VE.Direct cables by the strings they report instead of every FTDI FT232R/FT230X: Victron's own cable (manufacturer `VictronEnergy BV`, product `VE Direct cable`) and the lookalike (product `USB <-> Serial`). Other FTDI serial devices, such as tsOS-fsk's FSK receivers (stock FT230X, `FT230X Basic UART`), no longer get a `/dev/ttyUSBvd<n>` name, so `smartsolard` no longer opens them, and no longer get the ModemManager ignore; a variant sets that for its own devices in a drop-in. Another cable needs a drop-in in `/etc/udev/rules.d/` ([#42](https://github.com/trackIT-Systems/tsOS-base/issues/42))
 
 ### Added
 

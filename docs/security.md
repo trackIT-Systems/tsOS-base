@@ -421,7 +421,7 @@ and `char-ttyACM rw` limits it to USB serial devices. `systemd-analyze security`
   is readable by every local user (the file is 0644).
 - **BlueZ:** reached over D-Bus as a normal client; the pairing agent (passkey `000000`) is registered
   for the duration of a pairing only.
-- **VE.Direct port:** udev (`50-vedirect.rules`) names an FTDI adapter `/dev/ttyUSBvd<n>` after its `ttyUSB<n>` (group `dialout`, 0660) and marks it `ID_MM_DEVICE_IGNORE`, so ModemManager does not probe it with AT commands. It is opened exclusively, so no other program (the former `vedirect_dump` of
+- **VE.Direct port:** udev (`50-vedirect.rules`) names a VE.Direct cable (by its USB manufacturer/product strings, not every FTDI chip) `/dev/ttyUSBvd<n>` after its `ttyUSB<n>` (group `dialout`, 0660) and marks it `ID_MM_DEVICE_IGNORE`, so ModemManager does not probe it with AT commands. It is opened exclusively, so no other program (the former `vedirect_dump` of
   `mqttutil`, for example) can read it at the same time.
 - **Configuration** is `/etc/smartsolar/smartsolar.yml` (root-owned).
 
