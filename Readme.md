@@ -89,4 +89,5 @@ See [docs/build.md](docs/build.md) and [docs/structure.md](docs/structure.md).
 - [Project structure](docs/structure.md) — repository layout
 - [Updatability](docs/updatability.md) — dual-boot / tryboot
 - [Hardware watchdog](docs/watchdog.md)
+- [Time](docs/time.md) — trusted clock, which services wait for it
 - [Developer docs index](docs/README.md)

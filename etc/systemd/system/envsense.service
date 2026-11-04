@@ -2,6 +2,9 @@
 Description=envsensed environmental sensor daemon
 After=network-online.target
 Wants=network-online.target
+# Measurements need a trusted clock: no start before time-sync.target (see docs/time.md)
+After=time-sync.target
+Requires=time-sync.target
 
 [Service]
 Type=simple

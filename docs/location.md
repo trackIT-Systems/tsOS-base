@@ -117,7 +117,7 @@ Only the format of `/boot/firmware/geolocation` comes from geoclue. The `geoclue
 
 On a station without network, GNSS is the only time source. chrony reads the time from gpsd (`refclock SHM 0`, [gps.conf](../etc/chrony/conf.d/gps.conf)). When GNSS is switched off most of the time, chrony only gets time during fine fixes.
 
-So in every mode, including `off`, `tslocation` makes a fine fix when chrony has not used a time source for longer than `time_max_age`. In `off` mode, that fix is not reported. The accuracy is that of NMEA without PPS, around 100 ms, the same as today.
+So in every mode, including `off`, `tslocation` makes a fine fix when chrony has not used a time source for longer than `time_max_age`. In `off` mode, that fix is not reported. The accuracy is that of NMEA without PPS, around 100 ms, the same as today. How the clock gates the observation services: [time.md](time.md).
 
 ## Outputs
 

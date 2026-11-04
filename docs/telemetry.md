@@ -72,7 +72,7 @@ Files are only appended to, never rotated or deleted.
 
 ## Clock
 
-A station without RTC, or without network, can run for a long time with a wrong clock. `tstelemetry` does not wait for `time-sync.target`. Instead:
+A station without RTC, or without network, can run for a long time with a wrong clock. `tstelemetry` is a station service and does not wait for `time-sync.target` ([time.md](time.md)). Instead:
 
 - It reads the kernel's clock state with `adjtimex`. chrony clears `STA_UNSYNC` once it has synced. Once seen synced, the clock counts as synced for the rest of the boot; a marker in `/run/tstelemetry` keeps this across restarts of the daemon.
 - **Before the sync**, MQTT messages are sent live with `synced` false. Readings for the files go to a spool, `/data/<host>/tsconfig/.spool/<boot_id>.jsonl`, together with the time since boot (`CLOCK_BOOTTIME`).

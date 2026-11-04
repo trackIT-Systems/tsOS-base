@@ -116,7 +116,7 @@ Python-based services installed from git submodules under `/usr/local/src`:
 
 Key enabled services:
 - `tsconfig.service`, `tsconfig-ble.service`, `tsos-bluetooth-address.service` (gives the Bluetooth controller an address of its own install before the gateway starts)
-- `tstelemetry.service` (runs as `pi`, does not wait for the clock sync)
+- `tstelemetry.service` (runs as `pi`, does not wait for the clock sync; see [time.md](time.md))
 - `smartsolar.service` (`smartsolard`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `solarlife.service` (`solarlifed`, runs as `pi`, starts after `tsos-bluetooth-address.service`)
 - `tsschedule.service` (power management)
@@ -124,7 +124,7 @@ Key enabled services:
 - `caddy.service`, `filebrowser.service`
 - `devmon.service` (udevil automount)
 - `gpsd.service`
-- `chrony-wait.service` (time sync dependency)
+- `chrony-wait.service` (holds `time-sync.target` until the clock is trusted, without a timeout; see [time.md](time.md))
 - `hostname-config.service`
 - `repartition-cleanup.service`
 
