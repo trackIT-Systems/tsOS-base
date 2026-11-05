@@ -47,6 +47,7 @@ The charge controller daemons publish in the same style: CSV, JSON and CBOR with
 | `disk` | 60 s | `mount`, `total`, `used`, `free` (bytes), `percent`. One message per mounted mount point (default `/`, `/data`) |
 | `pmic` | 60 s | `<rail>_A` for `3V7_WL_SW`, `3V3_SYS`, `1V8_SYS`, `DDR_VDD2`, `DDR_VDDQ`, `1V1_SYS`, `0V8_SW`, `VDD_CORE`, `3V3_DAC`, `3V3_ADC`, `0V8_AON`, `HDMI`; then `<rail>_V` for the same rails; then `EXT5V_V`, `BATT_V`, `BAT_RTC_V` (Raspberry Pi 5 only) |
 | `throttled` | 60 s | `under_voltage`, `freq_capped`, `throttled`, `temp_limit`, `under_voltage_occurred`, `freq_capped_occurred`, `throttling_occurred`, `temp_limit_occurred`, `raw` |
+| `rsts` | 3600 s | `power_on_reset`, `watchdog_quick_reset`, `watchdog_full_reset`, `watchdog_hard_reset`, `software_quick_reset`, `software_full_reset`, `software_hard_reset`, `debugger_quick_reset`, `debugger_full_reset`, `debugger_hard_reset`, `raw` (the firmware's reset status `PM_RSTS`), `clean_shutdown` (the previous boot ended with `systemd-shutdown`; null without a previous boot in the journal), `reason`. Only changes at boot; see [Reset reason](#reset-reason) |
 | `clocks` | 60 s | `arm`, `core`, `h264`, `hevc`, `isp`, `v3d`, `uart`, `pwm`, `emmc`, `pixel`, `vec`, `hdmi`, `dpi` (Hz) |
 | `voltages` | 60 s | `core`, `sdram_c`, `sdram_i`, `sdram_p` (V) |
 | `wittypi` | 60 s | `voltage_in`, `voltage_out` (V), `current_out` (A), `power_ldo`, `temperature` (°C), `firmware_revision` |
@@ -57,6 +58,29 @@ The charge controller daemons publish in the same style: CSV, JSON and CBOR with
 | `journalstats` | 600 s | `unit`, `level`, `entries`, `dropped`. One message per unit and level that logged in the interval; `dropped` counts what the journal limits held back (see [Logging](logging.md#counts)). Skipped when `journal.enabled` is off |
 
 At startup, a collector whose hardware or tool is missing is skipped with one log line, e.g. no WittyPi board, no `vcgencmd`, or no `mmcli`. A collector that fails while running logs a warning once, and again when the error changes. It logs once more when it works again.
+
+### Reset reason
+
+The `rsts` collector tells why the station last booted. The firmware flags alone can't do that reliably. A clean reboot and a crash both go through the watchdog, and on a Pi 4 a crash even looks like a power-on. `vcgencmd get_rsts` after each kind of reset (kernel 6.18, `panic=10`, `RuntimeWatchdogSec=10s`, measured 2026-11-05):
+
+| Board | Power cycle | `reboot` | Kernel panic | Hardware watchdog |
+| --- | --- | --- | --- | --- |
+| Pi 3 B | `0x1000` | `0x1020` | `0x20` | `0x20` |
+| Pi 4 B (bootloader EEPROM 2022-01-25) | `0x1000` | `0x1020` | `0x1000` | `0x1000` |
+| Pi 5 | `0x1000` | `0x1020` | `0x20` | `0x20` |
+
+`0x1000` is `power_on_reset`, `0x20` is `watchdog_full_reset`. A kernel panic and an expired hardware watchdog look the same on every board. `clean_shutdown` comes from the persistent journal: a shutdown or reboot logs `systemd-shutdown` at the end of the boot, a crash or power loss does not. `reason` combines both:
+
+| `reason` | Meaning |
+| --- | --- |
+| `reboot` | Planned reboot |
+| `shutdown` | Planned shutdown, then power-on |
+| `crash` | Kernel panic (oops, hung task, RCU stall) or hardware watchdog |
+| `power_loss` | Power cut without a shutdown |
+| `power_loss_or_crash` | Pi 4: power cut or crash, which it can't tell apart |
+| `power_on`, `power_on_or_crash` | As above, but the journal holds no previous boot |
+
+The status page of tsconfig shows the reason below the uptime.
 
 ## Files
 
