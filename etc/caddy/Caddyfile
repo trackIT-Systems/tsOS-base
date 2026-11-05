@@ -12,6 +12,11 @@
 }
 
 (tsos) {
+    # Variants (tsOS-audio, tsOS-vhf, ...) add their routes as drop-ins instead of
+    # replacing this file: etc/caddy/tsos.d/<name>.caddy in their repository, which
+    # applies on :80 and :443 like everything in this block. Without a file Caddy
+    # only warns ("No files matching import glob pattern").
+    import /etc/caddy/tsos.d/*.caddy
     encode gzip
     reverse_proxy http://localhost:8000
 
