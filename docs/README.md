@@ -9,6 +9,7 @@ Technical documentation for developers working on tsOS-base.
 - **[Project Structure](structure.md)** - Repository organization
 - **[Updatability](updatability.md)** - Dual-boot update mechanism and tryboot
 - **[Hardware Watchdog](watchdog.md)** - Raspberry Pi hardware watchdog timer configuration
+- **[Memory Pressure](memory.md)** - `systemd-oomd`: killing the unit under memory pressure before the station thrashes
 - **[Security Design](security.md)** - `root`/`pi` privilege separation model
 - **[Telemetry](telemetry.md)** - `tstelemetry`: device health over MQTT and into daily CSV files
 - **[Location](location.md)** - `tslocationd`: reference, measured and effective position, modes, GNSS through ModemManager and gpsd

@@ -276,6 +276,11 @@ EOF
 # Disable Swap
 RUN systemctl mask rpi-resize-swap-file.service
 
+# Userspace OOM killer: kills the unit under memory pressure before the station thrashes
+# (needs psi=1 in cmdline.txt; slice drop-ins in etc/systemd/system/*.slice.d, docs/memory.md)
+RUN apt-get install -y systemd-oomd
+RUN systemctl enable systemd-oomd.service
+
 # Enable persistent journal
 RUN rm /usr/lib/systemd/journald.conf.d/40-rpi-volatile-storage.conf
 
