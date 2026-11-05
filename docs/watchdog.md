@@ -102,6 +102,32 @@ Drop-ins from `/etc` and `/usr/lib` are applied in filename order, so the number
    RuntimeWatchdogSec=10
    ```
 
+## Crash Logs
+
+A panic reboots the station 10 seconds later, and its kernel log would be gone with it: the journal on the SD card misses the last messages, and those of a hung storage cannot reach it at all. tsOS keeps the kernel log of a panic or oops in RAM across the reboot and puts it into `/data` at the next boot.
+
+1. **ramoops** (`config.txt`, set in the Pifile): `dtoverlay=ramoops` on `[pi3]`, `ramoops-pi4` on `[pi4]`, `ramoops-pi5` on `[pi5]`. Each reserves 64 KiB at 176 MiB (`0x0b000000`) for four records of 16 KiB. On a panic or oops, the kernel writes the end of its log into the next record. A watchdog reset or reboot keeps the RAM; a power loss does not.
+2. **`systemd-pstore.service`** (systemd's, enabled by Debian's preset): at boot, it copies the records from `/sys/fs/pstore` to `/var/lib/systemd/pstore/` (`dmesg-ramoops-0`, ...), logs each one to the journal with its content in the `FILE` field, and frees it in pstore. It replaces files of the same name, so the next crash would overwrite the previous one.
+3. **`tsos-pstore-data.service`** ([tsos-pstore-data](../usr/local/sbin/tsos-pstore-data)): starts when `/var/lib/systemd/pstore` is not empty and moves each record to
+
+   `/data/<host>/pstore/<host>_<YYYY-MM-DD>_<HHMMSS>_<record>.txt`
+
+   The time is when the station moved the record, at the first boot after the crash; the crash happened before that boot. As everywhere under `/data` ([time.md](time.md)), it is only written once the clock is trusted: the script waits for `time-sync.target` (inside the process, so that `multi-user.target` is not held). If `/data` is not mounted (no datafs), the unit fails and the records stay for the next boot.
+
+Operators download the files over HTTP (`/data/`, login required) or SFTP. They contain the kernel log, including kernel addresses.
+
+Inside a record, `Panic#1 Part1` or `Oops#1 Part1` in the first line names the cause, and the log's timestamps are seconds since that boot.
+
+### Checking a station
+
+```sh
+ls /sys/fs/pstore                      # records not yet saved (empty after boot)
+journalctl -u systemd-pstore -b        # "PStore dmesg-ramoops-0 moved to ..."
+journalctl -u tsos-pstore-data -b      # "Moved ... to /data/<host>/pstore/..."
+```
+
+To test it on a station that may reboot, panic the kernel as `root` (`pi` has no sudo, [security.md](security.md)): `echo c > /proc/sysrq-trigger`.
+
 ## References
 
 - [Raspberry Pi Documentation - kernel_watchdog_timeout](https://www.raspberrypi.com/documentation/computers/config_txt.html#kernel_watchdog_timeout)

@@ -323,6 +323,22 @@ kernel_watchdog_timeout=15
 
 EOF
 
+# Keep kernel crash logs in RAM across the reboot (ramoops, 64 KiB at 176 MiB); systemd-pstore
+# saves them at the next boot and tsos-pstore-data moves them to /data (docs/watchdog.md)
+RUN tee -a /boot/firmware/config.txt <<EOF
+[pi3]
+dtoverlay=ramoops
+
+[pi4]
+dtoverlay=ramoops-pi4
+
+[pi5]
+dtoverlay=ramoops-pi5
+
+[all]
+EOF
+RUN systemctl enable tsos-pstore-data.service
+
 # Enable UART0 on GPIO header in RPi5 
 RUN tee -a /boot/firmware/config.txt <<EOF
 [pi5]

@@ -1,0 +1,23 @@
+[Unit]
+Description=Move kernel crash logs (pstore) to /data
+Documentation=file:///usr/local/sbin/tsos-pstore-data
+# systemd-pstore.service moves the records from /sys/fs/pstore to /var/lib/systemd/pstore
+After=systemd-pstore.service
+ConditionDirectoryNotEmpty=/var/lib/systemd/pstore
+# Without datafs, /data is not mounted: the unit fails and the records wait for the next boot
+RequiresMountsFor=/data
+
+[Service]
+# Not oneshot: the script waits for time-sync.target, and a oneshot would hold
+# multi-user.target until then
+Type=exec
+ExecStart=/usr/local/sbin/tsos-pstore-data
+ProtectSystem=strict
+ReadWritePaths=/var/lib/systemd/pstore /data
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

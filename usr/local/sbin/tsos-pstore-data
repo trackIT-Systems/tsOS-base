@@ -1,0 +1,36 @@
+#!/bin/sh
+# Move the kernel crash records that systemd-pstore saved at boot from
+# /var/lib/systemd/pstore to /data/<host>/pstore/, where operators can download
+# them. See docs/watchdog.md#crash-logs.
+#
+# systemd-pstore copies ramoops records flat into /var/lib/systemd/pstore
+# (dmesg-ramoops-0, ...) and replaces files of the same name, so the next crash
+# would overwrite this one: each record is moved out under a name of its own.
+set -eu
+
+SRC=/var/lib/systemd/pstore
+
+# Files under /data only carry a trusted time (docs/time.md). Wait here instead of
+# After=time-sync.target, which would hold multi-user.target on a station without
+# any time source.
+until systemctl is-active --quiet time-sync.target; do
+	sleep 10
+done
+
+host=$(hostname)
+dest="/data/${host}/pstore"
+stamp=$(date +%Y-%m-%d_%H%M%S)
+mkdir -p "$dest"
+
+find "$SRC" -type f | sort | while read -r f; do
+	rel=${f#"$SRC"/}
+	name="${host}_${stamp}_$(printf '%s' "${rel%.txt}" | tr / _).txt"
+	# Copy, then remove: /data is exFAT on another partition, and a failed copy
+	# keeps the record for the next boot.
+	cp "$f" "${dest}/${name}.part"
+	mv "${dest}/${name}.part" "${dest}/${name}"
+	rm -f "$f"
+	echo "Moved ${f} to ${dest}/${name}"
+done
+
+find "$SRC" -mindepth 1 -type d -empty -delete
