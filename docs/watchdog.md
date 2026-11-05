@@ -48,6 +48,17 @@ To further harden the system, add the following parameters to `/boot/firmware/cm
 - **Effect**: Without it, an oops only kills the process that hit it. The kernel keeps running in a broken state, PID 1 keeps feeding the watchdog, and the station hangs until someone power-cycles it. With it, `panic=10` reboots the station 10 seconds after the oops.
 - **Background**: [tsOS-audio#17](https://github.com/trackIT-Systems/tsOS-audio/issues/17): one flipped bit in the kernel code made every `execve` oops. Nothing new could start, but systemd kept the watchdog fed.
 
+### `hung_task_panic=1` and `sysctl.kernel.hung_task_timeout_secs=300`
+- **Description**: Panic when a task stays in uninterruptible sleep (`D` state) without being scheduled once for `hung_task_timeout_secs` (`kernel.hung_task_panic=1`). The Raspberry Pi kernel has the detector built in (`CONFIG_DETECT_HUNG_TASK=y`, default timeout 120 s) but only logs `task ... blocked for more than ... seconds`.
+- **Effect**: Covers storage that stops answering: a locked-up SD card or its controller, a USB drive or a hung exFAT `/data`. Every process that touches the filesystem blocks forever, so no login and no service works, but PID 1 runs from memory and keeps feeding the watchdog. With it, the station panics and `panic=10` reboots it. The kernel checks once per timeout, so it reboots 5 to 10 minutes after the stall.
+- **Why 300 s**: a slow card can legitimately block a task for a long time (large `fsync`, discards in `mkfs.ext4` during `repartition`); 300 s is far above that and still recovers within minutes. If `repartition` itself stalls that long, the card is broken and the next boot starts `repartition` again.
+- **Note**: `sysctl.<name>=` on the command line sets a sysctl before userspace starts (no `sysctl.d` file needed; parameters other than tsconfig's three are kept when it rewrites `cmdline.txt`).
+
+### `sysctl.kernel.panic_on_rcu_stall=1`
+- **Description**: Panic when the kernel detects an RCU stall: a CPU that stays in kernel code without passing a quiescent state for `CONFIG_RCU_CPU_STALL_TIMEOUT` (21 s), typically a driver looping with interrupts or preemption off.
+- **Effect**: Without it, the stall is only logged, and the remaining CPUs may keep systemd and the watchdog alive. With it, `panic=10` reboots the station.
+- **Not used**: `softlockup_panic=1` would cover the same case on more kernels, but the Raspberry Pi kernels (`rpi-v6`, `-v7`, `-v8`, `-2712`) are built without `CONFIG_SOFTLOCKUP_DETECTOR`, so the parameter has no effect. `panic_on_warn` is too strict: the kernel prints harmless WARNs (e.g. from `vc4`).
+
 ### `bcm2835_wdt.nowayout=1`
 - **Description**: Watchdog "No Way Out" mode.
 - **Effect**: Once the watchdog is started, it cannot be stopped by the application or by closing the device file. If the watchdog daemon crashes or is killed, the watchdog timer will expire and reboot the system.
@@ -83,7 +94,7 @@ Drop-ins from `/etc` and `/usr/lib` are applied in filename order, so the number
 
 2. **`cmdline.txt`**:
    ```
-   ... panic=10 oops=panic bcm2835_wdt.nowayout=1 watchdog.open_timeout=30
+   ... panic=10 oops=panic hung_task_panic=1 sysctl.kernel.hung_task_timeout_secs=300 sysctl.kernel.panic_on_rcu_stall=1 bcm2835_wdt.nowayout=1 watchdog.open_timeout=30
    ```
 
 3. **`system.conf`**:

@@ -1,1 +1,1 @@
-repartition root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait audit=0 panic=10 oops=panic bcm2835_wdt.nowayout=1 watchdog.open_timeout=30 systemd.hostname=tsos-default-name timezone=Europe/Berlin
+repartition root=/dev/mmcblk0p2 rootfstype=ext4 fsck.repair=yes rootwait audit=0 panic=10 oops=panic hung_task_panic=1 sysctl.kernel.hung_task_timeout_secs=300 sysctl.kernel.panic_on_rcu_stall=1 bcm2835_wdt.nowayout=1 watchdog.open_timeout=30 systemd.hostname=tsos-default-name timezone=Europe/Berlin
