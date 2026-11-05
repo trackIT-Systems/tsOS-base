@@ -14,4 +14,4 @@ RemainAfterExit=yes
 StandardOutput=journal
 
 [Install]
-WantedBy=network-pre.target
+WantedBy=sysinit.target
