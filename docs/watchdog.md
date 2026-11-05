@@ -43,6 +43,11 @@ To further harden the system, add the following parameters to `/boot/firmware/cm
 - **Effect**: If a kernel panic occurs (unrecoverable system error), wait 10 seconds and then reboot.
 - **Default**: 0 (wait forever), which requires a manual power cycle.
 
+### `oops=panic`
+- **Description**: Turn every kernel oops into a panic (`kernel.panic_on_oops=1`; the Raspberry Pi kernel ships with it off).
+- **Effect**: Without it, an oops only kills the process that hit it. The kernel keeps running in a broken state, PID 1 keeps feeding the watchdog, and the station hangs until someone power-cycles it. With it, `panic=10` reboots the station 10 seconds after the oops.
+- **Background**: [tsOS-audio#17](https://github.com/trackIT-Systems/tsOS-audio/issues/17): one flipped bit in the kernel code made every `execve` oops. Nothing new could start, but systemd kept the watchdog fed.
+
 ### `bcm2835_wdt.nowayout=1`
 - **Description**: Watchdog "No Way Out" mode.
 - **Effect**: Once the watchdog is started, it cannot be stopped by the application or by closing the device file. If the watchdog daemon crashes or is killed, the watchdog timer will expire and reboot the system.
@@ -78,7 +83,7 @@ Drop-ins from `/etc` and `/usr/lib` are applied in filename order, so the number
 
 2. **`cmdline.txt`**:
    ```
-   ... panic=10 bcm2835_wdt.nowayout=1 watchdog.open_timeout=30
+   ... panic=10 oops=panic bcm2835_wdt.nowayout=1 watchdog.open_timeout=30
    ```
 
 3. **`system.conf`**:
