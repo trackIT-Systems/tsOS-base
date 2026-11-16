@@ -15,6 +15,10 @@ Nice=10
 ExecStart=/usr/local/bin/tsscheduled --schedule /boot/firmware/schedule.yml
 Restart=always
 RestartSec=300s
+# Exit code 2: no supported power management hardware. It cannot appear while running, so the
+# unit stops for this boot, logging the error once, instead of failing every RestartSec.
+RestartPreventExitStatus=2
+SuccessExitStatus=2
 User=root
 
 [Install]
