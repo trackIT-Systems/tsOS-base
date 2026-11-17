@@ -80,7 +80,7 @@ RUN rm /tmp/modemmanager-meig-asr.deb
 # Run the Huawei / Brovi E3372 LTE sticks (E3372-325, E3372h-320, E3372h-153) in modem mode
 # instead of HiLink mode. The package depends on the exact modemmanager version, so a
 # ModemManager bump fails here.
-RUN curl -fsSL -o /tmp/modemmanager-e3372.deb https://github.com/trackIT-Systems/modemmanager-e3372/releases/download/1.24.0-2/modemmanager-e3372_1.24.0-2_arm64.deb
+RUN curl -fsSL -o /tmp/modemmanager-e3372.deb https://github.com/trackIT-Systems/modemmanager-e3372/releases/download/1.24.0-3/modemmanager-e3372_1.24.0-3_arm64.deb
 RUN apt-get install -y /tmp/modemmanager-e3372.deb
 RUN rm /tmp/modemmanager-e3372.deb
 
