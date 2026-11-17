@@ -24,7 +24,7 @@ gatt:
   passkey: "000000"              # the pairing passkey of the device (Victron default)
   poll_interval_s: 900
   collect_s: 15
-  keepalive_s: 5
+  keepalive_s: 3
   connect_timeout_s: 45
   pair_timeout_s: 20
   request_timeout_s: 10
@@ -43,6 +43,7 @@ serial:
   publish_interval_s: 60
   stale_after_s: 10
   hex: true                      # false: read only, the daemon never sends a byte
+  registers_interval_s: 60       # read the settings, history, ... over HEX too (a request can cut a text block); 0: never
   request_timeout_s: 2
   reopen_initial_s: 2
   reopen_max_s: 60
