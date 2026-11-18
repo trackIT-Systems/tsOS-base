@@ -1,5 +1,6 @@
 # solarlifed: holds a BLE connection to the strongest SolarLife MPPT controller and reports it
-# via CSV and MQTT (JSON + CBOR). Keys that are left out use the defaults shown here. Edit on the card, then reboot.
+# via CSV and MQTT (CSV, JSON + CBOR). Keys that are left out use the defaults shown here. Root-owned
+# build-time config; after a change, restart solarlife.service. Outputs: pysolarlife docs/outputs.md.
 ble:
   # adapter: hci0
   # address: "10:23:81:1E:97:4C"   # pin a device (disables RSSI selection and switching)
@@ -8,6 +9,8 @@ ble:
   rescan_interval_s: 3600     # rescan cadence while connected
   switch_hysteresis_db: 10    # a rescan must find a device this much stronger to switch
   adv_max_age_s: 20           # only connect with an advertisement younger than this
+  scanning: auto              # auto: passive if bluetoothd runs with --experimental (tsOS does), else active;
+                              # passive; active. Passive needs no scan response, which the hotspot blocks
   # BlueZ retries a connect internally while the radio is shared with the Wi-Fi access point, and
   # such a connect often takes 10-40 s. A short timeout cancels attempts that would have worked.
   connect_timeout_s: 45
@@ -37,5 +40,9 @@ daemon:
     host: localhost
     port: 1883
     qos: 0
+    # payload formats, each on its own topic (pysolarlife docs/outputs.md)
+    csv: true
     json: true
     cbor: true
+    # at most one reading per device and block in this many seconds (the newest); 0 = every reading
+    publish_interval_s: 300

@@ -1,6 +1,7 @@
 # smartsolard: follows a Victron SmartSolar over Bluetooth (Instant Readout advertisements) and/or
-# a VE.Direct cable and reports it via CSV and MQTT (JSON + CBOR). Keys that are left out use the
-# defaults shown here. Edit on the card, then reboot. Details: docs in the pysmartsolar repository.
+# a VE.Direct cable and reports it via CSV and MQTT (CSV, JSON + CBOR). Keys that are left out use the
+# defaults shown here. Root-owned build-time config; after a change, restart smartsolar.service.
+# Details: docs in the pysmartsolar repository (outputs: docs/outputs.md).
 #
 # The Instant Readout advertisements are the main Bluetooth data path and work with the Wi-Fi hotspot
 # up. A GATT connection (key fetch, gatt.mode hold/poll, settings over Bluetooth) mostly fails while
@@ -14,6 +15,8 @@ ble:
   select_window_s: 10
   rescan_interval_s: 3600
   switch_hysteresis_db: 10
+  scanning: auto                 # auto: passive if bluetoothd runs with --experimental (tsOS does), else active;
+                                 # passive; active. Passive needs no scan response, which the hotspot blocks
 
 advert:
   publish_interval_s: 60
@@ -21,6 +24,10 @@ advert:
 
 gatt:
   mode: "off"                    # off | hold | poll
+  # A charger with Instant Readout disabled only advertises its product id: it is read over GATT
+  # in this mode instead while mode is off (off: leave it alone). With the hotspot up the first
+  # connection can take many attempts; a held connection then stays.
+  fallback: "hold"
   passkey: "000000"              # the pairing passkey of the device (Victron default)
   poll_interval_s: 900
   collect_s: 15
@@ -49,8 +56,8 @@ serial:
   reopen_max_s: 60
 
 keys:
-  # Instant Readout key of each device, by serial number (or MAC address). This file is world-readable
-  # on the boot partition: a key here is readable by every local user.
+  # Instant Readout key of each device, by serial number (or MAC address). This file is world-readable:
+  # a key here is readable by every local user (a fetched key in /var/lib/smartsolar is not).
   # "HQ22294ZGEU": "00112233445566778899aabbccddeeff"
 
 daemon:
@@ -67,5 +74,9 @@ daemon:
     host: localhost
     port: 1883
     qos: 0
+    # payload formats, each on its own topic (pysmartsolar docs/outputs.md)
+    csv: true
     json: true
     cbor: true
+    # at most one reading per device in this many seconds (the best source's newest); 0 = every reading
+    publish_interval_s: 300
