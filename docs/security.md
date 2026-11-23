@@ -88,6 +88,11 @@ start/stop/restart/reload, [app/utils/privileged.py](../usr/local/src/tsconfig/a
 are UI conveniences, not the boundary. The same goes for the configured-services check on log
 streaming.
 
+`NetworkManager.service` is on the allowlist so the operator can restart it from the network page.
+This also lets `pi` stop it, which cuts off a station that is only reachable over the network;
+the operator already has full NetworkManager control through `netdev` (see above), so the unit
+control grants no new capability.
+
 ### Reboot
 
 `schedule_reboot()` pre-checks authorization with `pkcheck` so an HTTP caller learns
