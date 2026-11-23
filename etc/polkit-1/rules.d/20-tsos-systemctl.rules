@@ -24,6 +24,7 @@ const TSOS_MANAGED_UNITS = [
     "tsupdate.service", "tstelemetry.service", "mosquitto.service",
     "envsense.service", "solarlife.service", "smartsolar.service", "tslocation.service", "filebrowser.service", "gpsd.service",
     "devmon.service", "wg-quick@wireguard.service", "chrony.service", "NetworkManager.service",
+    "ssh.service", "ModemManager.service", "bluetooth.service", "wificheck.service",
 ];
 
 polkit.addRule(function(action, subject) {
