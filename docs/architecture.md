@@ -70,6 +70,15 @@ LABEL=datafs            /media/datafs       exfat   defaults,user,umask=000,fmas
 /media/datafs           /data               none    defaults,bind,nofail                    0 0
 ```
 
+### Without a data volume
+
+Without `datafs` (cards up to 16 GiB) and without a USB disk that devmon bind-mounts on `/data`, `/data` is an empty, root-owned directory of the overlay and `data.mount` fails (its `LABEL=datafs` device times out after 5 s).
+
+- **Observation services** record to `/data` and declare `RequiresMountsFor=/data`: they do not start (`Dependency failed`), so nothing is written into the root overlay. These are `envsense` here and the variants' `radiotracking`, `lotekfskd`, `soundscapepipe` and `lightbarrier`. A dependency failure does not count as a start, so it does not trigger their `StartLimitAction=reboot`.
+- **Station services** (`tstelemetry`, `tslocationd`, `smartsolard`, `solarlifed`) run without `/data`: they publish over MQTT, log once that their CSV files can't be written, and write them again once `/data` is writable.
+
+A USB disk plugged in later makes `/data` writable, but observation services that already failed do not start by themselves: restart them or reboot.
+
 ### Repartitioning
 
 On first boot with `repartition` kernel parameter:
