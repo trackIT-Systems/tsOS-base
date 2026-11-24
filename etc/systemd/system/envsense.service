@@ -5,9 +5,11 @@ Wants=network-online.target
 # Measurements need a trusted clock: no start before time-sync.target (see docs/time.md)
 After=time-sync.target
 Requires=time-sync.target
-# Records to /data: no start without the data volume (datafs or a USB disk), so nothing is
-# written into the root overlay
+# Records to /data: runs only while the data volume (datafs or a USB disk that devmon
+# bind-mounts) is mounted, so nothing is written into the root overlay. BindsTo stops it when
+# the volume goes away, WantedBy=data.mount starts it when it appears (tsOS-base docs/architecture.md)
 RequiresMountsFor=/data
+BindsTo=data.mount
 
 [Service]
 Type=simple
@@ -27,4 +29,4 @@ Restart=on-failure
 RestartSec=5
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target data.mount

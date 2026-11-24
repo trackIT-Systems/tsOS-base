@@ -74,10 +74,10 @@ LABEL=datafs            /media/datafs       exfat   defaults,user,umask=000,fmas
 
 Without `datafs` (cards up to 16 GiB) and without a USB disk that devmon bind-mounts on `/data`, `/data` is an empty, root-owned directory of the overlay and `data.mount` fails (its `LABEL=datafs` device times out after 5 s).
 
-- **Observation services** record to `/data` and declare `RequiresMountsFor=/data`: they do not start (`Dependency failed`), so nothing is written into the root overlay. These are `envsense` here and the variants' `radiotracking`, `lotekfskd`, `soundscapepipe` and `lightbarrier`. A dependency failure does not count as a start, so it does not trigger their `StartLimitAction=reboot`.
+- **Observation services** record to `/data` and run only while it is mounted (`RequiresMountsFor=/data`, `BindsTo=data.mount`, and `WantedBy=data.mount` next to `multi-user.target`). These are `envsense` here and the variants' `radiotracking`, `lotekfskd`, `soundscapepipe` and `lightbarrier`. Without a data volume they don't start (`Dependency failed`), so nothing is written into the root overlay; a dependency failure is not a start, so it does not count towards their `StartLimitAction=reboot`.
 - **Station services** (`tstelemetry`, `tslocationd`, `smartsolard`, `solarlifed`) run without `/data`: they publish over MQTT, log once that their CSV files can't be written, and write them again once `/data` is writable.
 
-A USB disk plugged in later makes `/data` writable, but observation services that already failed do not start by themselves: restart them or reboot.
+devmon switches `/data` through `data.mount`: when a USB disk is plugged in it stops `data.mount` (which stops the observation services) and bind-mounts the disk on `/data`, which systemd sees as `data.mount` becoming active and starts them again (`WantedBy=data.mount`). When the disk is removed, the unmount stops them (`BindsTo`) and devmon starts `data.mount` again: with `datafs` they come back on it, without it they stay stopped. Files a service had open on the removed disk are cut off. A new observation service needs the same three lines, and must be (re-)enabled for `WantedBy=data.mount` to take effect.
 
 ### Repartitioning
 
