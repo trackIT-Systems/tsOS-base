@@ -174,7 +174,8 @@ a fleet-wide secret: whoever learns it has root on every device built with it.
 ## Operator authentication
 
 Every network entry point requires one credential: `pi`'s password. Staff may use `root` and its
-password instead, if one exists. Every web entry point is available over plain HTTP and,
+password instead, if one exists. The one exception is ecohub's config deployment from the
+WireGuard server (see "Config deployment from ecohub"). Every web entry point is available over plain HTTP and,
 optionally, over HTTPS with a device-local certificate (see "HTTPS (optional)").
 
 ### HTTPS (optional)
@@ -225,6 +226,37 @@ Plain HTTP on `:80` stays and is never redirected ([Caddyfile](../etc/caddy/Cadd
   does not use the API; it reads the same data with tsconfig's code in its own process.
   The cost: **any local process gets the whole API, including the shell websocket** — a `pi`
   shell — so a compromised sandboxed service (Mosquitto, `envsense`) is no longer contained.
+
+### Config deployment from ecohub
+
+ecohub deploys a config group to its stations without any credential: its Celery task reads the
+station's config version (`GET /api/configs/`) and uploads the bundle (`POST /api/configs.zip`)
+over WireGuard, through Caddy on `:80`. tsconfig lets exactly these two requests through without a
+login when they come from an address in `deploy.hosts` of `/etc/tsconfig/tsconfig.yml`
+([configs/tsconfig.yml](../usr/local/src/tsconfig/configs/tsconfig.yml), default `172.16.0.1`,
+the WireGuard server; `is_trusted_deployer` in
+[app/auth/session.py](../usr/local/src/tsconfig/app/auth/session.py)). Everything else, the bundle
+download `GET /api/configs.zip` (which holds the secrets) included, still needs a login. Each
+upload is logged at INFO (`Config deployment from 172.16.0.1`).
+
+- **Where the address comes from.** tsconfig listens on `127.0.0.1` only
+  ([tsconfig.service](../etc/systemd/system/tsconfig.service)), so a remote request always passes
+  Caddy, which sets `X-Forwarded-For` to the client's address and drops any value the client sent
+  (the Caddyfile has no `trusted_proxies`). tsconfig takes that header, and only as a single
+  address. A local process can set it itself, but local processes are trusted anyway.
+- **Why the address can be trusted.** WireGuard binds a packet's source address to the peer's key:
+  on the server every peer has exactly its own `/32` in `AllowedIPs`, so no peer can send as
+  `172.16.0.1`. The server forwards between peers, but without NAT on `wg0`, so a station or laptop
+  reaching another station keeps its own address and needs a login.
+- **What the server must keep that way.** `/32` `AllowedIPs` per peer, and no masquerading of
+  traffic into `wg0`. NAT into `wg0` would make every peer look like `172.16.0.1`, and then every
+  peer could reconfigure every station.
+- **Changing it.** A customer VPN puts its own server's tunnel address into `deploy.hosts`; `[]`
+  turns deployment without login off. A device config without a `deploy` section uses the shipped
+  default.
+- **The cost.** A bundle upload is full control of the station: it writes `authorized_keys`,
+  `userconf.txt`, `wireguard.conf` and `cmdline.txt` and may reboot. Whoever can send from
+  `172.16.0.1` has that, on every station, without a password (see "Known weaknesses").
 
 ### Staff login (`root`)
 
@@ -482,6 +514,12 @@ close that gap.
   still be man-in-the-middled. Prefer HTTPS, the hotspot's WPA2 link or WireGuard for WebDAV.
 - **What `pi` reaches is broad.** Through the above: the full journal and every NetworkManager
   secret, and — if a root password is set — root via `su`.
+- **The WireGuard server can reconfigure every station without a password** (see "Config
+  deployment from ecohub"). Not only ecohub sends from `172.16.0.1`: every process on that host,
+  every container with host networking (on the dev server Grafana, Filebrowser, the hub, the
+  server-mode tsconfig, ...) and every masqueraded Docker bridge does. A compromise of any web
+  service there reaches the whole fleet. Restricting connections into `wg0` on the server to
+  ecohub's user (`iptables -m owner`) would narrow that.
 - **Local processes are trusted** by tsconfig (including the shell) and Filebrowser; see "Trusted
   local requests". Accepted for tsOS's scope: a compromised local service ends up `pi`-level.
 - **Secrets in the journal.** `pi` reads the whole journal. No service was found logging secrets

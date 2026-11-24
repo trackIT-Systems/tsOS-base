@@ -23,7 +23,11 @@ RuntimeDirectoryPreserve=yes
 # Caddy keeps idle connections to tsconfig for up to 2 minutes; uvicorn closes them after 5 s by
 # default, and a request Caddy sends on one just as it closes fails with 502. Keep them open longer
 # than Caddy does, so Caddy is always the side that closes them.
-ExecStart=python3 -m uvicorn app.main:app --timeout-keep-alive 300
+# Loopback only (uvicorn's default, stated here because the login depends on it): remote clients
+# reach tsconfig only through Caddy, so X-Forwarded-For, which Caddy overwrites, is the client's
+# real address. That is what lets ecohub deploy from the WireGuard server without a login
+# (deploy.hosts in tsconfig.yml, docs/security.md).
+ExecStart=python3 -m uvicorn app.main:app --host 127.0.0.1 --timeout-keep-alive 300
 SyslogIdentifier=tsconfig
 
 Restart=always
